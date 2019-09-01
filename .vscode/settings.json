@@ -1,0 +1,9 @@
+{
+    "Lua.runtime.version": "LuaJIT",
+    "Lua.workspace.ignoreDir": [
+        "tests/*"
+    ],
+    "Lua.diagnostics.globals": [
+        "love"
+    ]
+}

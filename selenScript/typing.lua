@@ -1,0 +1,2 @@
+-- This file is dedicated to providing typing info using EmmyLua
+-- and is only used when the types can't be supplied in existing code

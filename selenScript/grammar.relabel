@@ -1,0 +1,222 @@
+/* Based on lua 5.4 grammar from the docs/reference */
+/* assisted from https://github.com/sumneko/lua-language-server/blob/master/server/src/parser/grammar.lua */
+chunk	<- block Sp* (!. / ({} {.*} {}->'chunk') -> UNPARSED_INPUT)
+block	<- Sp* (Scc stmt* Scc) -> block
+
+stmt	<- Sc (
+		   ';'
+		 / decorator_stmt
+		 / ({}->'' varlist (Sc typedeflist/{}->'') Sc '=' Sc exprlist) -> assign
+		 / ({}->'' varlist Sc typedeflist) -> assign
+		 / call
+		 / return
+		 / ('::' Sc {NAME} Sc '::') -> label
+		 / (BREAK (Sc exprlist/{}->'') (IF Sc expect_expr)?) -> break
+		 / (CONTINUE (IF Sc expect_expr)?) -> continue
+		 / (GOTO Sc {NAME} (IF Sc expect_expr)?) -> goto
+		 / do_stmt
+		 / while_stmt
+		 / (REPEAT block UNTIL Sc expect_expr) -> repeat
+		 / (
+				IF Sc expect_expr THEN block
+		 		((ELSEIF Sc expect_expr THEN block) -> elseif)*
+				(ELSE block -> else)?
+				(END / ({} {(!END .)* END?} {}->'if') -> UNPARSED_INPUT)
+		   ) -> if
+		 / for_range_stmt
+		 / for_each_stmt
+		 / function_stmt
+		 / ({LOCAL} Sc namelist (Sc typedeflist / {}->'') (Sc '=' Sc exprlist / {}->''))  -> assign
+		 /* / LOCAL '<' NAME '>' NAME '=' expect_expr */
+		 / (INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
+		 )
+
+_decorator_call	<- '(' Sc (exprlist/{}->MISS_DEC_ARGS) Sc ')'
+decorator		<- ('@' Sc (var_lcall/{}->MISS_EXPR) (_decorator_call)?) -> decorator
+decoratorlist	<- (Sc decorator)+ -> decoratorlist
+decorator_stmt	<- (decoratorlist Sc (function_stmt/{}->MISS_DEC)) -> decorate
+
+do_stmt			<- (DO block Sc (END / ({} {(!END .)* END?} {}->'do') -> UNPARSED_INPUT)) -> do
+while_stmt		<- (WHILE Sc expect_expr DO block Sc (END / ({} {(!END .)* END?} {}->'while') -> UNPARSED_INPUT)) -> while
+for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr / {}->'') DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT END?)) -> for_range
+for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* END?} {}->'for each') -> UNPARSED_INPUT)) -> for_each
+function_stmt	<- ({}->'' FUNCTION Sc funcname Sc funcbody) -> function
+				 / ({LOCAL} FUNCTION Sc {NAME} Sc funcbody) -> function
+
+expect_expr	<- expr / {}->MISS_EXPR
+expr	<- ((value/unary) (Sc {BINARY_OP} Sc (value/unary))+) -> math
+		 / unary -> math
+		 / do_stmt
+		 / while_stmt
+		 / for_range_stmt
+		 / for_each_stmt
+		 / value
+unary	<- {UNARY_OP} Sc (unary/value)
+
+value	<- NIL -> nil
+		 / ({TRUE} / {FALSE}) -> bool
+		 / Number
+		 / String
+		 / VAR_ARGS -> var_args
+		 / (FUNCTION Sc funcbody) -> anon_function
+		 / var
+		 / group
+		 / table
+
+group	<- '(' Sc expect_expr Sc (')'/{}->MISS_BRACKET)
+
+index	<- (
+			 ({'['} Sc expect_expr Sc (']'/{}->MISS_SQUARE_BRACKET)
+		   / {DOT} Sc {NAME}
+		   / {COLON} Sc {NAME} (args index?) -> call
+		   ) Sc index?) -> index
+		 / (args index?) -> call
+var		<- ({}->'' {NAME} Sc index?) -> index
+		 / ({}->'' group Sc index) -> index
+
+varlist		<- (var (Sc ',' Sc var)*) -> varlist
+exprlist	<- (expr (Sc ',' Sc expect_expr)*) -> exprlist
+opt_exprlist	<- (expr (Sc ',' Sc expect_expr)*)? -> exprlist
+namelist	<- ({NAME} (Sc ',' Sc {NAME})*) -> namelist
+
+param		<- ({NAME/VAR_ARGS} typedef?) -> param
+parlist		<- (param (Sc ',' Sc param)*) -> parlist
+opt_parlist	<- (param (Sc ',' Sc param)*)? -> parlist
+funcbody	<- ('(' Sc opt_parlist Sc ')' (Sc type_return/{}->'') block Sc (END / ({} {(!END .)* END?} {}->'funcbody') -> UNPARSED_INPUT)) -> funcbody
+
+return	<- (RETURN (Sc exprlist/{}->'')? (IF Sc expect_expr)?) -> return Sc ';'?
+
+funcindex	<- ({DOT/COLON} Sc {NAME} Sc funcindex?) -> index
+funcname	<- ({}->'' {NAME} Sc funcindex?) -> index
+
+index_lcall	<- (({'['} Sc expr Sc (']'/{}->MISS_SQUARE_BRACKET) / {DOT/COLON} Sc {NAME}) Sc (index_lcall / &args)) -> index
+		 / (args (index_lcall / &args)) -> call
+var_lcall	<- ({}->'' {NAME} Sc index_lcall?) -> index
+args		<- '(' Sc opt_exprlist Sc ')' / table / String
+call		<- ({}->'' (group / var_lcall) args -> call) -> index
+
+field			<- ('[' Sc expr Sc (']'/{}->MISS_SQUARE_BRACKET) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) -> field
+fieldlist		<- (field (Sc FIELD_SEP Sc field)*) -> fieldlist (Sc FIELD_SEP)?
+opt_fieldlist	<- (field (Sc FIELD_SEP Sc field)*)? -> fieldlist (Sc FIELD_SEP)?
+table			<- ('{' Sc opt_fieldlist Sc ('}'/{}->MISS_BRACKET)) -> table
+
+type		<- ({ARRAY} Sc '[' type_expr Sc (']'/{}->MISS_SQUARE_BRACKET)) -> type_array
+			 / ({TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/{}->MISS_SQUARE_BRACKET)) -> type_table
+			 / ({FUNCTION} (Sc type_args / {}->'') (Sc type_return / {}->'')) -> type_function
+			 / Sc {NAME/NIL} -> type
+type_expr	<- (type Sc (AND/'&') type_expr) -> type_and
+			 / (type Sc (OR/'|') type_expr) -> type_or
+			 / type
+typelist	<- (type_expr (Sc ',' Sc type_expr)*) -> typelist
+
+type_args	<- '(' opt_parlist Sc ')'
+type_return	<- '->' Sc type_expr
+typedef		<- ':' Sc type_expr
+typedeflist	<- ':' Sc typelist
+
+/* The rest of the needed stuff */
+Sc	<- {:_:Scc:} /* Space Comments (stops captureing anything, its complicated ish)*/
+Scc	<- (Comment / Sp)* /* Space Comments Capture */
+Sp	<- ' ' / %nl / %esc_t /* SPace */
+
+Esc		<- '\' EChar
+EChar	<- 'a'
+         / 'b'
+         / 'f'
+         / 'n'
+         / 'r'
+         / 't'
+         / 'v'
+         / '\'
+         / '"'
+         / "'"
+         / %nl
+         / 'z' (%nl / %s)*
+         / 'x' X16 X16
+         / [0-9] [0-9]? [0-9]?
+         / 'u{' WORD* '}'
+         / {} -> INVALID_ESC
+
+STRFormat	<- ('{'!'{' expr ('}' !'}' / {}->MISS_BRACKET)) -> STRFormat
+
+LongString	<- ('[' {} {:eq: '='* :} {} '[' %nl? {(!LongStringClose .)*} (LongStringClose / {} -> MISS_LONG_BRACKET)) -> LongString
+LongStringClose	<-  ']' =eq ']'
+
+Comment		 <- LongComment / ('--' {(!%nl .)*}) -> Comment
+LongComment	 <- '--' LongString -> LongComment
+
+String	<- ({'"'} {~(Esc / !%nl !'"' .)*~} ('"' / {} -> MISS_QUOTE_D)) -> String
+		 / ({"'"} {~(Esc / !%nl !"'" .)*~} ("'" / {} -> MISS_QUOTE_S)) -> String
+		 / ('f' {'"'} (STRFormat / {~(Esc / !%nl !'"' !STRFormat .)+~})* ('"' / {} -> MISS_QUOTE_D)) -> FormatString
+		 / ('f' {"'"} (STRFormat / {~(Esc / !%nl !"'" !STRFormat .)+~})* ("'" / {} -> MISS_QUOTE_S)) -> FormatString
+		 / LongString
+Number	<- Float / Hex / Int
+NUM_E	<- [eE] ({[+-]?} / {}->'+') {[0-9]+}
+Int		<- {[0-9]+NUM_E?} -> Int
+Float	<- ({[0-9]* DOT [0-9]+ NUM_E?} / {[0-9]+ DOT [0-9]* NUM_E?}) -> Float
+Hex		<- ('0' [xX] {X16+ NUM_E?}) -> Hex
+
+WORD        <-  [a-zA-Z0-9_]
+Cut         <-  !WORD
+Rest        <-  (!%nl .)*
+
+X16         <-  [a-fA-F0-9]
+NAME	<- (!RESERVED [a-zA-Z_][a-zA-Z_0-9]*) / RESERVED [a-zA-Z_0-9]+
+
+DOT			<- '.' !'.'
+CONCAT		<- '..' !'.'
+VAR_ARGS	<- '...'
+COLON		<- ':'
+FIELD_SEP	<- ',' / ';'
+BINARY_OP	<- '^'
+			 /* UNARY_OP */
+			 / '*' / '/' / '//' / '%'
+			 / '+' / '-'
+			 / CONCAT
+			 / '<<' / '>>'
+			 / '&'
+			 / '~' (!'=' / &"~=")
+			 / '|'
+			 / '<=' / '>=' / '<' / '>' / "~=" / "=="
+			 / AND
+			 / OR
+UNARY_OP	<- '-' / NOT / '#' / '~'
+
+RESERVED	<- RESERVED_STMT / NIL
+RESERVED_STMT	<- AND / OR / DO / BREAK / ELSE / ELSEIF / END / IF / FOR / TRUE / FALSE / GOTO
+				 / FUNCTION / IN / LOCAL / NOT / REPEAT / RETURN / THEN / WHILE / UNTIL / INTERFACE
+				 / CONTINUE
+
+AND         <- Sc 'and' Cut
+NOT         <- Sc 'not' Cut
+OR          <- Sc 'or' Cut
+
+NIL         <- Sc 'nil' Cut
+FALSE       <- Sc 'false' Cut
+TRUE        <- Sc 'true' Cut
+
+BREAK       <- Sc 'break' Cut
+GOTO        <- Sc 'goto' Cut
+CONTINUE	<- Sc 'continue' Cut 
+
+THEN        <- Sc 'then' Cut
+			/  Sc ({} {'do'} Cut {}) -> EXPECT_THEN
+DO          <- Sc 'do' Cut
+			/  Sc ({} {'then'} Cut {}) -> EXPECT_DO
+IN          <- Sc 'in' Cut
+END         <- Sc 'end'  Cut
+
+ELSE        <- Sc 'else' Cut
+ELSEIF      <- Sc 'elseif' Cut
+IF          <- Sc 'if' Cut
+FOR         <- Sc 'for' Cut
+FUNCTION    <- Sc 'function' Cut
+REPEAT      <- Sc 'repeat' Cut
+UNTIL       <- Sc 'until' Cut
+WHILE       <- Sc 'while' Cut
+INTERFACE   <- Sc 'interface' Cut
+RETURN      <- Sc 'return' Cut
+LOCAL       <- Sc 'local' Cut
+
+TABLE		<- Sc 'table' Cut
+ARRAY		<- Sc 'array' Cut

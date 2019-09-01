@@ -1,0 +1,40 @@
+Parsing
+block
+    1 = assign
+        'scope' = ''
+        'exprlist' = exprlist
+            1 = do
+                'block' = block
+                    1 = return
+                        'exprlist' = exprlist
+                            1 = Int
+                                'value' = '123'
+                            2 = Int
+                                'value' = '456'
+        'varlist' = varlist
+            1 = index
+                'op' = ''
+                'name' = 'a'
+    2 = LongComment
+        'comment' = LongString
+            'value' = "foo = while true do\n\tbreak "foo's value"\nend"
+            'quoteEqLen' = 0
+            'quote' = '[['
+    3 = LongComment
+        'comment' = LongString
+            'value' = 'bar = do\n\treturn "OOooo, fancy"\nend'
+            'quoteEqLen' = 0
+            'quote' = '[['
+    4 = LongComment
+        'comment' = LongString
+            'value' = 'baz = for i,v in pairs(t) do\n\tbreak v\nend'
+            'quoteEqLen' = 0
+            'quote' = '[['
+Resulting Lua...
+local __sls0__sls1
+do
+__sls0,__sls1=123,456;goto doreturn2
+::doreturn2:: end
+a=__sls0,__sls1
+
+Exit.
