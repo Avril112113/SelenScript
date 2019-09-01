@@ -1,4 +1,9 @@
-local transpiler = {}
+local transpiler = {
+	expr_stmts={
+		["while"]=true, for_range=true, for_each=true,
+		["do"]=true, if_expr=true
+	}
+}
 transpiler.__index = transpiler
 local function add(name, f)
 	transpiler[name] = f
@@ -38,7 +43,7 @@ function transpiler:tostring(value, ...)
 end
 function transpiler:strexpr(value, ...)
 	local result
-	if value.type == "while" or value.type == "do" or value.type == "for_range" or value.type == "for_each" then
+	if transpiler.expr_stmts[value.type] ~= nil then
 		self.expr_stmt_depth = self.block_depth
 		local prefixStmt = self:tostring(value, ...)
 		self.expr_stmt_depth = self.block_depth-1
@@ -50,10 +55,10 @@ function transpiler:strexpr(value, ...)
 			result = table.concat(names, ",")
 		end
 		table.insert(self.expr_stmt_codes, prefixStmt)
+		return result
 	else
-		result = self:tostring(value, ...)
+		return self:tostring(value, ...)
 	end
-	return result
 end
 function transpiler:getExprStmtCode()
 	local t = self.expr_stmt_codes
@@ -230,7 +235,7 @@ add("elseif", function(self, ast)
 	return str
 end)
 add("if", function(self, ast)
-	local str = "if " .. self:tostring(ast.condition) .. " then " .. self:tostring(ast.block)
+	local str = "if " .. self:tostring(ast.condition) .. " then\n" .. self:tostring(ast.block)
 	if ast.next ~= nil then
 		str = str .. self:tostring(ast.next)
 	end
@@ -241,7 +246,7 @@ add("for_range", function(self, ast)
 	if ast.step ~= nil then
 		str = str .. "," .. self:tostring(ast.step)
 	end
-	str = str .. " do " .. self:tostring(ast.block)
+	str = str .. " do\n" .. self:tostring(ast.block)
 	if self.continuelabel[self.block_depth+1] ~= nil then
 		str = str .. "::" .. self.continuelabel[self.block_depth+1] .. ":: "
 		table.remove(self.continuelabel, self.block_depth+1)
@@ -249,7 +254,7 @@ add("for_range", function(self, ast)
 	return self:getExprStmtCode() .. str .. "end\n"
 end)
 add("for_each", function(self, ast)
-	local str = "for " .. self:tostring(ast.namelist) .. " in " .. self:tostring(ast.exprlist) .. " do " .. self:tostring(ast.block)
+	local str = "for " .. self:tostring(ast.namelist) .. " in " .. self:tostring(ast.exprlist) .. " do\n" .. self:tostring(ast.block)
 	if self.continuelabel[self.block_depth+1] ~= nil then
 		str = str .. "::" .. self.continuelabel[self.block_depth+1] .. ":: "
 		table.remove(self.continuelabel, self.block_depth+1)
@@ -342,6 +347,14 @@ add("parlist", function(self, ast)
 	return str
 end)
 
+add("if_expr", function(self, ast)
+	local name = self:getReserveName()
+	local str = "if " .. self:strexpr(ast.condition) .. " then " ..
+				name .. "=" .. self:strexpr(ast.lhs) .. " else " ..
+				name .. "=" .. self:strexpr(ast.rhs) .. " end\n"
+	table.insert(self.expr_stmt_names, {name})
+	return str
+end)
 add("String", function(self, ast)
 	return ast.quote .. ast.value .. ast.quote
 end)

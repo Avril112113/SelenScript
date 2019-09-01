@@ -44,7 +44,9 @@ function_stmt	<- ({}->'' FUNCTION Sc funcname Sc funcbody) -> function
 				 / ({LOCAL} FUNCTION Sc {NAME} Sc funcbody) -> function
 
 expect_expr	<- expr / {}->MISS_EXPR
-expr	<- ((value/unary) (Sc {BINARY_OP} Sc (value/unary))+) -> math
+expr	<- (_expr (IF Sc expr ELSE Sc expr)+) -> if_expr
+		 / _expr
+_expr	<- ((value/unary) (Sc {BINARY_OP} Sc (value/unary))+) -> math
 		 / unary -> math
 		 / do_stmt
 		 / while_stmt

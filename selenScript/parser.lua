@@ -359,6 +359,24 @@ local defs = {
 		}
 	end,
 
+	if_expr=function(lhs, condition, rhs, ...)
+		local t = {...}
+		rhs = {
+			type="if_expr",
+			lhs=lhs,
+			condition=condition,
+			rhs=rhs
+		}
+		while #t > 0 do
+			rhs = {
+				type="if_expr",
+				lhs=table.remove(t, 1),
+				condition=table.remove(t, 1),
+				rhs=rhs
+			}
+		end
+		return rhs
+	end,
 	String=function(quote, value)  -- NOTE: used by Comment as well
 		return {
 			type="String",

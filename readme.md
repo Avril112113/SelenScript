@@ -16,7 +16,7 @@ it was recommended by DreadberryJam from a discord server i talk in.
 The syntax of SelenScript is directly a extension of Lua 5.4  
 This dose not mean you can't use it for other Lua versions (propper support maybe added later)  
 
-Typing in the syntax
+Typing in the syntax  
 ```Lua
 local a: number
 local b: int|float  -- same as number
@@ -30,7 +30,8 @@ f: table[string=number]
 g: array[string]
 ```
 
-`continue` works like any other language (luaJIT/lua5.2+, may add support for earlier versions later)
+`continue` works like any other language  
+NOTE: versions prior to (LuaJIT/Lua5.2+) may not support this as it use's goto  
 ```Lua
 for i, v in pairs(t) do
 	if type(v) ~= "string" then
@@ -48,24 +49,41 @@ for i, v in pairs(t) do
 end
 ```
 
-Iinline `if`
+Iinline `if`  
 ```Lua
 foo = 100
 bar = foo if foo >= 100 else foo+100  -- Bar: 100
-bar = foo if foo < 500 else foo-100  -- Bar: 0
+bar = foo-100 if foo < 500 else foo  -- Bar: 0
+-- Lua (Formatted)
+foo = 100
+local __sls0
+if foo >= 100 then
+	__sls0 = foo
+else
+	__sls0 = foo+100
+end
+bar = __sls0
+local __sls1
+if foo < 500 then
+	__sls1 = foo-100
+else
+	__sls1 = foo
+end
+bar = __sls1
 ```
 
-Neat conditional statements
+Statement conditionals  
 ```Lua
 break if baz == "baz"
 continue if baz == "baz"
 ```
 
-Expresion statements
+Expresion statements  
 ```Lua
 foo = while true do
 	break "foo's value"
 end
+-- NOTE: versions prior to (LuaJIT/Lua5.2+) may not support this as it use's goto  
 bar = do
 	return "OOooo, fancy"
 end
@@ -77,7 +95,7 @@ baz = for i,v in pairs(t) do
 end
 ```
 
-Class's
+Class's  
 ```Lua
 class FooClass
 	clsVar = 300
@@ -98,7 +116,7 @@ foo.clsVar = -300
 print(foo.clsVar == FooClass.clsVar) -- Result: false
 ```
 
-Interface's
+Interface's  
 ```lua
 interface FooBar
 	-- basically just a bunch of type definition's
@@ -124,7 +142,7 @@ class Person implements Jsonable, FooBar
 end
 ```
 
-Decorators (similar to Python)
+Decorators (similar to Python)  
 ```Lua
 -- `f` is always supplied
 -- `f` will be only argument if the decorator is not called
@@ -153,7 +171,7 @@ foo = default(foo, 3)
 print(foo()) -- Result: 3
 ```
 
-String formatting (like in python)
+String formatting (like in python)  
 ```Lua
 local test = 123
 print(f"{test} {{}}") -- Result: "123 {}"

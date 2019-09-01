@@ -4,18 +4,9 @@ local selenScript = require "selenScript"
 print("Parsing")
 local result = selenScript.parser.parse(
 [=[
-do
-	return 123, 456
+a = do
+	return 33 if true
 end
---[[foo = while true do
-	break "foo's value"
-end]]
---[[bar = do
-	return "OOooo, fancy"
-end]]
---[[baz = for i,v in pairs(t) do
-	break v
-end]]
 ]=])
 
 if #result.errors > 0 then
