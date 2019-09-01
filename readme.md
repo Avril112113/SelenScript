@@ -1,4 +1,9 @@
 # SelenScript
+This is a transpiler that outputs Lua code  
+Any normal Lua code should in theory transpile without issues (if not please report it)  
+The goal of SelenScript is to make Lua neater and easier to code  
+and make complex things simple  
+TODO: improve readme
 
 ## Name
 Selen is based from  
