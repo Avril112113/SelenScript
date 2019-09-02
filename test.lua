@@ -2,12 +2,13 @@ local selenScript = require "selenScript"
 
 
 print("Parsing")
+local start = os.clock()
 local result = selenScript.parser.parse(
 [=[
-a = do
-	return 33 if true
-end
+
 ]=])
+local finish = os.clock()
+print("Took " .. tostring(finish-start) .. "s")
 
 if #result.errors > 0 then
 	print("Errors (caught)")
@@ -20,7 +21,7 @@ if #result.errors > 0 then
 	end
 end
 
-selenScript.helpers.printAST(result.ast)
+-- selenScript.helpers.printAST(result.ast)
 -- print(selenScript.helpers.reconstructMath(result.ast[1][2][1]))
 
 print("Resulting Lua...")
@@ -29,4 +30,4 @@ local _, err = loadstring(luaResult, "@luaResult")
 if err ~= nil then
 	print("Resulting Lua Error:", err)
 end
-print(luaResult)
+-- print(luaResult)

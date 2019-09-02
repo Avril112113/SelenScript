@@ -12,8 +12,12 @@ function transpiler.transpile(ast)
 	local self = setmetatable({}, transpiler)
 	self.block_depth = 0
 	self.reserve_var_idx = -1
+
+	self.doreturn_depth = 0
 	---@type table<number,string>
 	self.doreturn = {}
+
+	self.continuelabel_depth = 0
 	---@type table<number,string>
 	self.continuelabel = {}
 
@@ -131,8 +135,8 @@ add("return", function(self, ast)
 			table.insert(self.expr_stmt_names, names)
 			str = assigns .. str
 		end
-		local name = "doreturn" .. tostring(self.block_depth)
-		self.doreturn[self.block_depth] = name
+		local name = "doreturn" .. tostring(self.doreturn_depth)
+		self.doreturn[self.doreturn_depth] = name
 		str = str .. "goto " .. name
 	else
 		str = "return " .. self:tostring(ast.exprlist)
@@ -181,8 +185,8 @@ add("break", function(self, ast)
 	return self:getExprStmtCode() .. str .. "\n"
 end)
 add("continue", function(self, ast)
-	local name = "continue" .. tostring(self.block_depth)
-	self.continuelabel[self.block_depth] = name
+	local name = "continue" .. tostring(self.continuelabel_depth)
+	self.continuelabel[self.continuelabel_depth] = name
 	local str = "goto " .. name
 	if ast.stmt_if ~= nil then
 		str = "if " .. self:tostring(ast.stmt_if) .. " then " .. str .. " end"
@@ -197,27 +201,36 @@ add("goto", function(self, ast)
 	return self:getExprStmtCode() .. str .. "\n"
 end)
 add("do", function(self, ast)
+	local old_doreturn_depth = self.doreturn_depth
+	self.doreturn_depth = self.block_depth
 	local str = self:getExprStmtCode() .. "do\n" .. self:tostring(ast.block)
-	if self.doreturn[self.block_depth+1] ~= nil then
-		str = str .. "::" .. self.doreturn[self.block_depth+1] .. ":: "
-		table.remove(self.doreturn, self.block_depth+1)
+	if self.doreturn[self.doreturn_depth] ~= nil then
+		str = str .. "::" .. self.doreturn[self.doreturn_depth] .. ":: "
+		table.remove(self.doreturn, self.doreturn_depth)
 	end
+	self.doreturn_depth = old_doreturn_depth
 	return str .. "end\n"
 end)
 add("while", function(self, ast)
+	local old_continuelabel_depth = self.continuelabel_depth
+	self.continuelabel_depth = self.block_depth
 	local str = "while " .. self:tostring(ast.condition) .. " do " .. self:tostring(ast.block)
-	if self.continuelabel[self.block_depth+1] ~= nil then
-		str = str .. "::" .. self.continuelabel[self.block_depth+1] .. ":: "
-		table.remove(self.continuelabel, self.block_depth+1)
+	if self.continuelabel[self.continuelabel_depth] ~= nil then
+		str = str .. "::" .. self.continuelabel[self.continuelabel_depth] .. ":: "
+		table.remove(self.continuelabel, self.continuelabel_depth)
 	end
+	self.continuelabel_depth = old_continuelabel_depth
 	return self:getExprStmtCode() .. str .. "end\n"
 end)
 add("repeat", function(self, ast)
+	local old_continuelabel_depth = self.continuelabel_depth
+	self.continuelabel_depth = self.block_depth
 	local str = "repeat " .. self:tostring(ast.block) .. "until " .. self:tostring(ast.condition)
-	if self.continuelabel[self.block_depth+1] ~= nil then
-		str = str .. "::" .. self.continuelabel[self.block_depth+1] .. ":: "
-		table.remove(self.continuelabel, self.block_depth+1)
+	if self.continuelabel[self.continuelabel_depth] ~= nil then
+		str = str .. "::" .. self.continuelabel[self.continuelabel_depth] .. ":: "
+		table.remove(self.continuelabel, self.continuelabel_depth)
 	end
+	self.continuelabel_depth = old_continuelabel_depth
 	return self:getExprStmtCode() .. str .. "\n"
 end)
 add("else", function(self, ast)
@@ -242,23 +255,29 @@ add("if", function(self, ast)
 	return self:getExprStmtCode() .. str .. "end\n"
 end)
 add("for_range", function(self, ast)
+	local old_continuelabel_depth = self.continuelabel_depth
+	self.continuelabel_depth = self.block_depth
 	local str = "for " .. self:tostring(ast.varname) .. "=" .. self:tostring(ast.from) .. "," .. self:tostring(ast.to)
 	if ast.step ~= nil then
 		str = str .. "," .. self:tostring(ast.step)
 	end
 	str = str .. " do\n" .. self:tostring(ast.block)
-	if self.continuelabel[self.block_depth+1] ~= nil then
-		str = str .. "::" .. self.continuelabel[self.block_depth+1] .. ":: "
-		table.remove(self.continuelabel, self.block_depth+1)
+	if self.continuelabel[self.continuelabel_depth] ~= nil then
+		str = str .. "::" .. self.continuelabel[self.continuelabel_depth] .. ":: "
+		table.remove(self.continuelabel, self.continuelabel_depth)
 	end
+	self.continuelabel_depth = old_continuelabel_depth
 	return self:getExprStmtCode() .. str .. "end\n"
 end)
 add("for_each", function(self, ast)
+	local old_continuelabel_depth = self.continuelabel_depth
+	self.continuelabel_depth = self.block_depth
 	local str = "for " .. self:tostring(ast.namelist) .. " in " .. self:tostring(ast.exprlist) .. " do\n" .. self:tostring(ast.block)
-	if self.continuelabel[self.block_depth+1] ~= nil then
-		str = str .. "::" .. self.continuelabel[self.block_depth+1] .. ":: "
-		table.remove(self.continuelabel, self.block_depth+1)
+	if self.continuelabel[self.continuelabel_depth] ~= nil then
+		str = str .. "::" .. self.continuelabel[self.continuelabel_depth] .. ":: "
+		table.remove(self.continuelabel, self.continuelabel_depth)
 	end
+	self.continuelabel_depth = old_continuelabel_depth
 	return self:getExprStmtCode() .. str .. "end\n"
 end)
 add("interface", function(self, ast)

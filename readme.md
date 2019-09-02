@@ -114,6 +114,19 @@ print(foo.clsVar == FooClass.clsVar) -- Result: true
 print(foo.objVar == 222, FooClass.objVar == nil) -- Result: true, true
 foo.clsVar = -300
 print(foo.clsVar == FooClass.clsVar) -- Result: false
+
+-- Full Syntax Potential
+class BarClass extends FooClass implements SomeInterface
+	foo: string
+	bar = "hi"
+
+	@decorator
+	function f()
+	end
+
+	function f2()
+	end
+end
 ```
 
 Interface's  
@@ -176,6 +189,12 @@ String formatting (like in python)
 local test = 123
 print(f"{test} {{}}") -- Result: "123 {}"
 ```
+
+
+## Settings/Options
+`default_local` in Lua, variables are by default global, this make all variables default to local  
+and to define a global you can just use `global`  
+note that we cant know the globals at runtime so they must be defined global somewhere (includes _G)  
 
 ## Reserved Words
 All Lua's reserved words and any that SelenScript provides like `interface` ect  

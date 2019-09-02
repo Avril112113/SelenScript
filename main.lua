@@ -4,7 +4,7 @@ package.path = package.path .. ";libs/?.lua;libs/?/init.lua"
 package.cpath = package.cpath .. ";libs/?.dll"
 require "printToFile"
 
-require "test"
+require "run_tests"
 
 print("Exit.")
 os.exit()

@@ -358,8 +358,11 @@ local defs = {
 			...
 		}
 	end,
+	class=function(...)
+		
+	end,
 
-	if_expr=function(lhs, condition, rhs, ...)
+	if_expr=function(condition, lhs, rhs, ...)
 		local t = {...}
 		rhs = {
 			type="if_expr",

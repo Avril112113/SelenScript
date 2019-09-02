@@ -6,8 +6,7 @@ block	<- Sp* (Scc stmt* Scc) -> block
 stmt	<- Sc (
 		   ';'
 		 / decorator_stmt
-		 / ({}->'' varlist (Sc typedeflist/{}->'') Sc '=' Sc exprlist) -> assign
-		 / ({}->'' varlist Sc typedeflist) -> assign
+		 / assign_stmt
 		 / call
 		 / return
 		 / ('::' Sc {NAME} Sc '::') -> label
@@ -17,18 +16,14 @@ stmt	<- Sc (
 		 / do_stmt
 		 / while_stmt
 		 / (REPEAT block UNTIL Sc expect_expr) -> repeat
-		 / (
-				IF Sc expect_expr THEN block
-		 		((ELSEIF Sc expect_expr THEN block) -> elseif)*
-				(ELSE block -> else)?
-				(END / ({} {(!END .)* END?} {}->'if') -> UNPARSED_INPUT)
-		   ) -> if
+		 / if_stmt
 		 / for_range_stmt
 		 / for_each_stmt
 		 / function_stmt
-		 / ({LOCAL} Sc namelist (Sc typedeflist / {}->'') (Sc '=' Sc exprlist / {}->''))  -> assign
+		 / local_assign_stmt
 		 /* / LOCAL '<' NAME '>' NAME '=' expect_expr */
-		 / (INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
+		 / interface_stmt
+		 / class_stmt
 		 )
 
 _decorator_call	<- '(' Sc (exprlist/{}->MISS_DEC_ARGS) Sc ')'
@@ -38,20 +33,39 @@ decorator_stmt	<- (decoratorlist Sc (function_stmt/{}->MISS_DEC)) -> decorate
 
 do_stmt			<- (DO block Sc (END / ({} {(!END .)* END?} {}->'do') -> UNPARSED_INPUT)) -> do
 while_stmt		<- (WHILE Sc expect_expr DO block Sc (END / ({} {(!END .)* END?} {}->'while') -> UNPARSED_INPUT)) -> while
+if_stmt			<- (IF Sc expect_expr THEN block
+					((ELSEIF Sc expect_expr THEN block) -> elseif)*
+					(ELSE block -> else)?
+					(END / ({} {(!END .)* END?} {}->'if') -> UNPARSED_INPUT)
+				   ) -> if
 for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr / {}->'') DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT END?)) -> for_range
 for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* END?} {}->'for each') -> UNPARSED_INPUT)) -> for_each
-function_stmt	<- ({}->'' FUNCTION Sc funcname Sc funcbody) -> function
+function_stmt	<- ((GLOBAL/{}->'') FUNCTION Sc funcname Sc funcbody) -> function
 				 / ({LOCAL} FUNCTION Sc {NAME} Sc funcbody) -> function
+assign_stmt		<- (({GLOBAL}/{}->'') varlist (Sc typedeflist/{}->'') Sc '=' Sc exprlist) -> assign
+				 / (({GLOBAL}/{}->'') varlist Sc typedeflist) -> assign
+local_assign_stmt	<- ({LOCAL} Sc namelist (Sc typedeflist / {}->'') (Sc '=' Sc exprlist / {}->''))  -> assign
+interface_stmt	<- (INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
+
+class_block_stmt	<- Sc (
+					   ';'
+					 / assign_stmt
+					 / decorator_stmt
+					 / function_stmt
+					 )
+class_block		<- Sp* (Scc class_block_stmt* Scc) -> block
+class_stmt		<- (CLASS (EXTENDS varlist/{}->'') (IMPLEMENTS varlist/{}->'')
+						class_block
+				   (END / ({} {(!END .)*} {}->'class') -> UNPARSED_INPUT END?)) -> class
 
 expect_expr	<- expr / {}->MISS_EXPR
-expr	<- (_expr (IF Sc expr ELSE Sc expr)+) -> if_expr
-		 / _expr
-_expr	<- ((value/unary) (Sc {BINARY_OP} Sc (value/unary))+) -> math
+expr	<- ((value/unary) (Sc {BINARY_OP} Sc (value/unary))+) -> math
 		 / unary -> math
 		 / do_stmt
 		 / while_stmt
 		 / for_range_stmt
 		 / for_each_stmt
+		 / (IF Sc expr THEN Sc expr ELSE Sc expr) -> if_expr
 		 / value
 unary	<- {UNARY_OP} Sc (unary/value)
 
@@ -208,6 +222,9 @@ DO          <- Sc 'do' Cut
 IN          <- Sc 'in' Cut
 END         <- Sc 'end'  Cut
 
+CLASS       <- Sc 'class' Cut
+EXTENDS     <- Sc 'extends' Cut
+IMPLEMENTS  <- Sc 'implements' Cut
 ELSE        <- Sc 'else' Cut
 ELSEIF      <- Sc 'elseif' Cut
 IF          <- Sc 'if' Cut
@@ -219,6 +236,7 @@ WHILE       <- Sc 'while' Cut
 INTERFACE   <- Sc 'interface' Cut
 RETURN      <- Sc 'return' Cut
 LOCAL       <- Sc 'local' Cut
+GLOBAL      <- Sc 'global' Cut
 
 TABLE		<- Sc 'table' Cut
 ARRAY		<- Sc 'array' Cut
