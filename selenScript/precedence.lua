@@ -42,6 +42,13 @@ local binaryOpData = {
 	["or"]={1, "or", false},
 }
 
+local types = {}
+for i, v in pairs(binaryOpData) do
+	types[v[2]] = v[2]
+end
+for i, v in pairs(unaryOpData) do
+	types[v[2]] = v[2]
+end
 
 local highestPrecedence = 1
 for i, v in pairs(unaryOpData) do
@@ -53,5 +60,6 @@ end
 return {
 	unaryOpData=unaryOpData,
 	binaryOpData=binaryOpData,
+	types=types,
 	highestPrecedence=highestPrecedence
 }

@@ -18,17 +18,9 @@ class BarClass extends FooClass implements SomeInterface
 end
 ]]
 [=[
-a_ = 1+2*3    -- 1+(2*3)
-ar = (1+2)*3  -- (1+2)*3
-
-b_ = -2^2    -- -(2^2)
-br = (-2)^2  -- (-2)^2
-
-c_ = "a" .. "b" .. "c"    -- "a" .. ("b" .. "c")
-cr = ("a" .. "b") .. "c"  -- ("a" .. "b") .. "c"
-
-d_ = -2*2    -- (-2)*2
-dr = -(2*2)  -- -(2*2)
+function t()
+	export ret = 400
+end
 ]=])
 local finish = os.clock()
 print("Took " .. tostring(finish-start) .. "s")

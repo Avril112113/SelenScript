@@ -13,6 +13,7 @@ Selina /səˈliːnə/ is a feminine given name, of Greek origin, derived from th
 it was recommended by DreadberryJam from a discord server i talk in.
 
 ## Syntax
+Please note that the syntax may change as this is work in progress!  
 The syntax of SelenScript is directly a extension of Lua 5.4  
 This dose not mean you can't use it for other Lua versions (propper support maybe added later)  
 
@@ -93,6 +94,58 @@ baz = for i,v in pairs(t) do
 	break v if v == "baz"
 	-- basically if nothing 'returned' a value then Lua's default is used `nil`
 end
+```
+
+Exports  
+The concept of exports might change in the future  
+```Lua
+export local function foo() end  -- NOTE: local not required
+
+local var = 32
+export var  -- NOTE: the given name is used for export
+export var as var2you
+
+export local foobar = "foobar"
+
+-- this works, but should not be used like this
+export function tbl.func() end
+export tbl.val = "im a value"
+--- Lua (Formatted)
+local function foo() end
+local var = 32
+return {
+	foo=foo,
+	var=var,
+	var2you=var,
+	foobar=foobar,
+	func=tbl.func,
+	val=tbl.val
+}
+```
+Exports work on a per scope level, for example  
+```Lua
+function t()
+	export ret = 400
+end
+-- Lua (Formatted)
+function t()
+	local ret = 400
+	return {
+		ret=ret
+	}
+end
+```
+But keep in mind that `do` statements can get complex in there functionality with exports  
+as `do` statements have there own block, but return in the current function ect  
+
+Runtime type checking  
+NOTE: this is only a concept right now, and has not been thought thru  
+```Lua
+local foo = 33
+print(foo istype number)  -- Result: true
+print(foo istype string)  -- Result: false
+local tbl = {["hi"]=true}
+print(tbl istype table[string=bool])  -- Result: true
 ```
 
 Class's  

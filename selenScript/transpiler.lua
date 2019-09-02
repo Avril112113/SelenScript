@@ -19,19 +19,22 @@ function transpiler.transpile(ast)
 	self.reserve_var_idx = -1
 	self.block_depth = 0
 
+	---@type table<number,string[]> @ number is block depth
+	self.export_names = {}
+
 	self.doreturn_depth = 0
-	---@type table<number,string>
+	---@type table<number,string> @ number is block depth
 	self.doreturn = {}
 
 	self.continuelabel_depth = 0
-	---@type table<number,string>
+	---@type table<number,string> @ number is block depth
 	self.continuelabel = {}
 
 	self.expr_stmt_depth = -1
 	---@type string[][]
-	self.expr_stmt_names = {}  -- LIFO
+	self.expr_stmt_names = {}  -- LIFO (LastInFirstOut)
 	---@type string[]
-	self.expr_stmt_codes = {}
+	self.expr_stmt_codes = {}  -- AIAO (AllInAllOut)
 	return self:tostring(ast)
 end
 function transpiler:getReserveName()
@@ -75,12 +78,49 @@ function transpiler:getExprStmtCode()
 	self.expr_stmt_codes = {}
 	return table.concat(t)
 end
+function transpiler:addExport(stmt, asName)
+	local exports = self.export_names[self.block_depth] or {}
+	self.export_names[self.block_depth] = exports
+	if type(stmt) == "string" then
+		exports[asName or stmt] = stmt
+	elseif stmt.type == "assign" and stmt.exprlist ~= nil then
+		for i, v in ipairs(stmt.varlist) do
+			local index = v
+			while index.index ~= nil do
+				if index.expr then goto continue end
+				index = index.index
+			end
+			exports[index.name] = self:tostring(v)
+			::continue::
+		end
+	elseif stmt.type == "function" then
+		local name
+		if type(stmt.funcname) == "string" then
+			name = stmt.funcname
+		else
+			local index = stmt.funcname
+			while index.index ~= nil do index = index.index end
+			name = index.name
+		end
+		exports[name] = self:tostring(stmt.funcname)
+	else
+		print("WARNING: unsupported type for addExport " .. tostring(stmt.type))
+	end
+end
 
 add("block", function(self, ast)
 	local str = ""
 	self.block_depth = self.block_depth + 1
 	for i, v in ipairs(ast) do
 		str = str .. self:tostring(v)
+	end
+	local exports = self.export_names[self.block_depth]
+	if exports ~= nil then
+		str = str .. "return {"
+		for i, v in pairs(exports) do
+			str = str .. i .. "=" .. v .. ","
+		end
+		str = str:gsub(",$", "") .. "}"
 	end
 	self.block_depth = self.block_depth - 1
 	if #self.expr_stmt_codes > 0 then
@@ -97,7 +137,7 @@ add("index", function(self, ast)
 	if ast.name ~= nil then
 		str = str .. self:tostring(ast.name)
 	-- special case `({})[1]` or `(""):f()` ect
-	elseif ast.index ~= nil and (ast.expr.type == "table" or ast.expr.type == "String" or ast.expr.type == "LongString" or ast.expr.type == "anon_function") then
+	elseif ast.index ~= nil and (ast.expr.type == "table" or ast.expr.type == "String" or ast.expr.type == "LongString" or ast.expr.type == "anon_function" or precedence.types[ast.expr.type] ~= nil) then
 		str = str .. "(" .. self:strexpr(ast.expr) .. ")"
 	else
 		str = str .. self:strexpr(ast.expr)
@@ -320,6 +360,17 @@ add("decorate", function(self, ast)
 	end
 	return self:getExprStmtCode() .. str .. funcname .. "=" .. decoratorsStr
 end)
+add("export", function(self, ast)
+	local stmt = ast.name or ast.stmt
+	if stmt ~= nil then
+		self:addExport(stmt, ast.asName)
+	end
+	if ast.stmt ~= nil then
+		return self:tostring(ast.stmt)
+	else
+		return ""
+	end
+end)
 
 add("exprlist", function(self, ast)
 	local str = ""
@@ -456,20 +507,14 @@ local binaryOperator = function(self, ast)
 	local doParens = opData[1] < self.last_precedence
 	self.last_precedence = opData[1]
 	if opData[3] then self.last_precedence = self.last_precedence + 1 end
-	local str = self:strexpr(ast.lhs) .. ast.operator .. self:strexpr(ast.rhs)
-	if doParens then
-		str = "(" .. str .. ")"
-	end
-	self.last_precedence = oldPrec
-	return str
-end
-local binaryOperatorSp = function(self, ast)
-	local oldPrec = self.last_precedence
-	local opData = binaryOpData[ast.operator]
-	local doParens = opData[1] < self.last_precedence
-	self.last_precedence = opData[1]
-	if opData[3] then self.last_precedence = self.last_precedence + 1 end
-	local str = self:strexpr(ast.lhs) .. " " .. ast.operator .. " " .. self:strexpr(ast.rhs)
+	local lhs = self:strexpr(ast.lhs)
+	if ast.operator:sub(1, 1) == "." and lhs:find("%d$") ~= nil or ast.operator:find("%w$") ~= nil then
+		lhs = lhs .. " " end
+	local rhs = self:strexpr(ast.rhs)
+	if ast.operator:sub(1, 1) == "." and rhs:find("%d$") ~= nil then
+		rhs = rhs .. " " end
+	if ast.operator:find("%w$") ~= nil then rhs = " " .. rhs end
+	local str = lhs .. ast.operator .. rhs
 	if doParens then
 		str = "(" .. str .. ")"
 	end
@@ -497,8 +542,8 @@ add("bit_shift", binaryOperator)
 add("bit_and", binaryOperator)
 add("bit_or", binaryOperator)
 add("bit_eor", binaryOperator)
-add("and", binaryOperatorSp)
-add("or", binaryOperatorSp)
+add("and", binaryOperator)
+add("or", binaryOperator)
 
 add("not", postfixOperator)
 add("neg", postfixOperator)
