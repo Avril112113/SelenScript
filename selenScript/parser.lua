@@ -1,6 +1,8 @@
 local lpl = require "lpeglabel"
 local re = require "relabel"
 
+local precedence = require "selenScript.precedence"
+
 
 local grammarPath = "selenScript/grammar.relabel"
 local grammarFile = io.open(grammarPath, "r")
@@ -18,59 +20,24 @@ local function pusherror(err)
 end
 
 
-local unaryOpData = {
-	-- ["OPERATOR"]={Precedence, TypeName}
-	["not"]={10, "not"},
-	["-"]={10, "neg"},
-	["#"]={10, "len"},
-	["~"]={10, "bit_not"},
-}
-local binaryOpData = {
-	-- ["OPERATOR"]={Precedence, TypeName, RightAssoc}
-	["^"]={11, "exp", true},
-
-	-- UNARY
-
-	["*"]={9, "mul", false},
-	["/"]={9, "mul", false},
-	["//"]={9, "mul", false},
-	["%"]={9, "mul", false},
-
-	["+"]={8, "add", false},
-	["-"]={8, "add", false},
-
-	[".."]={7, "concat", true},
-
-	["<<"]={6, "bit_shift", false},
-	[">>"]={6, "bit_shift", false},
-
-	["&"]={5, "bit_and", false},
-
-	["~"]={4, "bit_eor", false},
-
-	["|"]={3, "bit_or", false},
-
-	["<="]={2, "eq", false},
-	[">="]={2, "eq", false},
-	["<"]={2, "eq", false},
-	[">"]={2, "eq", false},
-	["~="]={2, "eq", false},
-	["=="]={2, "eq", false},
-
-	["and"]={1, "and", false},
-
-	["or"]={1, "or", false},
-}
+local unaryOpData = precedence.unaryOpData
+local binaryOpData = precedence.binaryOpData
 ---@param data any
 ---@param min_precedence number
-local function climbPrecedence(data, min_precedence)
+local function _climbPrecedence(data, min_precedence)
 	local lhs = table.remove(data, 1)
 	if type(lhs) == "string" then
 		local opData = unaryOpData[lhs]
-		return {
+		if opData == nil then
+			error("Invalid op, was unary '" .. lhs .. "' but expected a valid operator")
+		end
+		if #opData ~= 2 then
+			error("Invalid opData, data for unary '" .. lhs .. "' does not contain 2 values")
+		end
+		lhs = {
 			type=opData[2],
 			operator=lhs,
-			rhs=climbPrecedence(data, opData[1])
+			rhs=_climbPrecedence(data, opData[1])
 		}
 	end
 	while #data > 0 do
@@ -100,10 +67,25 @@ local function climbPrecedence(data, min_precedence)
 			type=opData[2],
 			lhs=lhs,
 			operator=op,
-			rhs=climbPrecedence(data, nextPrecedence)
+			rhs=_climbPrecedence(data, nextPrecedence)
 		}
 	end
 	return lhs
+end
+---@param data any
+---@param min_precedence number
+local function climbPrecedence(data, min_precedence)
+	min_precedence = min_precedence or 1
+	local result = _climbPrecedence(data, min_precedence)
+	if #data > 0 then
+		pusherror({
+			start=-1,
+			finish=-1,
+			msg="INTERNAL: climbPrecedence error, unparted data",
+			ast={type="<climbPrecedence:DATA>", data}  -- not really AST but, its close ;)
+		})
+	end
+	return result
 end
 
 ---@class SS_DEFS
@@ -358,8 +340,22 @@ local defs = {
 			...
 		}
 	end,
-	class=function(...)
-		
+	class_block=function(...)
+		local t = {...}
+		if t[1] == '' and #t == 1 then return {type="class_block"} end
+		return {
+			type="class_block",
+			...
+		}
+	end,
+	class=function(name, extendslist, implementslist, block)
+		return {
+			type="class",
+			name=name,
+			extendslist=extendslist,
+			implementslist=implementslist,
+			block=block
+		}
 	end,
 
 	if_expr=function(condition, lhs, rhs, ...)
@@ -527,7 +523,7 @@ local defs = {
 	end,
 
 	math=function(...)
-		return climbPrecedence({...}, 1)
+		return climbPrecedence({...})
 	end,
 
 	varlist=function(...)

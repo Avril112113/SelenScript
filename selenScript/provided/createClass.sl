@@ -50,35 +50,3 @@ local function __sls_createClass(clsName)
 	end
 	return setmetatable(cls, cls)
 end
-
-
-local ClassA = __sls_createClass("ClassA")
-ClassA.t = "A"
-ClassA.a = "Im from ClassA"
-
-local ClassB = __sls_createClass("ClassB")
-table.insert(ClassB.__sls_inherits, ClassA)
-ClassB.t = "B"
-ClassB.b = "Im from ClassB"
-function ClassB:__sls__tostring()
-	return "<ClassB OVERRIDE>"
-end
-
-print("ClassA", ClassA)
-print("ClassB", ClassB)
-local objA = ClassA()
-local objB = ClassB()
-print("objA", objA)
-print("objB", objB)
-
-objA.t = "objA"
-print("objA.t", objA.t)
-print("objB.t", objB.t)
-print("ClassA.t", ClassA.t)
-print("ClassB.t", ClassB.t)
-
-print("pcall(objA)", pcall(objA))
-
-print("ClassB.b", ClassB.b)
-print("ClassB.a", ClassB.a)
-print("ClassA.b", ClassA.b)

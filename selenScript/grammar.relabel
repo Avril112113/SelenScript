@@ -53,8 +53,8 @@ class_block_stmt	<- Sc (
 					 / decorator_stmt
 					 / function_stmt
 					 )
-class_block		<- Sp* (Scc class_block_stmt* Scc) -> block
-class_stmt		<- (CLASS (EXTENDS varlist/{}->'') (IMPLEMENTS varlist/{}->'')
+class_block		<- Sp* (Scc class_block_stmt* Scc) -> class_block
+class_stmt		<- (CLASS Sc {NAME} (EXTENDS Sc varlist/{}->'') (IMPLEMENTS Sc varlist/{}->'')
 						class_block
 				   (END / ({} {(!END .)*} {}->'class') -> UNPARSED_INPUT END?)) -> class
 

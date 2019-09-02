@@ -1,3 +1,8 @@
+local precedence = require "selenScript.precedence"
+local unaryOpData = precedence.unaryOpData
+local binaryOpData = precedence.binaryOpData
+
+
 local transpiler = {
 	expr_stmts={
 		["while"]=true, for_range=true, for_each=true,
@@ -10,8 +15,9 @@ local function add(name, f)
 end
 function transpiler.transpile(ast)
 	local self = setmetatable({}, transpiler)
-	self.block_depth = 0
+	self.last_precedence = 1
 	self.reserve_var_idx = -1
+	self.block_depth = 0
 
 	self.doreturn_depth = 0
 	---@type table<number,string>
@@ -113,7 +119,13 @@ add("call", function(self, ast)
 end)
 add("field", function(self, ast)
 	if ast.name ~= nil then
-		return self:tostring(ast.name)
+		local assignPart
+		if type(ast.name) == "string" then
+			assignPart = tostring(ast.name)
+		else
+			assignPart = "[" .. self:strexpr(ast.name) .. "]"
+		end
+		return assignPart .. "=" .. self:strexpr(ast.expr)
 	else
 		return self:strexpr(ast.expr)
 	end
@@ -150,7 +162,7 @@ end)
 add("assign", function(self, ast)
 	local str = ""
 	-- if its a global variable that has a type and no value (invalid Lua syntax)
-	if #ast.scope ~= "local" and ast.exprlist == nil then
+	if ast.scope ~= "local" and ast.exprlist == nil then
 		return ""
 	end
 	if ast.scope == "local" then
@@ -439,13 +451,42 @@ end)
 
 -- Operators
 local binaryOperator = function(self, ast)
-	return "(" .. self:tostring(ast.lhs) .. ast.operator .. self:tostring(ast.rhs) .. ")"
+	local oldPrec = self.last_precedence
+	local opData = binaryOpData[ast.operator]
+	local doParens = opData[1] < self.last_precedence
+	self.last_precedence = opData[1]
+	if opData[3] then self.last_precedence = self.last_precedence + 1 end
+	local str = self:strexpr(ast.lhs) .. ast.operator .. self:strexpr(ast.rhs)
+	if doParens then
+		str = "(" .. str .. ")"
+	end
+	self.last_precedence = oldPrec
+	return str
 end
 local binaryOperatorSp = function(self, ast)
-	return "(" .. self:tostring(ast.lhs) .. " " .. ast.operator .. " " .. self:tostring(ast.rhs) .. ")"
+	local oldPrec = self.last_precedence
+	local opData = binaryOpData[ast.operator]
+	local doParens = opData[1] < self.last_precedence
+	self.last_precedence = opData[1]
+	if opData[3] then self.last_precedence = self.last_precedence + 1 end
+	local str = self:strexpr(ast.lhs) .. " " .. ast.operator .. " " .. self:strexpr(ast.rhs)
+	if doParens then
+		str = "(" .. str .. ")"
+	end
+	self.last_precedence = oldPrec
+	return str
 end
 local postfixOperator = function(self, ast)
-	return "(" .. ast.operator .. self:tostring(ast.rhs) .. ")"
+	local oldPrec = self.last_precedence
+	local opData = unaryOpData[ast.operator]
+	local doParens = opData[1] < self.last_precedence
+	self.last_precedence = opData[1]
+	local str = ast.operator .. self:strexpr(ast.rhs)
+	if doParens then
+		str = "(" .. str .. ")"
+	end
+	self.last_precedence = oldPrec
+	return str
 end
 add("eq", binaryOperator)
 add("add", binaryOperator)
