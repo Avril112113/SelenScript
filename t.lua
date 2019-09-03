@@ -51,6 +51,10 @@ end
 return setmetatable(cls,cls)
 end
 end
-local BarClass=__sls_createClass('BarClass')function BarClass.test(self)print(tostring(self)..":test()")end
-BarClass:test()local obj=BarClass()
-obj:test()
+local FooClass=__sls_createClass('FooClass')FooClass.foo="im foo..."
+FooClass.both="im defined in FooClass"
+local BarClass=__sls_createClass('BarClass')BarClass.bar="im bar..."
+BarClass.both="im defined in BarClass"
+local TestClass=__sls_createClass('TestClass')table.insert(TestClass.__sls_inherits,FooClass)table.insert(TestClass.__sls_inherits,BarClass)function TestClass.test(self)print(tostring(self)..":test()")end
+print("inherit count",#TestClass.__sls_inherits)TestClass:test()local obj=TestClass()
+obj:test()print(tostring(TestClass.foo))print(tostring(obj.foo))print(tostring(obj.both))

@@ -12,15 +12,30 @@ print("Parsing")
 local start = os.clock()
 local result = selenScript.parser.parse(
 [=[
+class FooClass
+	foo = "im foo..."
+	both = "im defined in FooClass"
+end
 class BarClass
+	bar = "im bar..."
+	both = "im defined in BarClass"
+end
+
+class TestClass extends FooClass, BarClass
 	function test(self)
 		print(tostring(self) .. ":test()")
 	end
 end
 
-BarClass:test()
-local obj = BarClass()
+print("inherit count", #TestClass.__sls_inherits)
+
+TestClass:test()
+local obj = TestClass()
 obj:test()
+
+print(tostring(TestClass.foo))
+print(tostring(obj.foo))
+print(tostring(obj.both))
 ]=])
 local finish = os.clock()
 print("Took " .. tostring(finish-start) .. "s")

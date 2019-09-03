@@ -7,9 +7,11 @@ require "printToFile"
 
 function love.load(...)
 	local args = ({...})[1]
-	local file = args[1] or "run_tests"
 
-	require(file)
+	for _, file in ipairs(args) do
+		dofile(file..".lua")
+		print("------ RAN:" .. file..".lua ------")
+	end
 
 	print("Exit.")
 	os.exit()
