@@ -14,6 +14,8 @@ end
 
 addGlob("selenScript/provided/**/*.sl")
 
+
+local providedList = {}
 for _, path in ipairs(files) do
 	local f = io.open(path, "r")
 	local data = f:read("*a")
@@ -26,9 +28,38 @@ for _, path in ipairs(files) do
 		end
 		goto continue
 	end
-	local luaResult = selenScript.transpiler.transpile(result.ast)
-	local f = io.open(path .. ".lua", "w")
-	f:write(luaResult)
-	f:close()
+	local luaResult, _ = selenScript.transpiler.transpile(result.ast)
+	local name = path:gsub("^.*[\\/]", ""):gsub("%.sl$", "")
+	providedList[name] = {
+		name=name,
+		lua=luaResult
+	}
 	::continue::
 end
+
+for _, v in pairs(providedList) do
+	local deps = {}
+	v.deps = deps
+	for _, other in pairs(providedList) do
+		if v ~= other and v.lua:find("__sls_" .. other.name) ~= nil then
+			table.insert(deps, other.name)
+		end
+	end
+end
+
+local providedFile = io.open("selenScript/provided.lua", "w")
+providedFile:write("-- WARNING: this is a generated file by transpile_provided.lua\n")
+providedFile:write("return {\n")
+
+for _, v in pairs(providedList) do
+	providedFile:write(v.name .. " = {lua=[======[")
+	providedFile:write(v.lua)
+	providedFile:write("]======], deps={")
+	for _, depName in pairs(v.deps) do
+		providedFile:write("'" .. depName .. "',")
+	end
+	providedFile:write("}},\n")
+end
+
+providedFile:write("\n}")
+providedFile:close()

@@ -1,26 +1,26 @@
 local selenScript = require "selenScript"
 
 
+local print_ast = false
+local print_lua = false
+
+local prepend_provided_deps = true
+local write_to_file = "t.lua"
+
+
 print("Parsing")
 local start = os.clock()
 local result = selenScript.parser.parse(
---[[
-class BarClass extends FooClass implements SomeInterface
-	foo: string
-	bar = "hi"
-
-	@decorator
-	function f()
-	end
-
-	function f2()
-	end
-end
-]]
 [=[
-function t()
-	export ret = 400
+class BarClass
+	function test(self)
+		print(tostring(self) .. ":test()")
+	end
 end
+
+BarClass:test()
+local obj = BarClass()
+obj:test()
 ]=])
 local finish = os.clock()
 print("Took " .. tostring(finish-start) .. "s")
@@ -39,13 +39,27 @@ if #result.errors > 0 then
 	end
 end
 
-selenScript.helpers.printAST(result.ast)
--- print(selenScript.helpers.reconstructMath(result.ast[1][2][1]))
+if print_ast then
+	selenScript.helpers.printAST(result.ast)
+end
 
 print("Resulting Lua...")
-local luaResult = selenScript.transpiler.transpile(result.ast)
+local luaResult, transpiler = selenScript.transpiler.transpile(result.ast)
+if prepend_provided_deps then
+	for _, dep in pairs(transpiler.provided_deps) do
+		luaResult = dep.lua .. luaResult
+	end
+end
 local _, err = loadstring(luaResult, "@luaResult")
 if err ~= nil then
 	print("Resulting Lua Error:", err)
 end
-print(luaResult)
+if print_lua then
+	print(luaResult)
+end
+
+if write_to_file ~= nil then
+	local f = io.open(write_to_file, "w")
+	f:write(luaResult)
+	f:close()
+end

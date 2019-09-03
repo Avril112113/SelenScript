@@ -363,6 +363,8 @@ local defs = {
 		}
 	end,
 	class=function(name, extendslist, implementslist, block)
+		if extendslist == "" then extendslist = nil end
+		if implementslist == "" then implementslist = nil end
 		return {
 			type="class",
 			name=name,

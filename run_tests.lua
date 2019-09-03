@@ -41,7 +41,7 @@ for _, path in ipairs(files) do
 		break
 	end
 	local start = os.clock()
-	local luaResult = selenScript.transpiler.transpile(result.ast)
+	local luaResult, _ = selenScript.transpiler.transpile(result.ast)
 	local finish = os.clock()
 	totalTransTime = totalTransTime + finish-start
 	-- theres more operators, but this should do

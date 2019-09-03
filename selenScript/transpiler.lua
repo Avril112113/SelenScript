@@ -1,6 +1,22 @@
+local provided = require "selenScript.provided"
+
 local precedence = require "selenScript.precedence"
 local unaryOpData = precedence.unaryOpData
 local binaryOpData = precedence.binaryOpData
+
+
+-- should be used with care
+local function deepCopy(tbl)
+	local new = {}
+	for i, v in pairs(tbl) do
+		if type(i) == "table" then
+			new[i] = deepCopy(tbl)
+		else
+			new[i] = v
+		end
+	end
+	return new
+end
 
 
 local transpiler = {
@@ -15,6 +31,9 @@ local function add(name, f)
 end
 function transpiler.transpile(ast)
 	local self = setmetatable({}, transpiler)
+	---@type string[] @ string = provided name
+	self.provided_deps = {}
+
 	self.last_precedence = 1
 	self.reserve_var_idx = -1
 	self.block_depth = 0
@@ -35,7 +54,7 @@ function transpiler.transpile(ast)
 	self.expr_stmt_names = {}  -- LIFO (LastInFirstOut)
 	---@type string[]
 	self.expr_stmt_codes = {}  -- AIAO (AllInAllOut)
-	return self:tostring(ast)
+	return self:tostring(ast), self
 end
 function transpiler:getReserveName()
 	self.reserve_var_idx = self.reserve_var_idx + 1
@@ -105,6 +124,17 @@ function transpiler:addExport(stmt, asName)
 		exports[name] = self:tostring(stmt.funcname)
 	else
 		print("WARNING: unsupported type for addExport " .. tostring(stmt.type))
+	end
+end
+function transpiler:addProvidedDep(name)
+	local providedData = provided[name]
+	if providedData == nil then
+		print("WARNING: provided dep not found " .. name)
+	else
+		self.provided_deps[name] = providedData
+		for _, v in pairs(providedData.deps) do
+			self:addProvidedDep(v)
+		end
 	end
 end
 
@@ -366,16 +396,63 @@ add("export", function(self, ast)
 		self:addExport(stmt, ast.asName)
 	end
 	if ast.stmt ~= nil then
-		return self:tostring(ast.stmt)
+		return self:getExprStmtCode() .. self:tostring(ast.stmt)
 	else
 		return ""
 	end
+end)
+add("class", function(self, ast)
+	self:addProvidedDep("createClass")
+	local str = "local " .. ast.name .. "=__sls_createClass('" .. ast.name .. "')"
+	if ast.extendslist ~= nil then
+		for _, v in ipairs(ast.extendslist) do
+			str = str .. "table.insert(" .. ast.name .. ".__sls_inherits," .. self:strexpr(v) .. ")"
+		end
+	end
+	for _, v in ipairs(ast.block) do
+		if v.type == "assign" then
+			if v.exprlist == nil then
+				goto continue
+			end
+			local stmt = deepCopy(v)
+			for i, var in ipairs(stmt.varlist) do
+				var.op = "."
+				stmt.varlist[i] = {
+					type="index",
+					name=ast.name,
+					index=var
+				}
+			end
+			str = str .. self:tostring(stmt)
+		elseif v.type == "decorate" and v.expr.type == "function" then
+			local stmt = deepCopy(v)
+			stmt.expr.funcname.op = "."
+			stmt.expr.funcname = {
+				type="index",
+				name=ast.name,
+				index=stmt.expr.funcname
+			}
+			str = str .. self:tostring(stmt)
+		elseif v.type == "function" then
+			local stmt = deepCopy(v)
+			stmt.funcname.op = "."
+			stmt.funcname = {
+				type="index",
+				name=ast.name,
+				index=stmt.funcname
+			}
+			str = str .. self:tostring(stmt)
+		else
+			print("WARNING: unhandled type for class block " .. v.type)
+		end
+		::continue::
+	end
+	return self:getExprStmtCode() .. str
 end)
 
 add("exprlist", function(self, ast)
 	local str = ""
 	for i, v in ipairs(ast) do
-		-- TODO
 		str = str .. self:strexpr(v)
 		if i ~= #ast then
 			str = str .. ","
