@@ -56,7 +56,7 @@ function file.newFile(args)
 
 		self:file_changed()
 	elseif args.parse_result ~= nil or args.code ~= nil then
-		assert(args.code ~= nil, "arg 'codde' was omitted")
+		assert(args.code ~= nil, "arg 'code' was omitted")
 		self.type = args.type or "sl"
 		self.code = args.code
 		self.parse_result = args.parse_result

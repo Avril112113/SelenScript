@@ -3,15 +3,22 @@
 
 ---@class SS_NewFileArgs
 local newFileArgs = {
-	-- path to a file (`.sl` or `.lua` for example)
+	-- path to a file (ending with `.sl` or `.lua` for example)
 	---@type string
 	path=nil,
 
-	--- can be provided if not path can be provided (ignored if path is used)
+	--- can be provided if not path can be provided
+	--- ignored if `path` is used
 	---@type string
 	code=nil,
 
-	--- can be used to force the type the file is known as (required is path is not supplied)
+	--- provide with `code` arg, used for test code and saves having to re-parse the same thing 2 times
+	--- ignored if `path` is used
+	parse_result=nil,
+
+	--- can be used to force the type the file is known as
+	--- defaults to `sl` if `code` is used
+	--- gets retrived from the file extention if `path` is used
 	---@type string
 	type=nil
 }
