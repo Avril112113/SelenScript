@@ -34,13 +34,21 @@ function file.new(settings)
 	self.settings = {
 		path=settings.path or error("settings.path was omitted"),
 		include_provided_deps=default(settings, true),
-		default_local =settings.default_local  -- odd space, syntax colors messed up :/
+		default_local =settings.default_local,  -- odd space, syntax colors messed up :/
+		globals=settings.globals
 	}
 	if self.settings.default_local == nil then
 		if self.project == nil then
 			self.settings.default_local = true
 		else
 			self.settings.default_local = default(self.project.settings.default_local, true)
+		end
+	end
+	if self.settings.globals == nil then
+		if self.project == nil then
+			self.settings.globals = helpers.default_globals()
+		else
+			self.settings.globals = self.project.settings.globals or helpers.default_globals()
 		end
 	end
 

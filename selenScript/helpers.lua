@@ -164,6 +164,23 @@ local function str_dep(dep_name, dep, gotten_deps)
 	return str .. dep.lua
 end
 
+local default_global_any = {}  -- only used for comparison
+local function default_globals()
+	return {
+		_G=default_global_any,
+		_ENV=default_global_any,
+		debug=default_global_any,  -- TODO
+		os=default_global_any,  -- TODO
+		io=default_global_any,  -- TODO
+		math=default_global_any,  -- TODO
+		table=default_global_any,  -- TODO
+		utf8=default_global_any,  -- TODO
+		string=default_global_any,  -- TODO
+		package=default_global_any,  -- TODO
+		-- TODO: basic function https://www.lua.org/work/doc/manual.html#6.1
+	}
+end
+
 
 return {
 	strValueFromType=strValueFromType,
@@ -173,5 +190,7 @@ return {
 	serializeTable=serializeTable,
 	reconstructMath=reconstructMath,
 	default_value=default_value,
-	str_dep=str_dep
+	str_dep=str_dep,
+	default_globals=default_globals,
+	default_global_any=default_global_any
 }

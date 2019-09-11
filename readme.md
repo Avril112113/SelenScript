@@ -80,11 +80,11 @@ continue if baz == "baz"
 ```
 
 Expresion statements  
+NOTE: versions prior to (LuaJIT/Lua5.2+) may not support this as it use's goto  
 ```Lua
 foo = while true do
 	break "foo's value"
 end
--- NOTE: versions prior to (LuaJIT/Lua5.2+) may not support this as it use's goto  
 bar = do
 	return "OOooo, fancy"
 end
@@ -95,48 +95,6 @@ baz = for i,v in pairs(t) do
 	-- basically if nothing 'returned' a value then Lua's default is used `nil`
 end
 ```
-
-Exports  
-The concept of exports might change in the future  
-```Lua
-export local function foo() end  -- NOTE: local not required
-
-local var = 32
-export var  -- NOTE: the given name is used for export
-export var as var2you
-
-export local foobar = "foobar"
-
--- this works, but should not be used like this
-export function tbl.func() end
-export tbl.val = "im a value"
---- Lua (Formatted)
-local function foo() end
-local var = 32
-return {
-	foo=foo,
-	var=var,
-	var2you=var,
-	foobar=foobar,
-	func=tbl.func,
-	val=tbl.val
-}
-```
-Exports work on a per scope level, for example  
-```Lua
-function t()
-	export ret = 400
-end
--- Lua (Formatted)
-function t()
-	local ret = 400
-	return {
-		ret=ret
-	}
-end
-```
-But keep in mind that `do` statements can get complex in there functionality with exports  
-as `do` statements have there own block, but return in the current function ect  
 
 Runtime type checking  
 NOTE: this is only a concept right now, and has not been thought thru  
@@ -183,7 +141,7 @@ end
 ```
 
 Interface's  
-```lua
+```Lua
 interface FooBar
 	-- basically just a bunch of type definition's
 	-- this helps to define the structure of a table
@@ -224,7 +182,7 @@ end
 function foo(a)
 	return a
 end
--- LUA (Formatted)
+-- Lua (Formatted)
 function foo(a)
 	return a
 end
@@ -245,9 +203,10 @@ print(f"{test} {{}}") -- Result: "123 {}"
 
 
 ## Settings/Options
-`default_local` in Lua, variables are by default global, this make all variables default to local  
-and to define a global you can just use `global`  
-note that we cant know the globals at runtime so they must be defined global somewhere (includes _G)  
+`default_local`, in Lua variables are by default global, this make all variables default to local instead  
+and to define a global you can just use `global` like you'd use `local`  
+note that we cant know the globals at runtime so they must be defined global somewhere  
+there is a setting `globals` for any variables that are global in any file  
 
 ## Reserved Words
 All Lua's reserved words and any that SelenScript provides like `interface` ect  
@@ -256,7 +215,7 @@ also variables starting with `__sls` is reserved, using these may cause unexpect
 ## Notes
 Using an expresion statments in a format string may cause unexpected results  
 you can still use a return in a `do` statement without using it as a expresion, but it will work as it would in Lua for example  
-```lua
+```Lua
 function gz(b)
 	if b then goto later end
 	do
