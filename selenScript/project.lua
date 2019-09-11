@@ -13,6 +13,7 @@ function project.new(settings)
 	self.out_dir = settings.out_dir or settings.src_dir
 
 	self.provided_deps_out = settings.provided_deps_out or self.out_dir .. "/__sls_provided_deps.lua"
+	self.provided_deps_require = settings.provided_deps_require or "__sls_provided_deps"
 
 	self.files = {}
 

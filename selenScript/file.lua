@@ -67,7 +67,7 @@ function file:changed()
 	self.provided_deps = trans.provided_deps
 
 	if self.project ~= nil then
-		self:write_file('require("__sls_provided_deps")' .. lua_output)
+		self:write_file('require("' .. self.project.provided_deps_require .. '")' .. lua_output)
 		self.project:write_provided_deps()
 	else
 		self:write_file(self:str_deps() .. lua_output)

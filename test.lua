@@ -7,7 +7,8 @@ local selenScript = require "selenScript"
 
 
 local project = selenScript.project.new {
-	src_dir="tests/project"
+	src_dir="tests/project",
+	provided_deps_require="tests/project/__sls_provided_deps"
 }
 local testFile = selenScript.file.new {
 	path=filePath,
