@@ -347,9 +347,10 @@ local defs = {
 			block=block
 		}
 	end,
-	interface=function(name, ...)
+	interface=function(scope, name, ...)
 		return {
 			type="interface",
+			scope=scope,
 			name=name,
 			...
 		}
@@ -362,11 +363,12 @@ local defs = {
 			...
 		}
 	end,
-	class=function(name, extendslist, implementslist, block)
+	class=function(scope, name, extendslist, implementslist, block)
 		if extendslist == "" then extendslist = nil end
 		if implementslist == "" then implementslist = nil end
 		return {
 			type="class",
+			scope=scope,
 			name=name,
 			extendslist=extendslist,
 			implementslist=implementslist,

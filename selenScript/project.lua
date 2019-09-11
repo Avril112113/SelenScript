@@ -15,6 +15,10 @@ function project.new(settings)
 	self.provided_deps_out = settings.provided_deps_out or self.out_dir .. "/__sls_provided_deps.lua"
 	self.provided_deps_require = settings.provided_deps_require or "__sls_provided_deps"
 
+	self.settings = {
+		default_local =default(settings.default_local, true)  -- odd space, syntax colors messed up :/
+	}
+
 	self.files = {}
 
 	return self

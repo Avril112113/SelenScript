@@ -33,6 +33,7 @@ function transpiler.transpile(file)
 	assert(file ~= nil, "arg#1:file is nil")
 	local self = setmetatable({}, transpiler)
 	assert(file.ast ~= nil, "file.ast is nil")
+	self.file = file
 
 	---@type string[] @ string = provided name
 	self.provided_deps = {}
@@ -172,7 +173,7 @@ add("field", function(self, ast)
 end)
 
 add("funcbody", function(self, ast)
-	return "(" .. self:tostring(ast.args) .. ")" .. self:tostring(ast.block) .. "end"
+	return "(" .. self:tostring(ast.args) .. ")" .. self:tostring(ast.block) .. "end\n"
 end)
 add("return", function(self, ast)
 	local str = ""
@@ -205,7 +206,7 @@ add("assign", function(self, ast)
 	if ast.scope ~= "local" and ast.exprlist == nil then
 		return ""
 	end
-	if ast.scope == "local" then
+	if ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local) then
 		str = str .. "local "
 	end
 	str = str .. self:tostring(ast.varlist)
@@ -326,7 +327,7 @@ add("for_each", function(self, ast)
 	self.continuelabel_depth = self.block_depth
 	local str = "for " .. self:tostring(ast.namelist) .. " in " .. self:tostring(ast.exprlist) .. " do\n" .. self:tostring(ast.block)
 	if self.continuelabel[self.continuelabel_depth] ~= nil then
-		str = str .. "::" .. self.continuelabel[self.continuelabel_depth] .. ":: "
+		str = str .. "::" .. self.continuelabel[self.continuelabel_depth] .. "::\n"
 		table.remove(self.continuelabel, self.continuelabel_depth)
 	end
 	self.continuelabel_depth = old_continuelabel_depth
@@ -337,10 +338,10 @@ add("interface", function(self, ast)
 end)
 add("function", function(self, ast)
 	local str = ""
-	if ast.scope == "local" then
+	if ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local) then
 		str = str .. "local "
 	end
-	return self:getExprStmtCode() .. str .. "function " .. self:tostring(ast.funcname) .. self:tostring(ast.body) .. "\n"
+	return self:getExprStmtCode() .. str .. "function " .. self:tostring(ast.funcname) .. self:tostring(ast.body)
 end)
 add("decorate", function(self, ast)
 	local str = self:strexpr(ast.expr)
@@ -362,7 +363,11 @@ add("decorate", function(self, ast)
 end)
 add("class", function(self, ast)
 	self:addProvidedDep("createClass")
-	local str = "local " .. ast.name .. "=__sls_createClass('" .. ast.name .. "')"
+	local str = ""
+	if ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local) then
+		str = str .. "local "
+	end
+	str = str .. ast.name .. "=__sls_createClass('" .. ast.name .. "')"
 	if ast.extendslist ~= nil then
 		for _, v in ipairs(ast.extendslist) do
 			str = str .. "table.insert(" .. ast.name .. ".__sls_inherits," .. self:strexpr(v) .. ")"
@@ -467,8 +472,8 @@ end)
 
 add("if_expr", function(self, ast)
 	local name = self:getReserveName()
-	local str = "if " .. self:strexpr(ast.condition) .. " then " ..
-				name .. "=" .. self:strexpr(ast.lhs) .. " else " ..
+	local str = "if " .. self:strexpr(ast.condition) .. " then\n" ..
+				name .. "=" .. self:strexpr(ast.lhs) .. " else\n" ..
 				name .. "=" .. self:strexpr(ast.rhs) .. " end\n"
 	table.insert(self.expr_stmt_names, {name})
 	return str

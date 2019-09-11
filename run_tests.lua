@@ -43,10 +43,7 @@ for _, path in ipairs(files) do
 		break
 	end
 	local luaResult, trans = selenScript.transpiler.transpile(
-		selenScript.file.newFile {
-			code=data,
-			parse_result=result
-		}
+		selenScript.file.new_fake(result)
 	)
 	totalTransTime = totalTransTime + trans.transpileTime
 	-- theres more operators, but this should do
@@ -56,6 +53,7 @@ for _, path in ipairs(files) do
 		local _, err = loadstring(luaResult, "@luaResult")
 		if err ~= nil then
 			print("Resulting Lua Error:", err)
+			print("---- Lua Result ----")
 			print(luaResult)
 			break
 		end

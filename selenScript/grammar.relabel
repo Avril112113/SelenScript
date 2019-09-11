@@ -41,13 +41,13 @@ if_stmt			<- (IF Sc expect_expr THEN block
 for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr / {}->'') DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT END?)) -> for_range
 for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* END?} {}->'for each') -> UNPARSED_INPUT)) -> for_each
 function_stmt	<- (({GLOBAL}/{}->'') FUNCTION Sc funcname Sc funcbody) -> function
-				 / ({GLOBAL/LOCAL} FUNCTION Sc {NAME} Sc funcbody) -> function
-assign_stmt		<- (({}->'') varlist (Sc typedeflist/{}->'') Sc '=' Sc exprlist) -> assign
-				 / (({}->'') varlist Sc typedeflist) -> assign
+				 / (({GLOBAL/LOCAL}/{}->'') FUNCTION Sc {NAME} Sc funcbody) -> function
+assign_stmt		<- ({}->'' varlist (Sc typedeflist / {}->'') Sc '=' Sc exprlist) -> assign
+				 / ({}->'' varlist Sc typedeflist) -> assign
 single_assign_part	<- namelist (Sc typedeflist / {}->'') (Sc '=' Sc exprlist / {}->'')
 local_assign_stmt	<- ({LOCAL} Sc single_assign_part)  -> assign
-scoped_assign_stmt	<- ({GLOBAL/LOCAL} Sc single_assign_part)  -> assign
-interface_stmt	<- (INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
+scoped_assign_stmt	<- (({GLOBAL/LOCAL}/{}->'') Sc single_assign_part)  -> assign
+interface_stmt	<- (({GLOBAL/LOCAL}/{}->'') INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
 
 class_block_stmt	<- Sc (
 					   ';'
@@ -56,7 +56,7 @@ class_block_stmt	<- Sc (
 					 / function_stmt
 					 )
 class_block		<- Sp* (Scc class_block_stmt* Scc) -> class_block
-class_stmt		<- (CLASS Sc {NAME} (EXTENDS Sc varlist/{}->'') (IMPLEMENTS Sc varlist/{}->'')
+class_stmt		<- (({GLOBAL/LOCAL}/{}->'') CLASS Sc {NAME} (EXTENDS Sc varlist/{}->'') (IMPLEMENTS Sc varlist/{}->'')
 						class_block
 				   (END / ({} {(!END .)*} {}->'class') -> UNPARSED_INPUT END?)) -> class
 
