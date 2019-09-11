@@ -79,9 +79,10 @@ local function climbPrecedence(data, min_precedence)
 	local result = _climbPrecedence(data, min_precedence)
 	if #data > 0 then
 		pusherror({
+			type="internal_climbPrecedence_unparsed",
 			start=-1,
 			finish=-1,
-			msg="INTERNAL: climbPrecedence error, unparted data",
+			msg="INTERNAL: climbPrecedence error, unparsed data",
 			ast={type="<climbPrecedence:DATA>", data}  -- not really AST but, its close ;)
 		})
 	end
@@ -93,6 +94,7 @@ local defs = {
 	-- Errors (handled so we can continue parsing)
 	UNPARSED_INPUT=function(pos, str, name)
 		pusherror {
+			type="unparsed",
 			start=pos,
 			finish=pos,
 			msg="Unparsed input in '" .. tostring(name) .. "'\n" .. str .. "\n"
@@ -100,6 +102,7 @@ local defs = {
 	end,
 	MISS_QUOTE_D=function(pos)
 		pusherror {
+			type="miss_quote_d",
 			start=pos,
 			finish=pos,
 			msg="Missing double quote.",
@@ -108,6 +111,7 @@ local defs = {
 	end,
 	MISS_QUOTE_S=function(pos)
 		pusherror {
+			type="miss_quote_s",
 			start=pos,
 			finish=pos,
 			msg="Missing single quote.",
@@ -116,6 +120,7 @@ local defs = {
 	end,
 	MISS_BRACKET=function(pos)
 		pusherror {
+			type="miss_bracket",
 			start=pos,
 			finish=pos,
 			msg="Missing closing bracket."
@@ -123,6 +128,7 @@ local defs = {
 	end,
 	MISS_LONG_BRACKET=function(pos)
 		pusherror {
+			type="miss_long_bracket",
 			start=pos,
 			finish=pos,
 			msg="Missing long string closing."
@@ -130,6 +136,7 @@ local defs = {
 	end,
 	MISS_SQUARE_BRACKET=function(pos)
 		pusherror {
+			type="miss_square_bracket",
 			start=pos,
 			finish=pos,
 			msg="Missing closing square bracket.",
@@ -138,6 +145,7 @@ local defs = {
 	end,
 	MISS_EXPR=function(pos)
 		pusherror {
+			type="miss_expr",
 			start=pos,
 			finish=pos,
 			msg="Expecting an expresion."
@@ -145,6 +153,7 @@ local defs = {
 	end,
 	MISS_DEC=function(pos)
 		pusherror {
+			type="miss_dec",
 			start=pos,
 			finish=pos,
 			msg="Missing another decorator or function."
@@ -152,6 +161,7 @@ local defs = {
 	end,
 	MISS_DEC_ARGS=function(pos)
 		pusherror {
+			type="miss_dec_arg",
 			start=pos,
 			finish=pos,
 			msg="Call to decorator must have aguments or no arguments at all."
@@ -159,6 +169,7 @@ local defs = {
 	end,
 	MISS_CALL_AC=function(pos)
 		pusherror {
+			type="miss_call_ac",
 			start=pos,
 			finish=pos,
 			msg="Expected a call after `:`."
@@ -166,6 +177,7 @@ local defs = {
 	end,
 	EXPECT_DO=function(start, got, finish)
 		pusherror {
+			type="expect_do",
 			start=start,
 			finish=finish,
 			msg="Expected 'do' but found '" .. got .. "' instead.",
@@ -174,6 +186,7 @@ local defs = {
 	end,
 	EXPECT_THEN=function(start, got, finish)
 		pusherror {
+			type="expect_then",
 			start=start,
 			finish=finish,
 			msg="Expected 'then' but found '" .. got .. "' instead.",
@@ -182,6 +195,7 @@ local defs = {
 	end,
 	INVALID_ESC=function(pos)
 		pusherror {
+			type="invalid_esc",
 			start=pos,
 			finish=pos,
 			msg="Invalid escape sequence."

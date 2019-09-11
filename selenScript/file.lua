@@ -27,7 +27,7 @@ function file.new(settings)
 
 	self:changed()
 	local first_diagnostic = self.diagnostics[1]
-	if first_diagnostic ~= nil and first_diagnostic.file_not_found == true then
+	if first_diagnostic ~= nil and first_diagnostic.type == "file_not_found" then
 		error(first_diagnostic.msg)
 	end
 
@@ -39,10 +39,10 @@ function file:changed()
 	if f == nil then
 		self:add_diagnostic {
 			serverity="warn",
+			type="file_not_found",
 			start=1,
 			finish=1,
-			msg="failed to open file '" .. self.path .. "'",
-			file_not_found=true  -- only used to identify this error for file.new()
+			msg="failed to open file '" .. self.path .. "'"
 		}
 		return
 	end
@@ -54,6 +54,7 @@ function file:changed()
 	for _, err in pairs(self.parse_result.errors) do
 		self:add_diagnostic {
 			serverity="error",
+			type=err.type,
 			start=err.start,
 			finish=err.finish,
 			msg=err.msg,
@@ -89,10 +90,10 @@ function file:write_file(lua_output)
 	if f == nil then
 		self:add_diagnostic {
 			serverity="warn",
+			type="file_not_found",
 			start=1,
 			finish=1,
-			msg="failed to write file '" .. self:get_output_path() .. "'",
-			file_not_found=true  -- only used to identify this error for file.new()
+			msg="failed to write file '" .. self:get_output_path() .. "'"
 		}
 	else
 		f:write(lua_output)
@@ -105,7 +106,6 @@ function file:get_output_path()
 	if self.project ~= nil then
 		path = self.project.out_dir .. "/" .. path:gsub("^" .. self.project.out_dir, "")
 	end
-	print(path)
 	return self.settings.path:gsub("%.sl$", "") .. ".lua"
 end
 
