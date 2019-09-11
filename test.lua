@@ -1,5 +1,5 @@
 local filePath = "tests/project/test.sl"
-local print_ast = false
+local print_ast = true
 local include_provided_deps = true
 
 

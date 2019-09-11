@@ -338,7 +338,9 @@ add("interface", function(self, ast)
 end)
 add("function", function(self, ast)
 	local str = ""
-	if ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local) then
+	local has_indexing = ast.funcname.index ~= nil
+	print(has_indexing, ast.funcname.index)
+	if not has_indexing and (ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local)) then
 		str = str .. "local "
 	end
 	return self:getExprStmtCode() .. str .. "function " .. self:tostring(ast.funcname) .. self:tostring(ast.body)
