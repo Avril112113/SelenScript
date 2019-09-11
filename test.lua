@@ -6,9 +6,14 @@ local include_provided_deps = true
 local selenScript = require "selenScript"
 
 
+local project = selenScript.project.new {
+	src_dir="tests/project"
+}
 local testFile = selenScript.file.new {
 	path=filePath,
-	include_provided_deps=include_provided_deps
+	include_provided_deps=include_provided_deps,
+
+	project=project
 }
 
 if print_ast then

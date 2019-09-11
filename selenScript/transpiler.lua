@@ -29,9 +29,10 @@ transpiler.__index = transpiler
 local function add(name, f)
 	transpiler[name] = f
 end
-function transpiler.transpile(ast)
-	assert(ast ~= nil, "arg#1:ast was nil")
+function transpiler.transpile(file)
+	assert(file ~= nil, "arg#1:file is nil")
 	local self = setmetatable({}, transpiler)
+	assert(file.ast ~= nil, "file.ast is nil")
 
 	---@type string[] @ string = provided name
 	self.provided_deps = {}
@@ -57,7 +58,7 @@ function transpiler.transpile(ast)
 	self.expr_stmt_codes = {}  -- AIAO (AllInAllOut)
 
 	local start = os.clock()
-	local result = self:tostring(ast)
+	local result = self:tostring(file.ast)
 	local finish = os.clock()
 	self.transpileTime = finish - start
 	return result, self
