@@ -1,8 +1,9 @@
 local parse = require("selenScript.parser").parse
 local transpiler = require "selenScript.transpiler"
 local provided = require "selenScript.provided"
+local helpers = require "selenScript.helpers"
 
-local default = require("selenScript.helpers").default_value
+local default = helpers.default_value
 
 
 local file = {}
@@ -64,7 +65,12 @@ function file:changed()
 	local lua_output, trans = transpiler.transpile(self)
 	self.provided_deps = trans.provided_deps
 
-	self:write_file(self:str_deps() .. lua_output)
+	if self.project ~= nil then
+		self:write_file('require("__sls_provided_deps")' .. lua_output)
+		self.project:write_provided_deps()
+	else
+		self:write_file(self:str_deps() .. lua_output)
+	end
 end
 
 function file:complete(pos)
@@ -107,18 +113,9 @@ function file:str_deps()
 	local str = ""
 	local gotten_deps = {}
 	for dep_name, dep in pairs(self.provided_deps) do
-		str = str .. self:_str_dep(dep_name, dep, gotten_deps)
+		str = str .. helpers.str_dep(dep_name, dep, gotten_deps)
 	end
 	return str
-end
-function file:_str_dep(dep_name, dep, gotten_deps)
-	if gotten_deps[dep_name] ~= nil then return "" end
-	local str = ""
-	for _, dep_name in pairs(dep.deps) do
-		local dep_ = provided[dep_name]
-		str = str .. dep_.lua
-	end
-	return str .. dep.lua
 end
 
 return file
