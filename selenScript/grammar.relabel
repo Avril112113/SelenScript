@@ -20,10 +20,9 @@ stmt	<- Sc (
 		 / for_range_stmt
 		 / for_each_stmt
 		 / function_stmt
-		 / local_assign_stmt
+		 / scoped_assign_stmt
 		 /* / LOCAL '<' NAME '>' NAME '=' expect_expr */
 		 / interface_stmt
-		 / export_stmt
 		 / class_stmt
 		 )
 
@@ -41,15 +40,14 @@ if_stmt			<- (IF Sc expect_expr THEN block
 				   ) -> if
 for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr / {}->'') DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT END?)) -> for_range
 for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* END?} {}->'for each') -> UNPARSED_INPUT)) -> for_each
-function_stmt	<- ({}->''   FUNCTION Sc funcname Sc funcbody) -> function
-				 / ({GLOBAL} FUNCTION Sc {NAME} Sc funcbody) -> function
-				 / ({LOCAL}  FUNCTION Sc {NAME} Sc funcbody) -> function
-assign_stmt		<- (({GLOBAL}/{}->'') varlist (Sc typedeflist/{}->'') Sc '=' Sc exprlist) -> assign
-				 / (({GLOBAL}/{}->'') varlist Sc typedeflist) -> assign
-local_assign_stmt	<- ({LOCAL} Sc namelist (Sc typedeflist / {}->'') (Sc '=' Sc exprlist / {}->''))  -> assign
+function_stmt	<- (({GLOBAL}/{}->'') FUNCTION Sc funcname Sc funcbody) -> function
+				 / ({GLOBAL/LOCAL} FUNCTION Sc {NAME} Sc funcbody) -> function
+assign_stmt		<- (({}->'') varlist (Sc typedeflist/{}->'') Sc '=' Sc exprlist) -> assign
+				 / (({}->'') varlist Sc typedeflist) -> assign
+single_assign_part	<- namelist (Sc typedeflist / {}->'') (Sc '=' Sc exprlist / {}->'')
+local_assign_stmt	<- ({LOCAL} Sc single_assign_part)  -> assign
+scoped_assign_stmt	<- ({GLOBAL/LOCAL} Sc single_assign_part)  -> assign
 interface_stmt	<- (INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
-export_stmt		<- (EXPORT Sc (assign_stmt / local_assign_stmt / function_stmt / interface_stmt)) -> export
-				 / (EXPORT Sc {NAME} (AS Sc {NAME})?) -> export
 
 class_block_stmt	<- Sc (
 					   ';'
@@ -206,7 +204,7 @@ RESERVED	<- RESERVED_STMT / NIL / TRUE / FALSE
 /* NOTE: this might be out of date, please make sure it is */
 RESERVED_STMT	<- AND / OR / DO / BREAK / ELSE / ELSEIF / END / IF / FOR / GOTO
 				 / FUNCTION / IN / LOCAL / THEN / REPEAT / RETURN / NOT / WHILE / UNTIL
-				 / CONTINUE / AS / CLASS / EXPORT / EXTENDS / IMPLEMENTS / INTERFACE /*/ GLOBAL*/
+				 / CONTINUE / AS / CLASS / EXTENDS / IMPLEMENTS / INTERFACE / GLOBAL
 
 AND         <- Sc 'and' Cut
 NOT         <- Sc 'not' Cut
@@ -243,7 +241,6 @@ INTERFACE   <- Sc 'interface' Cut
 RETURN      <- Sc 'return' Cut
 LOCAL       <- Sc 'local' Cut
 GLOBAL      <- Sc 'global' Cut
-EXPORT      <- Sc 'export' Cut
 
 TABLE		<- Sc 'table' Cut
 ARRAY		<- Sc 'array' Cut

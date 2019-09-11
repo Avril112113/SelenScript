@@ -1,3 +1,4 @@
+-- currently using love2d as this laptop does not have luajit setup, and love2d use's luajit
 function love.conf(t)
     t.console = true
 

@@ -29,17 +29,18 @@ transpiler.__index = transpiler
 local function add(name, f)
 	transpiler[name] = f
 end
-function transpiler.transpile(ast)
+function transpiler.transpile(file)
+	assert(file ~= nil, "arg#1:file was nil")
 	local self = setmetatable({}, transpiler)
+	self.file = file
+	assert(file.ast ~= nil, "`file.ast` was nil")
+
 	---@type string[] @ string = provided name
 	self.provided_deps = {}
 
 	self.last_precedence = 1
 	self.reserve_var_idx = -1
 	self.block_depth = 0
-
-	---@type table<number,string[]> @ number is block depth
-	self.export_names = {}
 
 	self.doreturn_depth = 0
 	---@type table<number,string> @ number is block depth
@@ -54,7 +55,12 @@ function transpiler.transpile(ast)
 	self.expr_stmt_names = {}  -- LIFO (LastInFirstOut)
 	---@type string[]
 	self.expr_stmt_codes = {}  -- AIAO (AllInAllOut)
-	return self:tostring(ast), self
+
+	local start = os.clock()
+	local result = self:tostring(file.ast)
+	local finish = os.clock()
+	self.transpileTime = finish - start
+	return result, self
 end
 function transpiler:getReserveName()
 	self.reserve_var_idx = self.reserve_var_idx + 1
@@ -97,35 +103,6 @@ function transpiler:getExprStmtCode()
 	self.expr_stmt_codes = {}
 	return table.concat(t)
 end
-function transpiler:addExport(stmt, asName)
-	local exports = self.export_names[self.block_depth] or {}
-	self.export_names[self.block_depth] = exports
-	if type(stmt) == "string" then
-		exports[asName or stmt] = stmt
-	elseif stmt.type == "assign" and stmt.exprlist ~= nil then
-		for i, v in ipairs(stmt.varlist) do
-			local index = v
-			while index.index ~= nil do
-				if index.expr then goto continue end
-				index = index.index
-			end
-			exports[index.name] = self:tostring(v)
-			::continue::
-		end
-	elseif stmt.type == "function" then
-		local name
-		if type(stmt.funcname) == "string" then
-			name = stmt.funcname
-		else
-			local index = stmt.funcname
-			while index.index ~= nil do index = index.index end
-			name = index.name
-		end
-		exports[name] = self:tostring(stmt.funcname)
-	else
-		print("WARNING: unsupported type for addExport " .. tostring(stmt.type))
-	end
-end
 function transpiler:addProvidedDep(name)
 	local providedData = provided[name]
 	if providedData == nil then
@@ -143,14 +120,6 @@ add("block", function(self, ast)
 	self.block_depth = self.block_depth + 1
 	for i, v in ipairs(ast) do
 		str = str .. self:tostring(v)
-	end
-	local exports = self.export_names[self.block_depth]
-	if exports ~= nil then
-		str = str .. "return {"
-		for i, v in pairs(exports) do
-			str = str .. i .. "=" .. v .. ","
-		end
-		str = str:gsub(",$", "") .. "}"
 	end
 	self.block_depth = self.block_depth - 1
 	if #self.expr_stmt_codes > 0 then
@@ -389,17 +358,6 @@ add("decorate", function(self, ast)
 		decoratorsStr = decoratorsStr  .. ")"
 	end
 	return self:getExprStmtCode() .. str .. funcname .. "=" .. decoratorsStr
-end)
-add("export", function(self, ast)
-	local stmt = ast.name or ast.stmt
-	if stmt ~= nil then
-		self:addExport(stmt, ast.asName)
-	end
-	if ast.stmt ~= nil then
-		return self:getExprStmtCode() .. self:tostring(ast.stmt)
-	else
-		return ""
-	end
 end)
 add("class", function(self, ast)
 	self:addProvidedDep("createClass")

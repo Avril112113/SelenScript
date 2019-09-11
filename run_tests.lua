@@ -1,3 +1,4 @@
+--[[
 local bl = {
 	Sp=true,
 	Sc=true,
@@ -5,7 +6,8 @@ local bl = {
 	Comment=true,
 	LongComment=true,
 }
--- function debug.relabelDbgFilter(n) return bl[n] == nil end
+function debug.relabelDbgFilter(n) return bl[n] == nil end
+--]]
 
 local selenScript = require "selenScript"
 
@@ -40,10 +42,13 @@ for _, path in ipairs(files) do
 		end
 		break
 	end
-	local start = os.clock()
-	local luaResult, _ = selenScript.transpiler.transpile(result.ast)
-	local finish = os.clock()
-	totalTransTime = totalTransTime + finish-start
+	local luaResult, trans = selenScript.transpiler.transpile(
+		selenScript.file.newFile {
+			code=data,
+			parse_result=result
+		}
+	)
+	totalTransTime = totalTransTime + trans.transpileTime
 	-- theres more operators, but this should do
 	if luaResult:find("<<") ~= nil or luaResult:find(">>") ~= nil then
 		print("Skipping syntax check, has luaJIT incompatabilities.")

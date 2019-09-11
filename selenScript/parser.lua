@@ -340,20 +340,6 @@ local defs = {
 			...
 		}
 	end,
-	export=function(nameOrStmt, asName)
-		local name, stmt
-		if type(nameOrStmt) == "string" then
-			name = nameOrStmt
-		else
-			stmt = nameOrStmt
-		end
-		return {
-			type="export",
-			name=name,
-			stmt=stmt,
-			asName=asName
-		}
-	end,
 	class_block=function(...)
 		local t = {...}
 		if t[1] == '' and #t == 1 then return {type="class_block"} end

@@ -196,7 +196,8 @@ local function processSignals()
                     thread.eventQueue[#thread.eventQueue + 1] = {"yield"}
                 end
             end]]--
-            if thread.cgroups.signal.global and sig[2] then
+            -- SELENSCRIPT NOTE: changed from `global` to `global_` as global is now a keyword in selenscript
+            if thread.cgroups.signal.global_ and sig[2] then
                 local nsig, oldest = countThreadSignals(thread, "signal")
                 if nsig > thread.maxPendingSignals then --TODO: make it a bit more intelligent
                     table.remove(thread.eventQueue, oldest)

@@ -9,9 +9,10 @@ end
 spawnGroupGetters = {}
 groupConstructors = {}
 
-groupConstructors.signal = function(global)
+-- SELENSCRIPT NOTE: changed from `global` to `global_` as global is now a keyword in selenscript
+groupConstructors.signal = function(global_)
     local group = newGroup()
-    group.global = global --boolean
+    group.global_ = global_ --boolean
     return group
 end
 

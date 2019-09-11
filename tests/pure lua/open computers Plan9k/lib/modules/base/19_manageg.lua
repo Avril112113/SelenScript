@@ -35,7 +35,8 @@ function newsandbox()
 end
 
 --User function. Defines globals for strict mode.
-function global(sandbox, ...)
+-- SELENSCRIPT NOTE: changed from `global` to `global_` as global is now a keyword in selenscript
+function global_(sandbox, ...)
    for _, v in ipairs{...} do getmetatable(mt).__declared[v] = true end
 end
 

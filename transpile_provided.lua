@@ -28,7 +28,12 @@ for _, path in ipairs(files) do
 		end
 		goto continue
 	end
-	local luaResult, _ = selenScript.transpiler.transpile(result.ast)
+	local luaResult, trans = selenScript.transpiler.transpile(
+		selenScript.file.newFile {
+			code=data,
+			parse_result=result
+		}
+	)
 	local name = path:gsub("^.*[\\/]", ""):gsub("%.sl$", "")
 	providedList[name] = {
 		name=name,
@@ -52,14 +57,14 @@ providedFile:write("-- WARNING: this is a generated file by transpile_provided.l
 providedFile:write("return {\n")
 
 for _, v in pairs(providedList) do
-	providedFile:write(v.name .. " = {lua=[======[")
-	providedFile:write(v.lua)
-	providedFile:write("]======], deps={")
+	providedFile:write("\t" .. v.name .. " = {\n\t\tlua=\"")
+	providedFile:write(v.lua:gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t"):gsub("\"", "\\\""))
+	providedFile:write("\",\n\t\tdeps={")
 	for _, depName in pairs(v.deps) do
-		providedFile:write("'" .. depName .. "',")
+		providedFile:write("\"" .. depName .. "\",")
 	end
-	providedFile:write("}},\n")
+	providedFile:write("}\n\t},\n")
 end
 
-providedFile:write("\n}")
+providedFile:write("}")
 providedFile:close()
