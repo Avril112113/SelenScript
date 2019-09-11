@@ -58,7 +58,8 @@ providedFile:write("return {\n")
 
 for _, v in pairs(providedList) do
 	providedFile:write("\t" .. v.name .. " = {\n\t\tlua=\"")
-	providedFile:write(v.lua:gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t"):gsub("\"", "\\\""))
+	local lua_output = v.lua:gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t"):gsub("\"", "\\\"")
+	providedFile:write(lua_output)
 	providedFile:write("\",\n\t\tdeps={")
 	for _, depName in pairs(v.deps) do
 		providedFile:write("\"" .. depName .. "\",")

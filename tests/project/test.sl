@@ -1,5 +1,3 @@
-local var = 200
-print()
+print("hi")
 
-global deadMsg = f"dead man walking: {var}"
-print(deadMsg)
+class T end

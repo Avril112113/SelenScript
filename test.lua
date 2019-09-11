@@ -1,15 +1,20 @@
+local filePath = "tests/project/test.sl"
+local print_ast = false
+local include_provided_deps = true
+
+
 local selenScript = require "selenScript"
 
 
-local project = selenScript.project.new()
-
-local testFile = selenScript.file.newFile {
-	path="tests/project/test.sl"
+local testFile = selenScript.file.new {
+	path=filePath,
+	include_provided_deps=include_provided_deps
 }
-project:addFile(testFile)
 
-print("--- AST ---")
-selenScript.helpers.printAST(testFile.ast)
+if print_ast then
+	print("--- AST ---")
+	selenScript.helpers.printAST(testFile.ast)
+end
 
 print("--- Diagnostics ---")
 for _, diag in pairs(testFile.diagnostics) do

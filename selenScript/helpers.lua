@@ -143,11 +143,20 @@ local function reconstructMath(ast)
 	end
 end
 
+local function default_value(value, default)
+	if value ~= nil then
+		return value
+	else
+		return default
+	end
+end
+
 return {
 	strValueFromType=strValueFromType,
 	printAST=printAST,
 	tblEqual=tblEqual,
 	tblPrint=tblPrint,
 	serializeTable=serializeTable,
-	reconstructMath=reconstructMath
+	reconstructMath=reconstructMath,
+	default_value=default_value
 }

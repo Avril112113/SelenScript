@@ -1,160 +1,69 @@
-local parser = require "selenScript.parser"
-local transpiler = require "selenScript.transpiler"
+local parse = require("selenScript.parser").parse
+
+local default = require("selenScript.helpers").default_value
 
 
----@class SS_File
-local file = {
-	---@type string
-	path=nil,
-	---@type string
-	type=nil,
-	---@type string
-	code=nil,
-	parse_result=nil,
-	ast=nil,
-	---@type SS_Project
-	project=nil,
-}
+local file = {}
 file.__index = file
 
----@param path string
-function file.nameFromPath(path)
-	return path:match("([^/\\]+)%..*$")
-end
 
-
----@param args SS_NewFileArgs
-function file.newFile(args)
+function file.new(settings)
 	local self = setmetatable({}, file)
-	-- TODO: args.path should be made abslosute path
-	if args.path ~= nil then
-		self.path = args.path
-		self.type = args.type
-		if self.type == nil then
-			if self.path:sub(#self.path-3, #self.path) == ".lua" then
-				self.type = "lua"
-			elseif self.path:sub(#self.path-2, #self.path) == ".sl" then
-				self.type = "sl"
-			else
-				error("arg 'type' was not supplied, and was not able to find it from 'path' arg")
-			end
-		end
-		self.name = args.name
-		if self.name == nil then
-			self.name = file.nameFromPath(self.path)
-		end
 
-		self.watch = args.watch
-		if self.watch ~= false then
-			-- TODO: add watcher
-		end
+	self.settings = {
+		path=settings.path or error("settings.path was omited"),
 
-		self.auto_transpile = args.auto_transpile
-		if self.auto_transpile == nil then
-			self.auto_transpile = true
-		end
+		include_provided_deps=default(settings, true),
+	}
 
-		self:file_changed()
-	elseif args.parse_result ~= nil or args.code ~= nil then
-		assert(args.code ~= nil, "arg 'code' was omitted")
-		self.type = args.type or "sl"
-		self.code = args.code
-		self.parse_result = args.parse_result
-		if self.parse_result == nil then
-			self.parse_result = parser.parse(self.code)
-		end
-		self.ast = self.parse_result.ast
-	else
-		error("arg 'path' and 'parse_result' was omitted")
+	self.diagnostics = {}
+
+	self:changed()
+	local first_diagnostic = self.diagnostics[1]
+	if first_diagnostic ~= nil and first_diagnostic.file_not_found == true then
+		error(first_diagnostic.msg)
 	end
-
-	--- this table might be IN the project's globals
-	self.globals = setmetatable({}, {__mode="v"})
 
 	return self
 end
 
----@param project SS_Project
-function file:update_project(project)
-	if self.project then
-		self.project.files[self.path] = nil
-		self.project.globals[self.path] = nil
-	end
-
-	self.project = project
-
-	project.files[self.path] = file
-	self.project.globals[self.path] = self.globals
-
-	if self.path ~= nil then
-		self:file_changed()
-	end
-end
-
-function file:file_changed()
-	local f= io.open(self.path, "r")
+function file:changed()
+	local f = io.open(self.settings.path, "r")
 	if f == nil then
-		print("WARNING: failed to open file '" .. self.path .. "'")
+		self:add_diagnostic {
+			serverity="warn",
+			start=1,
+			finish=1,
+			msg="failed to open file '" .. self.path .. "'",
+			file_not_found=true  -- only used to identify this error for file.new()
+		}
 		return
 	end
 	self.code = f:read("*a")
 	f:close()
 
-	self.parse_result = parser.parse(self.code)
-	self.ast = self.parse_result.ast  -- short hand for self.parse_result.ast
-
-	self.diagnostics = {}
-	for i, err in pairs(self.parse_result.errors) do
-		table.insert(self.diagnostics, {
+	self.parse_result = parse(self.code)
+	for _, err in pairs(self.parse_result.errors) do
+		self:add_diagnostic {
 			serverity="error",
 			start=err.start,
 			finish=err.finish,
 			msg=err.msg,
 			fix=err.fix,
-			ast=err.ast
-		})
-	end
-
-	self:ast_changed()
-end
-
-function file:ast_changed()
-	local luaOutput, trans = transpiler.transpile(self)
-	if self.auto_transpile then
-		local ok, err = self:write_file(luaOutput)
-		if not ok then
-			table.insert(self.diagnostics, {
-				serverity="warn",
-				start=1,
-				finish=1,
-				msg=err,
-			})
-		end
+			ast=err.ast,
+		}
 	end
 end
 
----@param pos number
 function file:complete(pos)
 	local completions = {}
-	print("file:complete() not implemented")
+	error("file:complete() not implemented")
 	return completions
 end
 
 
----@param data string
-function file:write_file(data)
-	if self.path == nil then
-		return false, "file does not has a path"
-	end
-	local out_path = self.path .. ".lua"
-	local f = io.open(out_path, "w")
-	if f == nil then
-		return false, "failed to open file"
-	end
-	f:write(data)
-	f:close()
-	return true, nil
+function file:add_diagnostic(diagnostic)
+	table.insert(self.diagnostics, diagnostic)
 end
-
 
 return file

@@ -281,7 +281,7 @@ would return from the function and not the `do` statement as its not used as an 
 `function`  
 `function(arg: ArgType)`  
 `function(arg: ArgType) -> ReturnType`  
-`unkown` when no type is defined (can be ignored, not useable)  
+`unknown` when no type is defined (can be ignored, not useable, use `any` if the type is explisitly unknown)  
 
 
 # Contributors

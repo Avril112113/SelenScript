@@ -29,16 +29,16 @@ transpiler.__index = transpiler
 local function add(name, f)
 	transpiler[name] = f
 end
-function transpiler.transpile(file)
-	assert(file ~= nil, "arg#1:file was nil")
+function transpiler.transpile(ast)
+	assert(ast ~= nil, "arg#1:ast was nil")
 	local self = setmetatable({}, transpiler)
-	self.file = file
-	assert(file.ast ~= nil, "`file.ast` was nil")
 
 	---@type string[] @ string = provided name
 	self.provided_deps = {}
 
 	self.last_precedence = 1
+	self.next_op = ""
+
 	self.reserve_var_idx = -1
 	self.block_depth = 0
 
@@ -57,7 +57,7 @@ function transpiler.transpile(file)
 	self.expr_stmt_codes = {}  -- AIAO (AllInAllOut)
 
 	local start = os.clock()
-	local result = self:tostring(file.ast)
+	local result = self:tostring(ast)
 	local finish = os.clock()
 	self.transpileTime = finish - start
 	return result, self
@@ -542,15 +542,17 @@ local binaryOperator = function(self, ast)
 	local doParens = opData[1] < self.last_precedence
 	self.last_precedence = opData[1]
 	if opData[3] then self.last_precedence = self.last_precedence + 1 end
+	self.next_op = ast.operator
 	local lhs = self:strexpr(ast.lhs)
 	if ast.operator:sub(1, 1) == "." and lhs:find("%d$") ~= nil or ast.operator:find("%w$") ~= nil then
 		lhs = lhs .. " " end
+	self.next_op = ast.operator
 	local rhs = self:strexpr(ast.rhs)
 	if ast.operator:sub(1, 1) == "." and rhs:find("%d$") ~= nil then
 		rhs = rhs .. " " end
 	if ast.operator:find("%w$") ~= nil then rhs = " " .. rhs end
 	local str = lhs .. ast.operator .. rhs
-	if doParens then
+	if doParens and not (self.next_op == ".."and ast.operator == "..") then
 		str = "(" .. str .. ")"
 	end
 	self.last_precedence = oldPrec
@@ -561,6 +563,7 @@ local postfixOperator = function(self, ast)
 	local opData = unaryOpData[ast.operator]
 	local doParens = opData[1] < self.last_precedence
 	self.last_precedence = opData[1]
+	self.next_op = ast.operator
 	local str = ast.operator .. self:strexpr(ast.rhs)
 	if doParens then
 		str = "(" .. str .. ")"
