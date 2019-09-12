@@ -1,5 +1,5 @@
 if __sls_createClass == nil then
-	local BaseClass = {
+	BaseClass = {
 		__sls_clsName="BaseClass",
 		__sls_inherits={}
 	}

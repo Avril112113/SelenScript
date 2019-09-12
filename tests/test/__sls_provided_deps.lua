@@ -11,7 +11,7 @@ return address
 end
 end
 if __sls_createClass==(nil) then
-local BaseClass={__sls_clsName="BaseClass",__sls_inherits={}}
+BaseClass={__sls_clsName="BaseClass",__sls_inherits={}}
 BaseClass.__class=BaseClass
 function BaseClass:__index(index)local value
 local cls=rawget(self,"__class")

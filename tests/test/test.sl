@@ -4,7 +4,7 @@ end
 
 class FooCls
 	function __tostring()
-		return "<Customized: " .. tostring(super(self).__tostring(self)) .. ">"	
+		return "<Customized: " .. tostring(BaseClass.__tostring(self)) .. ">"	
 	end
 
 	function __call()
