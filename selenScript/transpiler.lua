@@ -348,7 +348,7 @@ add("decorate", function(self, ast)
 	local str = self:strexpr(ast.expr)
 	assert(type(ast.expr) == "table")
 	assert(ast.expr.type == "function")
-	local funcname = self:tostring(ast.expr.funcname)
+	local funcname = self:tostring(ast.expr.funcname):gsub(":", ".")
 	local decoratorsStr = funcname
 	for i=#ast.decorators,1,-1 do
 		local dec = ast.decorators[i]
@@ -391,7 +391,7 @@ add("class", function(self, ast)
 			str = str .. self:tostring(stmt)
 		elseif v.type == "decorate" and v.expr.type == "function" then
 			local stmt = deepCopy(v)
-			stmt.expr.funcname.op = "."
+			stmt.expr.funcname.op = ":"
 			stmt.expr.funcname = {
 				type="index",
 				name=ast.name,
@@ -400,7 +400,7 @@ add("class", function(self, ast)
 			str = str .. self:tostring(stmt)
 		elseif v.type == "function" then
 			local stmt = deepCopy(v)
-			stmt.funcname.op = "."
+			stmt.funcname.op = ":"
 			stmt.funcname = {
 				type="index",
 				name=ast.name,

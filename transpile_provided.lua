@@ -29,10 +29,7 @@ for _, path in ipairs(files) do
 		goto continue
 	end
 	local luaResult, trans = selenScript.transpiler.transpile(
-		selenScript.file.newFile {
-			code=data,
-			parse_result=result
-		}
+		selenScript.file.new_fake(result)
 	)
 	local name = path:gsub("^.*[\\/]", ""):gsub("%.sl$", "")
 	providedList[name] = {
@@ -69,3 +66,11 @@ end
 
 providedFile:write("}")
 providedFile:close()
+
+-- because we can chain multiple files to run, and we changed selenScript files
+-- we need to let other file reload it if needed
+for i, v in pairs(package.loaded) do
+	if i:find("selenScript") ~= nil then
+		package.loaded[i] = nil
+	end
+end
