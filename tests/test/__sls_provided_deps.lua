@@ -13,14 +13,12 @@ end
 if __sls_createClass==(nil) then
 local BaseClass={__sls_clsName="BaseClass",__sls_inherits={}}
 BaseClass.__class=BaseClass
-function BaseClass:is_class()return rawget(self,"__sls_clsName")~=(nil)
-end
 function BaseClass:__index(index)local value
 local cls=rawget(self,"__class")
 value=rawget(cls,index)
 if value==(nil) then
 for _,v in ipairs(rawget(cls,"__sls_inherits")) do
-if v~=BaseClass then
+if v~=self then
 value=v[index]
 if value~=(nil) then
 return value
@@ -40,12 +38,11 @@ return "<Class "..self.__sls_clsName.." at "..__sls_getTblAddr(self)..">"
 else return "<Object of "..tostring(self.__class).." at "..__sls_getTblAddr(self)..">"
 end
 end
+function BaseClass:is_class()return rawget(self,"__sls_clsName")~=(nil)
+end
 function __sls_createClass(clsName)local cls={__sls_clsName=clsName,__sls_inherits={[1]=BaseClass}}
 cls.__class=cls
-cls.is_class=BaseClass.is_class
 cls.__index=BaseClass.__index
-cls.__call=BaseClass.__call
-cls.__tostring=BaseClass.__tostring
 return setmetatable(cls,cls)
 end
 end

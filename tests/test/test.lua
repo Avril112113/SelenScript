@@ -4,4 +4,4 @@ local FooCls=__sls_createClass('FooCls')function FooCls:__tostring()return "<Cus
 end
 function FooCls:__call()print("Fancy call, im super cool.")return super(self).__call(self)
 end
-print("str")print(FooCls)print("call")print(FooCls())
+print(" -- print(FooCls) -- ")print(FooCls)print(" -- print(FooCls()) -- ")print(FooCls())

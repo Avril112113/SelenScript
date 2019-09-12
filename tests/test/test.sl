@@ -13,7 +13,7 @@ class FooCls
 	end
 end
 
-print("print(FooCls)")
+print(" -- print(FooCls) -- ")
 print(FooCls)
-print("print(FooCls())")
+print(" -- print(FooCls()) -- ")
 print(FooCls())
