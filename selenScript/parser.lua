@@ -180,6 +180,7 @@ local defs = {
 			type="expect_do",
 			start=start,
 			finish=finish,
+			got=got,
 			msg="Expected 'do' but found '" .. got .. "' instead.",
 			fix="do"
 		}
@@ -189,6 +190,7 @@ local defs = {
 			type="expect_then",
 			start=start,
 			finish=finish,
+			got=got,
 			msg="Expected 'then' but found '" .. got .. "' instead.",
 			fix="then"
 		}
@@ -199,6 +201,14 @@ local defs = {
 			start=pos,
 			finish=pos,
 			msg="Invalid escape sequence."
+		}
+	end,
+	STMT_EXPR=function(pos)
+		pusherror {
+			type="stmt_expr",
+			start=pos,
+			finish=pos,
+			msg="Unexpected expresion."
 		}
 	end,
 
@@ -220,8 +230,6 @@ local defs = {
 	end,
 
 	assign=function(scope, varlist, typelist, exprlist)
-		if typelist == "" then typelist = nil end
-		if exprlist == "" then exprlist = nil end
 		return {
 			type="assign",
 			varlist=varlist,
@@ -329,7 +337,6 @@ local defs = {
 		}
 	end,
 	for_range=function(varname, from, to, step, block)
-		if step == "" then step = nil end
 		return {
 			type="for_range",
 			varname=varname,
@@ -364,8 +371,6 @@ local defs = {
 		}
 	end,
 	class=function(scope, name, extendslist, implementslist, block)
-		if extendslist == "" then extendslist = nil end
-		if implementslist == "" then implementslist = nil end
 		return {
 			type="class",
 			scope=scope,
@@ -626,8 +631,6 @@ local defs = {
 		}
 	end,
 	type_function=function(name, type_args, type_return)
-		if type_args == "" then type_args = nil end
-		if type_return == "" then type_return = nil end
 		return {
 			type="type",
 			name=name,

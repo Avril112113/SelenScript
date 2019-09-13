@@ -10,7 +10,7 @@ stmt	<- Sc (
 		 / call
 		 / return
 		 / ('::' Sc {NAME} Sc '::') -> label
-		 / (BREAK (Sc exprlist/{}->'') (IF Sc expect_expr)?) -> break
+		 / (BREAK (Sc exprlist)?? (IF Sc expect_expr)?) -> break
 		 / (CONTINUE (IF Sc expect_expr)?) -> continue
 		 / (GOTO Sc {NAME} (IF Sc expect_expr)?) -> goto
 		 / do_stmt
@@ -24,6 +24,7 @@ stmt	<- Sc (
 		 /* / LOCAL '<' NAME '>' NAME '=' expect_expr */
 		 / interface_stmt
 		 / class_stmt
+		 / expr -> STMT_EXPR
 		 )
 
 _decorator_call	<- '(' Sc (exprlist/{}->MISS_DEC_ARGS) Sc ')'
@@ -38,16 +39,16 @@ if_stmt			<- (IF Sc expect_expr THEN block
 					(ELSE block -> else)?
 					(END / ({} {(!END .)* END?} {}->'if') -> UNPARSED_INPUT)
 				   ) -> if
-for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr / {}->'') DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT END?)) -> for_range
+for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT END?)) -> for_range
 for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* END?} {}->'for each') -> UNPARSED_INPUT)) -> for_each
-function_stmt	<- (({GLOBAL}/{}->'') FUNCTION Sc funcname Sc funcbody) -> function
-				 / (({GLOBAL/LOCAL}/{}->'') FUNCTION Sc {NAME} Sc funcbody) -> function
-assign_stmt		<- ({}->'' varlist (Sc typedeflist / {}->'') Sc '=' Sc exprlist) -> assign
-				 / ({}->'' varlist Sc typedeflist) -> assign
-single_assign_part	<- namelist (Sc typedeflist / {}->'') (Sc '=' Sc exprlist / {}->'')
+function_stmt	<- (({GLOBAL})?? FUNCTION Sc funcname Sc funcbody) -> function
+				 / (ScopeDef FUNCTION Sc {NAME} Sc funcbody) -> function
+assign_stmt		<- (Ec varlist (Sc typedeflist)? Sc '=' Sc exprlist) -> assign
+				 / (Ec varlist Sc typedeflist) -> assign
+single_assign_part	<- namelist (Sc typedeflist)?? (Sc '=' Sc exprlist)??
 local_assign_stmt	<- ({LOCAL} Sc single_assign_part)  -> assign
-scoped_assign_stmt	<- (({GLOBAL/LOCAL}/{}->'') Sc single_assign_part)  -> assign
-interface_stmt	<- (({GLOBAL/LOCAL}/{}->'') INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
+scoped_assign_stmt	<- (ScopeDef Sc single_assign_part)  -> assign
+interface_stmt	<- (ScopeDef INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
 
 class_block_stmt	<- Sc (
 					   ';'
@@ -56,7 +57,7 @@ class_block_stmt	<- Sc (
 					 / function_stmt
 					 )
 class_block		<- Sp* (Scc class_block_stmt* Scc) -> class_block
-class_stmt		<- (({GLOBAL/LOCAL}/{}->'') CLASS Sc {NAME} (EXTENDS Sc varlist/{}->'') (IMPLEMENTS Sc varlist/{}->'')
+class_stmt		<- (ScopeDef CLASS Sc {NAME} (EXTENDS Sc varlist)?? (IMPLEMENTS Sc varlist)??
 						class_block
 				   (END / ({} {(!END .)*} {}->'class') -> UNPARSED_INPUT END?)) -> class
 
@@ -89,8 +90,8 @@ index	<- (
 		   / {COLON} Sc {NAME} (args index?) -> call
 		   ) Sc index?) -> index
 		 / (args index?) -> call
-var		<- ({}->'' {NAME} Sc index?) -> index
-		 / ({}->'' group Sc index) -> index
+var		<- (Ec {NAME} Sc index?) -> index
+		 / (Ec group Sc index) -> index
 
 varlist		<- (var (Sc ',' Sc var)*) -> varlist
 exprlist	<- (expr (Sc ',' Sc expect_expr)*) -> exprlist
@@ -100,18 +101,18 @@ namelist	<- ({NAME} (Sc ',' Sc {NAME})*) -> namelist
 param		<- ({NAME/VAR_ARGS} typedef?) -> param
 parlist		<- (param (Sc ',' Sc param)*) -> parlist
 opt_parlist	<- (param (Sc ',' Sc param)*)? -> parlist
-funcbody	<- ('(' Sc opt_parlist Sc ')' (Sc type_return/{}->'') block Sc (END / ({} {(!END .)* END?} {}->'funcbody') -> UNPARSED_INPUT)) -> funcbody
+funcbody	<- ('(' Sc opt_parlist Sc ')' (Sc type_return)?? block Sc (END / ({} {(!END .)* END?} {}->'funcbody') -> UNPARSED_INPUT)) -> funcbody
 
-return	<- (RETURN (Sc exprlist/{}->'')? (IF Sc expect_expr)?) -> return Sc ';'?
+return	<- (RETURN (Sc exprlist)?? (IF Sc expect_expr)?) -> return Sc ';'?
 
 funcindex	<- ({DOT/COLON} Sc {NAME} Sc funcindex?) -> index
-funcname	<- ({}->'' {NAME} Sc funcindex?) -> index
+funcname	<- (Ec {NAME} Sc funcindex?) -> index
 
 index_lcall	<- (({'['} Sc expr Sc (']'/{}->MISS_SQUARE_BRACKET) / {DOT/COLON} Sc {NAME}) Sc (index_lcall / &args)) -> index
 		 / (args (index_lcall / &args)) -> call
-var_lcall	<- ({}->'' {NAME} Sc index_lcall?) -> index
+var_lcall	<- (Ec {NAME} Sc index_lcall?) -> index
 args		<- '(' Sc opt_exprlist Sc ')' / table / String
-call		<- ({}->'' (group / var_lcall) args -> call) -> index
+call		<- (Ec (group / var_lcall) args -> call) -> index
 
 field			<- ('[' Sc expr Sc (']'/{}->MISS_SQUARE_BRACKET) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) -> field
 fieldlist		<- (field (Sc FIELD_SEP Sc field)*) -> fieldlist (Sc FIELD_SEP)?
@@ -120,7 +121,7 @@ table			<- ('{' Sc opt_fieldlist Sc ('}'/{}->MISS_BRACKET)) -> table
 
 type		<- ({ARRAY} Sc '[' type_expr Sc (']'/{}->MISS_SQUARE_BRACKET)) -> type_array
 			 / ({TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/{}->MISS_SQUARE_BRACKET)) -> type_table
-			 / ({FUNCTION} (Sc type_args / {}->'') (Sc type_return / {}->'')) -> type_function
+			 / ({FUNCTION} (Sc type_args)?? (Sc type_return)??) -> type_function
 			 / Sc {NAME/NIL} -> type
 type_expr	<- (type Sc (AND/'&') type_expr) -> type_and
 			 / (type Sc (OR/'|') type_expr) -> type_or
@@ -173,6 +174,9 @@ NUM_E	<- [eE] ({[+-]?} / {}->'+') {[0-9]+}
 Int		<- {[0-9]+NUM_E?} -> Int
 Float	<- ({[0-9]* DOT [0-9]+ NUM_E?} / {[0-9]+ DOT [0-9]* NUM_E?}) -> Float
 Hex		<- ('0' [xX] {X16+ NUM_E?}) -> Hex
+
+ScopeDef	<- {GLOBAL/LOCAL}/Ec
+Ec			<- {}->''  /* Empty Capture */
 
 WORD        <-  [a-zA-Z0-9_]
 Cut         <-  !WORD
