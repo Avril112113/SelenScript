@@ -11,6 +11,8 @@ file.__index = file
 
 
 --- results unexpected
+--- a lot of stuff will not work
+--- used for testing mostly
 function file.new_fake(parse_result)
 	local self = setmetatable({}, file)
 	self.settings = {
