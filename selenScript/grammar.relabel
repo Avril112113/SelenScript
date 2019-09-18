@@ -24,7 +24,7 @@ stmt	<- Sc (
 		 /* / LOCAL '<' NAME '>' NAME '=' expect_expr */
 		 / interface_stmt
 		 / class_stmt
-		 / expr -> STMT_EXPR
+		 / expr {} -> STMT_EXPR
 		 )
 
 _decorator_call	<- '(' Sc (exprlist/{}->MISS_DEC_ARGS) Sc ')'
@@ -43,16 +43,17 @@ for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc
 for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* END?} {}->'for each') -> UNPARSED_INPUT)) -> for_each
 function_stmt	<- (({GLOBAL})?? FUNCTION Sc funcname Sc funcbody) -> function
 				 / (ScopeDef FUNCTION Sc {NAME} Sc funcbody) -> function
-assign_stmt		<- (Ec varlist (Sc typedeflist)? Sc '=' Sc exprlist) -> assign
-				 / (Ec varlist Sc typedeflist) -> assign
-single_assign_part	<- namelist (Sc typedeflist)?? (Sc '=' Sc exprlist)??
-local_assign_stmt	<- ({LOCAL} Sc single_assign_part)  -> assign
+single_assign_part	<- namelist (Sc typedeflist)?? Sc '=' Sc exprlist
+					 / namelist Sc typedeflist
+assign_stmt		<- (Ec varlist Sc single_assign_part) -> assign
 scoped_assign_stmt	<- (ScopeDef Sc single_assign_part)  -> assign
+					 / (ScopeDef Sc namelist) -> assign
 interface_stmt	<- (ScopeDef INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* END?} {}->'interface') -> UNPARSED_INPUT)) -> interface
 
 class_block_stmt	<- Sc (
 					   ';'
-					 / assign_stmt
+							/* is not actually Global, its just so tranilation does not add 'local' if default_locals */
+					 / ({}->'global' single_assign_part) -> assign
 					 / decorator_stmt
 					 / function_stmt
 					 )

@@ -94,20 +94,30 @@ function file:changed()
 		}
 	end
 
-	local lua_output, trans = transpiler.transpile(self)
-	self.provided_deps = trans.provided_deps
-
-	if self.project ~= nil then
-		if self.settings.include_provided_deps then
-			lua_output = 'require("' .. self.project.provided_deps_require .. '")' .. lua_output
-		end
-		self:write_file(lua_output)
-		self.project:write_provided_deps()
+	local ok, lua_output, trans = pcall(transpiler.transpile, self)
+	if not ok then
+		self:add_diagnostic({
+			serverity="warn",
+			type="transpiler_error",
+			start=1,
+			finish=1,
+			msg="Transpiler Error:\n" .. tostring(lua_output)
+		})
 	else
-		if self.settings.include_provided_deps then
-			lua_output = self:str_deps() .. lua_output
+		self.provided_deps = trans.provided_deps
+
+		if self.project ~= nil then
+			if self.settings.include_provided_deps then
+				lua_output = 'require("' .. self.project.provided_deps_require .. '")' .. lua_output
+			end
+			self:write_file(lua_output)
+			self.project:write_provided_deps()
+		else
+			if self.settings.include_provided_deps then
+				lua_output = self:str_deps() .. lua_output
+			end
+			self:write_file(lua_output)
 		end
-		self:write_file(lua_output)
 	end
 end
 

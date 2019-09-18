@@ -380,12 +380,16 @@ add("class", function(self, ast)
 				goto continue
 			end
 			local stmt = deepCopy(v)
-			for i, var in ipairs(stmt.varlist) do
-				var.op = "."
+			for i, name in ipairs(stmt.varlist) do
+				-- stmt.varlist is actually always namelist
 				stmt.varlist[i] = {
 					type="index",
 					name=ast.name,
-					index=var
+					index={
+						type="index",
+						name=name,
+						op="."
+					}
 				}
 			end
 			str = str .. self:tostring(stmt)

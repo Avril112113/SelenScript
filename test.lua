@@ -1,5 +1,5 @@
 local filePath = "tests/test/test.sl"
-local print_ast = false
+local print_ast = true
 local include_provided_deps = true
 
 
@@ -28,11 +28,19 @@ for _, diag in pairs(testFile.diagnostics) do
 	if diag.fix ~= nil then
 		str = str .. "(fix: '" .. tostring(diag.fix):gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t") ..  "')"
 	end
+	if diag.type ~= nil then
+		str = str .. " (" .. diag.type .. ")"
+	end
 	print(str)
 	if diag.ast ~= nil then
 		selenScript.helpers.printAST(diag.ast)
 	end
 end
+
+--[[
+local complete_pos = 0
+print("--- Complete:" .. tostring(complete_pos) .. " ---")
+--]]
 
 --[[
 local completePos = 22
