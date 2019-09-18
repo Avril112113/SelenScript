@@ -78,13 +78,13 @@ local function climbPrecedence(data, min_precedence)
 	min_precedence = min_precedence or 1
 	local result = _climbPrecedence(data, min_precedence)
 	if #data > 0 then
-		pusherror({
+		pusherror {
 			type="internal_climbPrecedence_unparsed",
 			start=-1,
 			finish=-1,
 			msg="INTERNAL: climbPrecedence error, unparsed data",
 			ast={type="<climbPrecedence:DATA>", data}  -- not really AST but, its close ;)
-		})
+		}
 	end
 	return result
 end
@@ -125,6 +125,7 @@ local defs = {
 			msg="Expecting an expresion."
 		}
 	end,
+	-- MISS DECorator or function
 	MISS_DEC=function(pos)
 		pusherror {
 			type="miss_dec",
@@ -141,6 +142,7 @@ local defs = {
 			msg="Call to decorator must have aguments or no arguments at all."
 		}
 	end,
+	-- MISS CALL After Colon
 	MISS_CALL_AC=function(pos)
 		pusherror {
 			type="miss_call_ac",
@@ -155,6 +157,14 @@ local defs = {
 			start=pos,
 			finish=pos,
 			msg="Expected a function name."
+		}
+	end,
+	MISS_NAME=function(pos)
+		pusherror {
+			type="miss_name",
+			start=pos,
+			finish=pos,
+			msg="Expected a name."
 		}
 	end,
 	EXPECT_DO=function(start, got, finish)

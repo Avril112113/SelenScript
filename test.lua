@@ -3,6 +3,7 @@ local print_ast = true
 local include_provided_deps = true
 
 
+local relabel = require "relabel"
 local selenScript = require "selenScript"
 
 
@@ -25,7 +26,8 @@ end
 print("--- Diagnostics ---")
 for _, diag in pairs(testFile.diagnostics) do
 	local errType = diag.type or "nil"
-	local str = diag.serverity:upper() .. ":" .. errType .. " at " .. tostring(diag.start) .. ":" .. tostring(diag.finish) .. " " ..  diag.msg
+	local sl, sc = relabel.calcline(testFile.code, diag.start)
+	local str = diag.serverity:upper() .. ":" .. errType .. " at " .. tostring(sl) .. ":" .. tostring(sc) .. " " ..  diag.msg
 	if diag.fix ~= nil then
 		str = str .. "\nfix: '" .. tostring(diag.fix):gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t") ..  "'"
 	end

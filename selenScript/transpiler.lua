@@ -34,6 +34,7 @@ function transpiler.transpile(file)
 	local self = setmetatable({}, transpiler)
 	assert(file.ast ~= nil, "file.ast is nil")
 	self.file = file
+	self.add_diagnostic = file.add_diagnostic
 
 	---@type string[] @ string = provided name
 	self.provided_deps = {}
@@ -82,8 +83,8 @@ function transpiler:tostring(value, ...)
 	end
 end
 function transpiler:strexpr(value, ...)
-	local result
 	if transpiler.expr_stmts[value.type] ~= nil then
+		local result
 		self.expr_stmt_depth = self.block_depth
 		local prefixStmt = self:tostring(value, ...)
 		self.expr_stmt_depth = self.block_depth-1
@@ -137,6 +138,8 @@ add("index", function(self, ast)
 	end
 	if ast.name ~= nil then
 		str = str .. self:tostring(ast.name)
+	elseif ast.expr == nil then
+		str = "--[[ERROR]]"
 	-- special case `({})[1]` or `(""):f()` ect
 	elseif ast.index ~= nil and (ast.expr.type == "table" or ast.expr.type == "String" or ast.expr.type == "LongString" or ast.expr.type == "anon_function" or precedence.types[ast.expr.type] ~= nil) then
 		str = str .. "(" .. self:strexpr(ast.expr) .. ")"
@@ -206,7 +209,7 @@ add("assign", function(self, ast)
 	if ast.scope ~= "local" and ast.exprlist == nil then
 		return ""
 	end
-	if ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local) then
+	if ast.varlist.type ~= "varlist" and (ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local)) then
 		str = str .. "local "
 	end
 	str = str .. self:tostring(ast.varlist)
@@ -368,10 +371,11 @@ add("class", function(self, ast)
 	if ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local) then
 		str = str .. "local "
 	end
-	str = str .. ast.name .. "=__sls_createClass('" .. ast.name .. "')"
+	local name = ast.name or "--[[ERROR]]"
+	str = str .. name .. "=__sls_createClass('" .. name .. "')"
 	if ast.extendslist ~= nil then
 		for _, v in ipairs(ast.extendslist) do
-			str = str .. "table.insert(" .. ast.name .. ".__sls_inherits," .. self:strexpr(v) .. ")"
+			str = str .. "table.insert(" .. name .. ".__sls_inherits," .. self:strexpr(v) .. ")"
 		end
 	end
 	for _, v in ipairs(ast.block) do
@@ -398,7 +402,7 @@ add("class", function(self, ast)
 			stmt.expr.funcname.op = ":"
 			stmt.expr.funcname = {
 				type="index",
-				name=ast.name,
+				name=name,
 				index=stmt.expr.funcname
 			}
 			str = str .. self:tostring(stmt)
@@ -407,7 +411,7 @@ add("class", function(self, ast)
 			stmt.funcname.op = ":"
 			stmt.funcname = {
 				type="index",
-				name=ast.name,
+				name=name,
 				index=stmt.funcname
 			}
 			str = str .. self:tostring(stmt)

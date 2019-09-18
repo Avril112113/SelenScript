@@ -9,10 +9,10 @@ stmt	<- Sc (
 		 / assign_stmt
 		 / call
 		 / return
-		 / ('::' Sc {NAME} Sc '::') -> label
+		 / ('::' Sc ({NAME}/{}->MISS_NAME) Sc '::') -> label
 		 / (BREAK (Sc exprlist)?? (IF Sc expect_expr)?) -> break
 		 / (CONTINUE (IF Sc expect_expr)?) -> continue
-		 / (GOTO Sc {NAME} (IF Sc expect_expr)?) -> goto
+		 / (GOTO Sc ({NAME}/{}->MISS_NAME) (IF Sc expect_expr)?) -> goto
 		 / do_stmt
 		 / while_stmt
 		 / (REPEAT block UNTIL Sc expect_expr) -> repeat
@@ -39,16 +39,16 @@ if_stmt			<- (IF Sc expect_expr THEN block
 					(ELSE block -> else)?
 					(END / ({} {(!END .)* EXPECT_END} {}->'if') -> UNPARSED_INPUT)
 				   ) -> if
-for_range_stmt	<- (FOR Sc {NAME} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT EXPECT_END)) -> for_range
+for_range_stmt	<- (FOR Sc ({NAME}/{}->MISS_NAME) Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT EXPECT_END)) -> for_range
 for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* EXPECT_END} {}->'for each') -> UNPARSED_INPUT)) -> for_each
-function_stmt	<- (({GLOBAL})?? FUNCTION Sc (funcname/{}->MISS_FUNCNAME) Sc funcbody) -> function
-				 / (OptScopeDef FUNCTION Sc {NAME} Sc funcbody) -> function
+function_stmt	<- (Ec FUNCTION Sc (funcname/{}->MISS_FUNCNAME) Sc funcbody) -> function
+				 / (OptScopeDef FUNCTION Sc ({NAME}/{}->MISS_NAME) Sc funcbody) -> function
 assign_part		<- (typedeflist Sc)?? '=' Sc exprlist
 				 / typedeflist
 assign_stmt		<- (Ec varlist Sc assign_part) -> assign
 scoped_assign_stmt	<- (ScopeDef Sc namelist Sc assign_part)  -> assign
 					 / (ScopeDef Sc namelist) -> assign
-interface_stmt	<- (OptScopeDef INTERFACE Sc {NAME} ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT)) -> interface
+interface_stmt	<- (OptScopeDef INTERFACE Sc ({NAME}/{}->MISS_NAME) ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT)) -> interface
 
 class_block_stmt	<- Sc (
 					   ';'
@@ -58,7 +58,7 @@ class_block_stmt	<- Sc (
 					 / function_stmt
 					 )
 class_block		<- Sp* (Scc class_block_stmt* Scc) -> class_block
-class_stmt		<- (OptScopeDef CLASS Sc {NAME} (EXTENDS Sc varlist)?? (IMPLEMENTS Sc varlist)??
+class_stmt		<- (OptScopeDef CLASS Sc ({NAME}/ErrC {}->MISS_NAME) (EXTENDS Sc varlist)?? (IMPLEMENTS Sc varlist)??
 						class_block
 				   (END / ({} {(!END .)*} {}->'class') -> UNPARSED_INPUT EXPECT_END)) -> class
 
@@ -87,8 +87,8 @@ group	<- '(' Sc expect_expr Sc (')'/({} {}->')')->MISSING)
 
 index	<- (
 			 ({'['} Sc expect_expr Sc (']'/({} {}->']')->MISSING)
-		   / {DOT} Sc {NAME}
-		   / {COLON} Sc {NAME} (args index?) -> call
+		   / {DOT} Sc ({NAME}/{}->MISS_NAME)
+		   / {COLON} Sc ({NAME}/{}->MISS_NAME) (args index?) -> call
 		   ) Sc index?) -> index
 		 / (args index?) -> call
 var		<- (Ec {NAME} Sc index?) -> index
@@ -106,10 +106,10 @@ funcbody	<- (('('/({} {}->'(')->MISSING) Sc opt_parlist Sc (')'/({} {}->')')->MI
 
 return	<- (RETURN (Sc exprlist)?? (IF Sc expect_expr)?) -> return Sc ';'?
 
-funcindex	<- ({DOT/COLON} Sc {NAME} Sc funcindex?) -> index
-funcname	<- (Ec {NAME} Sc funcindex?) -> index
+funcindex	<- ({DOT/COLON} Sc ({NAME}/{}->MISS_NAME) (Sc funcindex)?) -> index
+funcname	<- (Ec {NAME} (Sc funcindex)?) -> index
 
-index_lcall	<- (({'['} Sc expr Sc (']'/({} {}->']')->MISSING) / {DOT/COLON} Sc {NAME}) Sc (index_lcall / &args)) -> index
+index_lcall	<- (({'['} Sc expr Sc (']'/({} {}->']')->MISSING) / {DOT/COLON} Sc ({NAME}/{}->MISS_NAME)) Sc (index_lcall / &args)) -> index
 		 / (args (index_lcall / &args)) -> call
 var_lcall	<- (Ec {NAME} Sc index_lcall?) -> index
 args		<- '(' Sc opt_exprlist Sc (')'/({} {}->')')->MISSING) / table / String
@@ -179,6 +179,7 @@ Hex		<- ('0' [xX] {X16+ NUM_E?}) -> Hex
 ScopeDef	<- {GLOBAL/LOCAL}
 OptScopeDef	<- ScopeDef/Ec
 Ec			<- {}->''  /* Empty Capture */
+ErrC		<- {}->'--[[ERROR]]'  /* Error Capture */
 
 WORD        <-  [a-zA-Z0-9_]
 Cut         <-  !WORD
