@@ -415,8 +415,9 @@ add("class", function(self, ast)
 				index=stmt.funcname
 			}
 			str = str .. self:tostring(stmt)
+		elseif v.type == "Comment" then
 		else
-			print("WARNING: unhandled type for class block " .. v.type)
+			print("WARNING: unhandled type for class block '" .. v.type .. "'")
 		end
 		::continue::
 	end
@@ -567,7 +568,7 @@ local binaryOperator = function(self, ast)
 		rhs = rhs .. " " end
 	if ast.operator:find("%w$") ~= nil then rhs = " " .. rhs end
 	local str = lhs .. ast.operator .. rhs
-	if doParens and not (self.next_op == ".."and ast.operator == "..") then
+	if doParens and not (self.next_op == ".." and ast.operator == "..") then
 		str = "(" .. str .. ")"
 	end
 	self.last_precedence = oldPrec
