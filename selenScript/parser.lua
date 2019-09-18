@@ -97,33 +97,16 @@ local defs = {
 			type="unparsed",
 			start=pos,
 			finish=pos,
-			msg="Unparsed input in '" .. tostring(name) .. "'\n" .. str .. "\n"
+			msg=("Unparsed input in '" .. tostring(name) .. "'\n" .. str:gsub("^[\n\r]*", "")):gsub("[\n\r]*$", "")
 		}
 	end,
-	MISS_QUOTE_D=function(pos)
+	MISSING=function(pos, missing)
 		pusherror {
-			type="miss_quote_d",
+			type="missing",
 			start=pos,
 			finish=pos,
-			msg="Missing double quote.",
-			fix="\""
-		}
-	end,
-	MISS_QUOTE_S=function(pos)
-		pusherror {
-			type="miss_quote_s",
-			start=pos,
-			finish=pos,
-			msg="Missing single quote.",
-			fix="'"
-		}
-	end,
-	MISS_BRACKET=function(pos)
-		pusherror {
-			type="miss_bracket",
-			start=pos,
-			finish=pos,
-			msg="Missing closing bracket."
+			msg="Missing '" .. missing .. "'.",
+			fix=missing
 		}
 	end,
 	MISS_LONG_BRACKET=function(pos)
@@ -132,15 +115,6 @@ local defs = {
 			start=pos,
 			finish=pos,
 			msg="Missing long string closing."
-		}
-	end,
-	MISS_SQUARE_BRACKET=function(pos)
-		pusherror {
-			type="miss_square_bracket",
-			start=pos,
-			finish=pos,
-			msg="Missing closing square bracket.",
-			fix="]"
 		}
 	end,
 	MISS_EXPR=function(pos)
@@ -173,6 +147,14 @@ local defs = {
 			start=pos,
 			finish=pos,
 			msg="Expected a call after `:`."
+		}
+	end,
+	MISS_FUNCNAME=function(pos)
+		pusherror {
+			type="miss_funcname",
+			start=pos,
+			finish=pos,
+			msg="Expected a function name."
 		}
 	end,
 	EXPECT_DO=function(start, got, finish)

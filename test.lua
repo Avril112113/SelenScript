@@ -24,12 +24,10 @@ end
 
 print("--- Diagnostics ---")
 for _, diag in pairs(testFile.diagnostics) do
-	local str = diag.serverity:upper() .. " at " .. tostring(diag.start) .. ":" .. tostring(diag.finish) .. " " ..  diag.msg
+	local errType = diag.type or "nil"
+	local str = diag.serverity:upper() .. ":" .. errType .. " at " .. tostring(diag.start) .. ":" .. tostring(diag.finish) .. " " ..  diag.msg
 	if diag.fix ~= nil then
-		str = str .. "(fix: '" .. tostring(diag.fix):gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t") ..  "')"
-	end
-	if diag.type ~= nil then
-		str = str .. " (" .. diag.type .. ")"
+		str = str .. "\nfix: '" .. tostring(diag.fix):gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t") ..  "'"
 	end
 	print(str)
 	if diag.ast ~= nil then
