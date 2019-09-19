@@ -20,10 +20,7 @@ end
 
 
 function vm:reset()
-	self.globals = {
-		content={},
-		types={}
-	}
+	self.globals = self:create_table()
 	self.current_block = nil
 end
 
@@ -58,6 +55,14 @@ function vm:run(ast, ...)
 	end
 end
 
+function vm:create_table()
+	return {
+		content={},
+		types={},
+		references={}
+	}
+end
+
 function vm:eval(ast)
 	if type(ast) == "table" and ast.type ~= nil then
 		if ast.type == "Int" then
@@ -65,16 +70,15 @@ function vm:eval(ast)
 		elseif ast.type == "String" then
 			return ast.value
 		elseif ast.type == "table" then
-			local tbl = {
-				content={},
-				types={}
-			}
+			local tbl = self:create_table()
 			for i, field in ipairs(ast.fieldlist) do
 				local key = self:eval(field.name)
 				local value = self:eval(ast.expr)
-				tbl[key] = value
+				tbl.content[key] = value
 			end
 			return tbl
+		elseif ast.type == "index" then
+			return self:get_variable(ast)
 		else
 			self.add_diagnostic {
 				serverity="error",
@@ -84,8 +88,16 @@ function vm:eval(ast)
 				msg="VM Error: missing eval support for type '" .. tostring(ast.type) .. "'"
 			}
 		end
+	elseif ast == nil then
+		return nil
 	else
-		return ast  -- might just be nil or something
+		self.add_diagnostic {
+			serverity="error",
+			type="vm_error",
+			start=1,
+			finish=1,
+			msg="VM Error: eval did not get nil or table with type field."
+		}
 	end
 end
 
@@ -101,6 +113,7 @@ function vm:get_variable(ast, ignoreLast)
 	-- find initial value
 	while true do
 		if variables.content[value] ~= nil then
+			variables.references[value] = variables.references[value] + 1
 			variables = variables.content[value]
 			indexingStr = tostring(value)
 			break
@@ -140,6 +153,7 @@ function vm:get_variable(ast, ignoreLast)
 		end
 		-- TODO: check value == nil
 		if variables.content[value] ~= nil then
+			variables.references[value] = variables.references[value] + 1
 			variables = variables.content[value]
 		else
 			self.add_diagnostic {
@@ -161,16 +175,24 @@ end
 add("block", function(self, ast)
 	local block = {
 		parent=self.current_block,
-		locals={
-			content={},
-			types={}
-		}
+		locals=self:create_table()
 	}
 	self.current_block = block
 	for i, stmt in ipairs(ast) do
 		self:run(stmt)
 	end
 	self.current_block = block.parent
+	for k, refs in pairs(block.locals.references) do
+		if refs == 0 then
+			self.add_diagnostic {
+				type="unused-variable",
+				serverity="warn",
+				start=1,
+				finish=1,
+				msg="Unused Variable " .. helpers.strValueFromType(k)
+			}
+		end
+	end
 	return block
 end)
 
@@ -186,9 +208,13 @@ add("assign", function(self, ast)
 	for i, name in ipairs(ast.varlist) do
 		local value = self:eval(ast.exprlist and ast.exprlist[i] or nil)
 		local typeInfo = ast.typelist and ast.typelist[i] or nil
+		if typeInfo == nil then
+			typeInfo = {type="type", name=value == nil and "unknown" or type(value)}
+		end
 		if type(name) == "string" then
 			variables.content[name] = value
 			variables.types[name] = typeInfo
+			variables.references[name] = 0
 		else
 			local last, indexingStr
 			variables, last, indexingStr = self:get_variable(name, true)
@@ -207,6 +233,7 @@ add("assign", function(self, ast)
 			else
 				variables.content[lastValue] = value
 				variables.types[lastValue] = typeInfo
+				variables.references[lastValue] = 0
 			end
 		end
 	end

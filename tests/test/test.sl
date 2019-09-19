@@ -1,6 +1,8 @@
-local function f()
+t = {}
+t.a = "Hi"
 
-end
+global a
+a = 1
 
-local t: table
-t.a: string
+local b = 3
+b=4

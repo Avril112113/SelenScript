@@ -1,5 +1,5 @@
 local filePath = "tests/test/test.sl"
-local print_ast = true
+local print_ast = false
 local include_provided_deps = true
 
 
@@ -68,16 +68,24 @@ local function strType(type)
 	end
 end
 local function strVariable(origin, k, v)
-	return selenScript.helpers.strValueFromType(k) .. ": " .. strType(origin.types[k]) .. " = " .. selenScript.helpers.strValueFromType(v)
+	return selenScript.helpers.strValueFromType(k) .. ": " .. strType(origin.types[k]) .. " = " .. selenScript.helpers.strValueFromType(v) .. " (Refs: " .. origin.references[k] .. ")"
 end
 local function printVmTable(slTbl, indent)
 	indent = indent or 0
 	local indentStr = string.rep("    ", indent)
+	local printed = {}
 	for k, v in pairs(slTbl.content) do
 		print(indentStr .. strVariable(slTbl, k, v))
 		if type(v) == "table" and v.content ~= nil and v.types ~= nil then
 			printVmTable(v, indent+1)
 		end
+		printed[k] = v
+	end
+	for k, v in pairs(slTbl.references) do
+		if printed[k] == nil then
+			print(indentStr .. selenScript.helpers.strValueFromType(k) .. ": " .. strType(slTbl.types[k]))
+		end
+		printed[k] = v
 	end
 end
 print("- Globals -")
