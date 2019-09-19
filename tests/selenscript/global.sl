@@ -1,1 +1,1 @@
-global someVar = 33
+global SomeVar = 33
