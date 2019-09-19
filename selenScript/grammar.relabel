@@ -85,14 +85,16 @@ value	<- NIL -> nil
 
 group	<- '(' Sc expect_expr Sc (')'/({} {}->')')->MISSING)
 
-index	<- (
-			 ({'['} Sc expect_expr Sc (']'/({} {}->']')->MISSING)
-		   / {DOT} Sc ({NAME}/{}->MISS_NAME)
-		   / {COLON} Sc ({NAME}/{}->MISS_NAME) (args index?) -> call
-		   ) Sc index?) -> index
+index	<- ({} (
+				{'['} Sc expect_expr Sc (']'/({} {}->']')->MISSING)
+			  / {DOT}   Sc ({NAME}/{}->MISS_NAME)
+		      / {COLON} Sc ({NAME}/{}->MISS_NAME) (args index?) -> call
+		       )
+			{} Sc index?
+		   ) -> index
 		 / (args index?) -> call
-var		<- (Ec {NAME} Sc index?) -> index
-		 / (Ec group Sc index) -> index
+var		<- ({} Ec {NAME} {} Sc index?) -> index
+		 / ({} Ec group {} Sc index) -> index
 
 varlist		<- (var (Sc ',' Sc var)*) -> varlist
 exprlist	<- (expr (Sc ',' Sc expect_expr)*) -> exprlist
@@ -106,14 +108,14 @@ funcbody	<- (('('/({} {}->'(')->MISSING) Sc opt_parlist Sc (')'/({} {}->')')->MI
 
 return	<- (RETURN (Sc exprlist)?? (IF Sc expect_expr)?) -> return Sc ';'?
 
-funcindex	<- ({DOT/COLON} Sc ({NAME}/{}->MISS_NAME) (Sc funcindex)?) -> index
-funcname	<- (Ec {NAME} (Sc funcindex)?) -> index
+funcindex	<- ({} {DOT/COLON} Sc ({NAME}/{}->MISS_NAME) {} (Sc funcindex)?) -> index
+funcname	<- ({} Ec {NAME} {} (Sc funcindex)?) -> index
 
-index_lcall	<- (({'['} Sc expr Sc (']'/({} {}->']')->MISSING) / {DOT/COLON} Sc ({NAME}/{}->MISS_NAME)) Sc (index_lcall / &args)) -> index
+index_lcall	<- ({} ({'['} Sc expr Sc (']'/({} {}->']')->MISSING) / {DOT/COLON} Sc ({NAME}/{}->MISS_NAME)) {} Sc (index_lcall / &args)) -> index
 		 / (args (index_lcall / &args)) -> call
-var_lcall	<- (Ec {NAME} Sc index_lcall?) -> index
+var_lcall	<- ({} Ec {NAME} {} Sc index_lcall?) -> index
 args		<- '(' Sc opt_exprlist Sc (')'/({} {}->')')->MISSING) / table / String
-call		<- (Ec (group / var_lcall) args -> call) -> index
+call		<- ({} Ec (group / var_lcall) {} args -> call) -> index
 
 field			<- ('[' Sc expr Sc (']'/({} {}->']')->MISSING) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) -> field
 fieldlist		<- (field (Sc FIELD_SEP Sc field)*) -> fieldlist (Sc FIELD_SEP)?
@@ -122,22 +124,21 @@ table			<- ('{' Sc opt_fieldlist Sc ('}'/({} {}->'}')->MISSING)) -> table
 
 type		<- ({ARRAY} Sc '[' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_array
 			 / ({TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_table
-			 / ({FUNCTION} (Sc type_args)?? (Sc type_return)??) -> type_function
+			 / (FUNCTION (Sc type_args)?? (Sc type_return)??) -> type_function
 			 / Sc {NAME/NIL} -> type
-type_expr	<- (type Sc (AND/'&') type_expr) -> type_and
-			 / (type Sc (OR/'|') type_expr) -> type_or
+type_expr	<- (type Sc (OR/'|' Sc) type_expr) -> type_or
 			 / type
 typelist	<- (type_expr (Sc ',' Sc type_expr)*) -> typelist
 
-type_args	<- '(' opt_parlist Sc (')'/({} {}->')')->MISSING)
+type_args	<- '(' Sc opt_parlist Sc (')'/({} {}->')')->MISSING)
 type_return	<- '->' Sc type_expr
 typedef		<- ':' Sc type_expr
 typedeflist	<- ':' Sc typelist
 
 /* The rest of the needed stuff */
-Sc	<- {:_:Scc:} /* Space Comments (stops captureing anything, its complicated ish)*/
-Scc	<- (Comment / Sp)* /* Space Comments Capture */
-Sp	<- ' ' / %nl / %esc_t /* SPace */
+Sc	<- {:_:Scc:}  /* Space Comments (stops captureing anything, its complicated ish)*/
+Scc	<- (Comment / Sp)*  /* Space Comments Capture */
+Sp	<- ' ' / %nl / %esc_t  /* SPace */
 
 Esc		<- '\' EChar
 EChar	<- 'a'

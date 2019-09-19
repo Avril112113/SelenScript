@@ -1,4 +1,5 @@
 local provided = require "selenScript.provided"
+local common = require "selenScript.ast_common"
 
 local precedence = require "selenScript.precedence"
 local unaryOpData = precedence.unaryOpData
@@ -34,7 +35,9 @@ function transpiler.transpile(file)
 	local self = setmetatable({}, transpiler)
 	assert(file.ast ~= nil, "file.ast is nil")
 	self.file = file
-	self.add_diagnostic = file.add_diagnostic
+	self.add_diagnostic = function(tbl)
+		file:add_diagnostic(tbl)
+	end
 
 	---@type string[] @ string = provided name
 	self.provided_deps = {}
@@ -73,7 +76,13 @@ function transpiler:tostring(value, ...)
 	if type(value) == "table" and value.type ~= nil then
 		local f = self[value.type]
 		if f == nil then
-			print("ERROR: missing transpile function '" .. tostring(value.type) .. "'")
+			self.add_diagnostic {
+				serverity="error",
+				type="transpiler_error",
+				start=1,
+				finish=1,
+				msg="Transpiler Error: missing transpile function '" .. tostring(value.type) .. "'"
+			}
 			return " "
 		else
 			return f(self, value, ...)
@@ -109,7 +118,13 @@ end
 function transpiler:addProvidedDep(name)
 	local providedData = provided[name]
 	if providedData == nil then
-		print("WARNING: provided dep not found " .. name)
+		self.add_diagnostic {
+			serverity="warn",
+			type="transpiler_error",
+			start=1,
+			finish=1,
+			msg="Transpiler Warning: provided dep not found " .. name
+		}
 	else
 		self.provided_deps[name] = providedData
 		for _, v in pairs(providedData.deps) do
@@ -126,7 +141,13 @@ add("block", function(self, ast)
 	end
 	self.block_depth = self.block_depth - 1
 	if #self.expr_stmt_codes > 0 then
-		print("WARNING: unexpected results may be caused by expr_stmt_codes not being empty at end of block.")
+		self.add_diagnostic {
+			serverity="warn",
+			type="transpiler_error",
+			start=1,
+			finish=1,
+			msg="Transpiler Warning: unexpected results may be caused by expr_stmt_codes not being empty at end of block."
+		}
 	end
 	return str
 end)
@@ -209,7 +230,7 @@ add("assign", function(self, ast)
 	if ast.scope ~= "local" and ast.exprlist == nil then
 		return ""
 	end
-	if ast.varlist.type ~= "varlist" and (ast.scope == "local" or (ast.scope == "" and self.file.settings.default_local)) then
+	if common.assign_local(ast, self.file) then
 		str = str .. "local "
 	end
 	str = str .. self:tostring(ast.varlist)
@@ -417,7 +438,13 @@ add("class", function(self, ast)
 			str = str .. self:tostring(stmt)
 		elseif v.type == "Comment" then
 		else
-			print("WARNING: unhandled type for class block '" .. v.type .. "'")
+			self.add_diagnostic {
+				serverity="warn",
+				type="transpiler_error",
+				start=1,
+				finish=1,
+				msg="Transpiler Warning: unhandled type for class block '" .. v.type .. "'"
+			}
 		end
 		::continue::
 	end

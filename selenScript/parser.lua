@@ -482,7 +482,7 @@ local defs = {
 		}
 	end,
 
-	index=function(op, nameOrExpr, index)
+	index=function(start, op, nameOrExpr, finish, index)
 		local name
 		local expr
 		if type(nameOrExpr) == "string" then
@@ -492,6 +492,8 @@ local defs = {
 		end
 		return {
 			type="index",
+			start=start,
+			finish=finish,
 			op=op,
 			name=name,
 			expr=expr,
@@ -601,6 +603,11 @@ local defs = {
 	end,
 
 	-- Typeing
+	typelist=function(...)
+		local t = {...}
+		if t[1] == "" and #t == 1 then return {type="typelist"} end
+		return {type="typelist", ...}
+	end,
 	type=function(name)
 		return {
 			type="type",
@@ -609,38 +616,24 @@ local defs = {
 	end,
 	type_array=function(name, valuetype)
 		return {
-			type="type",
+			type="type_array",
 			name=name,
 			valuetype=valuetype
 		}
 	end,
 	type_table=function(name, keytype, valuetype)
 		return {
-			type="type",
+			type="type_table",
 			name=name,
 			keytype=keytype,
 			valuetype=valuetype
 		}
 	end,
-	type_function=function(name, type_args, type_return)
+	type_function=function(type_args, type_return)
 		return {
-			type="type",
-			name=name,
+			type="type_function",
 			type_args=type_args,
 			type_return=type_return
-		}
-	end,
-	typelist=function(...)
-		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="typelist"} end
-		return {type="typelist", ...}
-	end,
-
-	type_and=function(a, b)
-		return {
-			type="type_and",
-			a=a,
-			b=b
 		}
 	end,
 	type_or=function(a, b)

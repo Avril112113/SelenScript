@@ -1,7 +1,7 @@
 local parse = require("selenScript.parser").parse
 local transpiler = require "selenScript.transpiler"
-local provided = require "selenScript.provided"
 local helpers = require "selenScript.helpers"
+local vm = require "selenScript.vm"
 
 local default = helpers.default_value
 
@@ -94,21 +94,23 @@ function file:changed()
 		}
 	end
 
+	self:create_new_vm()
+
 	local ok, lua_output, trans = pcall(transpiler.transpile, self)
 	if not ok then
-		self:add_diagnostic({
+		self:add_diagnostic {
 			serverity="warn",
 			type="transpiler_error",
 			start=1,
 			finish=1,
 			msg="Transpiler Error:\n" .. tostring(lua_output)
-		})
+		}
 	else
 		self.provided_deps = trans.provided_deps
 
 		if self.project ~= nil then
 			if self.settings.include_provided_deps then
-				lua_output = 'require("' .. self.project.provided_deps_require .. '")' .. lua_output
+				lua_output = 'require"' .. self.project.provided_deps_require .. '"\n' .. lua_output
 			end
 			self:write_file(lua_output)
 			self.project:write_provided_deps()
@@ -118,6 +120,35 @@ function file:changed()
 			end
 			self:write_file(lua_output)
 		end
+	end
+end
+
+function file:create_new_vm()
+	local ok, errOrVm = pcall(vm.new, self.ast, self)
+	if not ok then
+		self:add_diagnostic {
+			serverity="warn",
+			type="vm_create_error",
+			start=1,
+			finish=1,
+			msg="VM Creation Error:\n" .. tostring(errOrVm)
+		}
+	else
+		self.vm = errOrVm
+	end
+end
+function file:run_vm()
+	local ok, errOrBlock = pcall(self.vm.run, self.vm, self.ast)
+	if not ok then
+		self:add_diagnostic {
+			serverity="warn",
+			type="vm_run_error",
+			start=1,
+			finish=1,
+			msg="VM Run Error:\n" .. tostring(errOrBlock)
+		}
+	else
+		self.vm.block = errOrBlock
 	end
 end
 

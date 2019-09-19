@@ -1,5 +1,5 @@
 local filePath = "tests/test/test.sl"
-local print_ast = false
+local print_ast = true
 local include_provided_deps = true
 
 
@@ -37,15 +37,59 @@ for _, diag in pairs(testFile.diagnostics) do
 	end
 end
 
---[[
-local complete_pos = 0
-print("--- Complete:" .. tostring(complete_pos) .. " ---")
---]]
+print("--- VM ---")
+local function strType(type)
+	if type == nil then return "unknown" end
+	if type.type == "type" then
+		return type.name
+	elseif type.type == "type_array" then
+		return type.name .. "[" .. strType(type.valuetype) .. "]"
+	elseif type.type == "type_table" then
+		return type.name .. "[" .. strType(type.keytype) .. "=" .. strType(type.valuetype) .. "]"
+	elseif type.type == "type_function" then
+		local str = "function"
+		if type.type_args ~= nil then
+			str = str .. "("
+			for i, arg in ipairs(type.type_args) do
+				if i > 1 then str = str .. "," end
+				str = str .. arg.name
+				if arg.param_type ~= nil then
+					str = str .. ":" .. strType(arg.param_type)
+				end
+			end
+			str = str .. ")"
+		end
+		if type.type_return ~= nil then
+			str = str .. "->" .. strType(type.type_return)
+		end
+		return str
+	else
+		return "<Unknown:" .. tostring(type.type) .. ">"
+	end
+end
+local function strVariable(origin, k, v)
+	return selenScript.helpers.strValueFromType(k) .. ": " .. strType(origin.types[k]) .. " = " .. selenScript.helpers.strValueFromType(v)
+end
+local function printVmTable(slTbl, indent)
+	indent = indent or 0
+	local indentStr = string.rep("    ", indent)
+	for k, v in pairs(slTbl.content) do
+		print(indentStr .. strVariable(slTbl, k, v))
+		if type(v) == "table" and v.content ~= nil and v.types ~= nil then
+			printVmTable(v, indent+1)
+		end
+	end
+end
+print("- Globals -")
+printVmTable(testFile.vm.globals)
+print("- Main Block Variables -")
+printVmTable(testFile.vm.block.locals)
 
 --[[
-local completePos = 22
-local completions = testFile:complete(completePos)
+local complete_pos = 7
+print("--- Complete:" .. tostring(complete_pos) .. " ---")
+local completions = testFile:complete(complete_pos)
 for i, v in ipairs(completions) do
-	print(i, v)
+	print(v)
 end
 --]]
