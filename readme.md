@@ -17,18 +17,22 @@ Please note that the syntax may change as this is work in progress!
 The syntax of SelenScript is directly a extension of Lua 5.4  
 This dose not mean you can't use it for other Lua versions (propper support maybe added later)  
 
-Typing in the syntax  
+Typing info 
 ```Lua
 local a: number
 local b: int|float  -- same as number
 local c: string or nil  -- you can use the pipe or `or`
 d: function  -- also works on globals
 e: function(arg: string) -> string  -- also can do function type definitions
-function e(arg: string) -> string
+-- this function will be typed by the typing info just above
+function e(arg)
 	return "Nah..."
 end
-f: table[string=number]
-g: array[string]
+function f(foo: number) -> number
+	return -foo
+end
+g: table[string=number]
+h: array[string]
 ```
 
 `continue` works like any other language  
