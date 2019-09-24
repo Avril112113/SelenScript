@@ -15,7 +15,7 @@ it was recommended by DreadberryJam from a discord server i talk in.
 ## Syntax
 Please note that the syntax may change as this is work in progress!  
 The syntax of SelenScript is directly a extension of Lua 5.4  
-This dose not mean you can't use it for other Lua versions (propper support maybe added later)  
+This dose not mean you can't use it for other Lua versions (proper support maybe added later)  
 
 Typing info 
 ```Lua
@@ -54,7 +54,7 @@ for i, v in pairs(t) do
 end
 ```
 
-Iinline `if`  
+Inline `if`  
 ```Lua
 foo = 100
 bar = foo if foo >= 100 else foo+100  -- Bar: 100
@@ -83,7 +83,7 @@ break if baz == "baz"
 continue if baz == "baz"
 ```
 
-Expresion statements  
+expression statements  
 NOTE: versions prior to (LuaJIT/Lua5.2+) may not support this as it use's goto  
 ```Lua
 foo = while true do
@@ -98,16 +98,6 @@ baz = for i,v in pairs(t) do
 	break v if v == "baz"
 	-- basically if nothing 'returned' a value then Lua's default is used `nil`
 end
-```
-
-Runtime type checking  
-NOTE: this is only a concept right now, and has not been thought thru  
-```Lua
-local foo = 33
-print(foo istype number)  -- Result: true
-print(foo istype string)  -- Result: false
-local tbl = {["hi"]=true}
-print(tbl istype table[string=bool])  -- Result: true
 ```
 
 Class's  
@@ -162,7 +152,7 @@ interface Jsonable
 end
 class Person implements Jsonable, FooBar
 	foo = "hi from a class"
-	bar: number  -- wants explisit definition
+	bar: number  -- wants explicit definition
 
 	function jsonify(self)
 		return self.foo
@@ -192,7 +182,7 @@ function foo(a)
 end
 foo = default(foo, 3)
 
--- the reason we deinfe the function first then redefine with the dectorator it instead of just using
+-- the reason we define the function first then redefine with the decorator it instead of just using
 -- it directly as an argument to the decorator is because for example
 -- `function t:foo() end`, we want to preserve the special nature of `:`
 
@@ -217,19 +207,19 @@ All Lua's reserved words and any that SelenScript provides like `interface` ect
 also variables starting with `__sls` is reserved, using these may cause unexpected results  
 
 ## Notes
-Using an expresion statments in a format string may cause unexpected results  
-you can still use a return in a `do` statement without using it as a expresion, but it will work as it would in Lua for example  
+Using an expression statements in a format string may cause unexpected results  
+you can still use a return in a `do` statement without using it as a expression, but it will work as it would in Lua for example  
 ```Lua
 function gz(b)
 	if b then goto later end
 	do
-		return "early happend"
+		return "early happened"
 	end
 	::later::
-	return "later happend"
+	return "later happened"
 end
 ```
-would return from the function and not the `do` statement as its not used as an expresion statement  
+would return from the function and not the `do` statement as its not used as an expression statement  
 
 ## Types
 `any` can be anything  
