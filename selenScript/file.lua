@@ -66,14 +66,14 @@ function file.new(settings)
 end
 
 function file:changed()
-	local f = io.open(self.settings.path, "r")
+	local f = io.open(self:get_src_path(), "r")
 	if f == nil then
 		self:add_diagnostic {
 			serverity="warn",
 			type="file_not_found",
 			start=1,
 			finish=1,
-			msg="failed to open file '" .. self.path .. "'"
+			msg="failed to open file '" .. self:get_src_path() .. "'"
 		}
 		return
 	end
@@ -182,9 +182,16 @@ end
 function file:get_output_path()
 	local path = self.settings.path
 	if self.project ~= nil then
-		path = self.project.out_dir .. "/" .. path:gsub("^" .. self.project.out_dir, "")
+		path = self.project.out_dir .. "/" .. path
 	end
-	return self.settings.path:gsub("%.sl$", "") .. ".lua"
+	return helpers.cleanupPath(path:gsub("%..+$", "") .. ".lua")
+end
+function file:get_src_path()
+	local path = self.settings.path
+	if self.project ~= nil then
+		path = self.project.src_dir .. "/" .. path
+	end
+	return helpers.cleanupPath(path)
 end
 
 function file:str_deps()

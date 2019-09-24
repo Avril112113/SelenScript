@@ -1,13 +1,11 @@
--- currently using love2d as this laptop does not have luajit setup, and love2d use's luajit
+local verstr = _VERSION:sub(5)
 
-package.path = package.path .. ";libs/?.lua;libs/?/init.lua"
-package.cpath = package.cpath .. ";libs/?.dll"
+package.path = "?/init.lua;libs/?.lua;libs/?/init.lua;libs/?/?.lua;" .. package.path
+package.cpath = "libs/" .. verstr .. "/?.dll;libs/?.dll;" .. package.cpath
 require "printToFile"
 
 
-function love.load(...)
-	local args = ({...})[1]
-
+local function run(args)
 	for _, file in ipairs(args) do
 		file = file:gsub("%.lua$", "")
 		print("------ Running:" .. file .. ".lua ------")
@@ -17,4 +15,14 @@ function love.load(...)
 
 	print("Exit.")
 	os.exit()
+end
+
+
+if love ~= nil then
+	function love.load(...)
+		run(({...})[1])
+	end
+else
+	local args = {...}
+	run(args)
 end

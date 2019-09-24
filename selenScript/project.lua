@@ -9,8 +9,8 @@ project.__index = project
 function project.new(settings)
 	local self = setmetatable({}, project)
 
-	self.src_dir = settings.src_dir or error("setting.src_dir was omitted")
-	self.out_dir = settings.out_dir or settings.src_dir
+	self.src_dir = helpers.cleanupPath(settings.src_dir or error("setting.src_dir was omitted"))
+	self.out_dir = helpers.cleanupPath(settings.out_dir or settings.src_dir)
 
 	self.provided_deps_out = settings.provided_deps_out or self.out_dir .. "/__sls_provided_deps.lua"
 	self.provided_deps_require = settings.provided_deps_require or "__sls_provided_deps"

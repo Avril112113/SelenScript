@@ -1,8 +1,7 @@
-t = {}
-t.a = "Hi"
+t: table
 
-global a
-a = 1
+t:b()
+f().t = 123
 
-local b = 3
-b=4
+
+t:b {}

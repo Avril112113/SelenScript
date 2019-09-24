@@ -181,6 +181,10 @@ local function default_globals()
 	}
 end
 
+local function cleanupPath(path)
+	return path:gsub("\\", "/"):gsub("//", "/"):gsub("/$", "")
+end
+
 
 return {
 	strValueFromType=strValueFromType,
@@ -192,5 +196,6 @@ return {
 	default_value=default_value,
 	str_dep=str_dep,
 	default_globals=default_globals,
-	default_global_any=default_global_any
+	default_global_any=default_global_any,
+	cleanupPath=cleanupPath
 }

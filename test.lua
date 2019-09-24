@@ -1,5 +1,5 @@
-local filePath = "tests/test/test.sl"
-local print_ast = false
+local filePath = "test.sl"  -- relitive to src_dir
+local print_ast = true
 local include_provided_deps = true
 
 
