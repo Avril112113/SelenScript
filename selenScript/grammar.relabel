@@ -46,8 +46,7 @@ function_stmt	<- (Ec FUNCTION Sc (funcname/{}->MISS_FUNCNAME) Sc funcbody) -> fu
 assign_part		<- (typedeflist Sc)?? '=' Sc exprlist
 				 / typedeflist
 assign_stmt		<- (Ec varlist Sc assign_part) -> assign
-scoped_assign_stmt	<- (ScopeDef Sc namelist Sc assign_part)  -> assign
-					 / (ScopeDef Sc namelist) -> assign
+scoped_assign_stmt	<- (ScopeDef Sc namelist (Sc assign_part)??)  -> assign
 interface_stmt	<- (OptScopeDef INTERFACE Sc ({NAME}/{}->MISS_NAME) ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT)) -> interface
 
 class_block_stmt	<- Sc (
@@ -88,10 +87,10 @@ group	<- '(' Sc expect_expr Sc (')'/({} {}->')')->MISSING)
 index	<- ({} (
 				{'['} Sc expect_expr Sc (']'/({} {}->']')->MISSING)
 			  / {DOT}   Sc ({NAME}/{}->MISS_NAME)
-		      / {COLON} Sc ({NAME}/{}->MISS_NAME) (args index?) -> call
 		       )
 			{} Sc index?
 		   ) -> index
+		 / ({} {COLON} Sc ({NAME}/{}->MISS_NAME) {} (args index?) -> call) -> index
 		 / (args index?) -> call
 var		<- ({} Ec {NAME} {} Sc index?) -> index
 		 / ({} Ec group {} Sc index) -> index
@@ -109,10 +108,13 @@ funcbody	<- (('('/({} {}->'(')->MISSING) Sc opt_parlist Sc (')'/({} {}->')')->MI
 return	<- (RETURN (Sc exprlist)?? (IF Sc expect_expr)?) -> return Sc ';'?
 
 funcindex	<- ({} {DOT/COLON} Sc ({NAME}/{}->MISS_NAME) {} (Sc funcindex)?) -> index
-funcname	<- ({} Ec {NAME} {} (Sc funcindex)?) -> index
+funcname	<- ({} Ec             ({NAME}/{}->MISS_NAME) {} (Sc funcindex)?) -> index
 
-index_lcall	<- ({} ({'['} Sc expr Sc (']'/({} {}->']')->MISSING) / {DOT/COLON} Sc ({NAME}/{}->MISS_NAME)) {} Sc (index_lcall / &args)) -> index
-		 / (args (index_lcall / &args)) -> call
+index_lcall	<- ({} (
+					{'['} Sc expr Sc (']'/({} {}->']')->MISSING)
+				  / {DOT/COLON} Sc ({NAME}/{}->MISS_NAME)
+				) {} Sc (index_lcall / &args)) -> index
+			 / (args (index_lcall / &args)) -> call
 var_lcall	<- ({} Ec {NAME} {} Sc index_lcall?) -> index
 args		<- '(' Sc opt_exprlist Sc (')'/({} {}->')')->MISSING) / table / String
 call		<- ({} Ec (group / var_lcall) {} args -> call) -> index
@@ -125,7 +127,7 @@ table			<- ('{' Sc opt_fieldlist Sc ('}'/({} {}->'}')->MISSING)) -> table
 type		<- ({ARRAY} Sc '[' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_array
 			 / ({TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_table
 			 / (FUNCTION (Sc type_args)?? (Sc type_return)??) -> type_function
-			 / Sc {NAME/NIL} -> type
+			 / Sc {NAME/NIL} -> type !(Sc args)
 type_expr	<- (type Sc (OR/'|' Sc) type_expr) -> type_or
 			 / type
 typelist	<- (type_expr (Sc ',' Sc type_expr)*) -> typelist
