@@ -202,10 +202,10 @@ end)
 add("return", function(self, ast)
 	local str = ""
 	if self.expr_stmt_depth+1 == self.block_depth then
-		if ast.exprlist ~= nil then
-			local exprs = self:tostring(ast.exprlist)
+		if ast.expr_list ~= nil then
+			local exprs = self:tostring(ast.expr_list)
 			local names = {}
-			for i=1,#ast.exprlist do
+			for i=1,#ast.expr_list do
 				names[i] = self:getReserveName()
 			end
 			local assigns = table.concat(names, ",") .. "=" .. exprs .. ";"
@@ -216,7 +216,7 @@ add("return", function(self, ast)
 		self.doreturn[self.doreturn_depth] = name
 		str = str .. "goto " .. name
 	else
-		str = "return " .. self:tostring(ast.exprlist)
+		str = "return " .. self:tostring(ast.expr_list)
 	end
 	if ast.stmt_if ~= nil then
 		str = "if " .. self:tostring(ast.stmt_if) .. " then " .. str .. " end"
@@ -227,15 +227,15 @@ end)
 add("assign", function(self, ast)
 	local str = ""
 	-- if its a global variable that has a type and no value (invalid Lua syntax)
-	if ast.scope ~= "local" and ast.exprlist == nil then
+	if ast.scope ~= "local" and ast.expr_list == nil then
 		return ""
 	end
 	if common.assign_local(ast, self.file) then
 		str = str .. "local "
 	end
-	str = str .. self:tostring(ast.varlist)
-	if ast.exprlist ~= nil then
-		str = str .. "=" .. self:tostring(ast.exprlist)
+	str = str .. self:tostring(ast.var_list)
+	if ast.expr_list ~= nil then
+		str = str .. "=" .. self:tostring(ast.expr_list)
 	end
 	return self:getExprStmtCode() .. str .. "\n"
 end)
@@ -245,10 +245,10 @@ end)
 add("break", function(self, ast)
 	local str = "break"
 	if self.expr_stmt_depth+1 == self.block_depth then
-		if ast.exprlist ~= nil then
-			local exprs = self:tostring(ast.exprlist)
+		if ast.expr_list ~= nil then
+			local exprs = self:tostring(ast.expr_list)
 			local names = {}
-			for i=1,#ast.exprlist do
+			for i=1,#ast.expr_list do
 				names[i] = self:getReserveName()
 			end
 			local assigns = table.concat(names, ",") .. "=" .. exprs .. ";"
@@ -349,7 +349,7 @@ end)
 add("for_each", function(self, ast)
 	local old_continuelabel_depth = self.continuelabel_depth
 	self.continuelabel_depth = self.block_depth
-	local str = "for " .. self:tostring(ast.namelist) .. " in " .. self:tostring(ast.exprlist) .. " do\n" .. self:tostring(ast.block)
+	local str = "for " .. self:tostring(ast.name_list) .. " in " .. self:tostring(ast.expr_list) .. " do\n" .. self:tostring(ast.block)
 	if self.continuelabel[self.continuelabel_depth] ~= nil then
 		str = str .. "::" .. self.continuelabel[self.continuelabel_depth] .. "::\n"
 		table.remove(self.continuelabel, self.continuelabel_depth)
@@ -394,20 +394,20 @@ add("class", function(self, ast)
 	end
 	local name = ast.name or "--[[ERROR]]"
 	str = str .. name .. "=__sls_createClass('" .. name .. "')"
-	if ast.extendslist ~= nil then
-		for _, v in ipairs(ast.extendslist) do
+	if ast.extends_list ~= nil then
+		for _, v in ipairs(ast.extends_list) do
 			str = str .. "table.insert(" .. name .. ".__sls_inherits," .. self:strexpr(v) .. ")"
 		end
 	end
 	for _, v in ipairs(ast.block) do
 		if v.type == "assign" then
-			if v.exprlist == nil then
+			if v.expr_list == nil then
 				goto continue
 			end
 			local stmt = deepCopy(v)
-			for i, name in ipairs(stmt.varlist) do
-				-- stmt.varlist is actually always namelist
-				stmt.varlist[i] = {
+			for i, name in ipairs(stmt.var_list) do
+				-- stmt.var_list is actually always namelist
+				stmt.var_list[i] = {
 					type="index",
 					name=ast.name,
 					index={
@@ -451,7 +451,7 @@ add("class", function(self, ast)
 	return self:getExprStmtCode() .. str
 end)
 
-add("exprlist", function(self, ast)
+add("expr_list", function(self, ast)
 	local str = ""
 	for i, v in ipairs(ast) do
 		str = str .. self:strexpr(v)
@@ -461,7 +461,7 @@ add("exprlist", function(self, ast)
 	end
 	return str
 end)
-add("varlist", function(self, ast)
+add("var_list", function(self, ast)
 	local str = ""
 	for i, v in ipairs(ast) do
 		str = str .. self:tostring(v)
@@ -471,7 +471,7 @@ add("varlist", function(self, ast)
 	end
 	return str
 end)
-add("namelist", function(self, ast)
+add("name_list", function(self, ast)
 	local str = ""
 	for i, v in ipairs(ast) do
 		str = str .. self:tostring(v)
@@ -481,7 +481,7 @@ add("namelist", function(self, ast)
 	end
 	return str
 end)
-add("fieldlist", function(self, ast)
+add("field_list", function(self, ast)
 	local str = ""
 	for i, v in ipairs(ast) do
 		str = str .. self:tostring(v)
@@ -496,7 +496,7 @@ end)
 add("param", function(self, ast)
 	return self:tostring(ast.name)
 end)
-add("parlist", function(self, ast)
+add("par_list", function(self, ast)
 	local str = ""
 	for i, v in ipairs(ast) do
 		str = str .. self:tostring(v)
@@ -569,7 +569,7 @@ add("nil", function(self, ast)
 	return "(" .. self:tostring(ast.value) .. ")"
 end)
 add("table", function(self, ast)
-	return "{" .. self:tostring(ast.fieldlist) .. "}"
+	return "{" .. self:tostring(ast.field_list) .. "}"
 end)
 add("anon_function", function(self, ast)
 	return "function" .. self:tostring(ast.body)
@@ -637,7 +637,7 @@ add("LongComment", function(self, ast) return "" end)
 
 -- Types
 add("type", function(self, ast) return "" end)
-add("typelist", function(self, ast) return "" end)
+add("type_list", function(self, ast) return "" end)
 add("type_and", function(self, ast) return "" end)
 add("type_or", function(self, ast) return "" end)
 

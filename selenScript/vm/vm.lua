@@ -71,7 +71,7 @@ function vm:eval(ast)
 			return ast.value
 		elseif ast.type == "table" then
 			local tbl = self:create_table()
-			for i, field in ipairs(ast.fieldlist) do
+			for i, field in ipairs(ast.field_list) do
 				local key = self:eval(field.name)
 				local value = self:eval(ast.expr)
 				tbl.content[key] = value
@@ -205,9 +205,9 @@ add("assign", function(self, ast)
 		variables = self.globals
 	end
 
-	for i, name in ipairs(ast.varlist) do
-		local value = self:eval(ast.exprlist and ast.exprlist[i] or nil)
-		local typeInfo = ast.typelist and ast.typelist[i] or nil
+	for i, name in ipairs(ast.var_list) do
+		local value = self:eval(ast.expr_list and ast.expr_list[i] or nil)
+		local typeInfo = ast.type_list and ast.type_list[i] or nil
 		if typeInfo == nil then
 			typeInfo = {type="type", name=value == nil and "unknown" or type(value)}
 		end

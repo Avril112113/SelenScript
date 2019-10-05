@@ -224,10 +224,20 @@ local defs = {
 	assign=function(scope, varlist, typelist, exprlist)
 		return {
 			type="assign",
-			varlist=varlist,
-			typelist=typelist,
-			exprlist=exprlist,
+			var_list=varlist,
+			type_list=typelist,
+			expr_list=exprlist,
 			scope=scope
+		}
+	end,
+	attrib_assign=function(scope, attrib, name, typedef, expr)
+		return {
+			type="assign",
+			var_list={type="name_list", name},
+			type_list={type="type_list", typedef},
+			expr_list={type="expr_list", expr},
+			scope=scope,
+			attrib=attrib
 		}
 	end,
 	label=function(label)
@@ -237,10 +247,10 @@ local defs = {
 		}
 	end,
 	["break"]=function(exprlist, stmt_if)
-		if exprlist == "" then exprlist = {type="exprlist"} end
+		if exprlist == "" then exprlist = {type="expr_list"} end
 		return {
 			type="break",
-			exprlist=exprlist,
+			expr_list=exprlist,
 			stmt_if=stmt_if
 		}
 	end,
@@ -341,8 +351,8 @@ local defs = {
 	for_each=function(namelist, exprlist, block)
 		return {
 			type="for_each",
-			namelist=namelist,
-			exprlist=exprlist,
+			name_list=namelist,
+			expr_list=exprlist,
 			block=block
 		}
 	end,
@@ -367,8 +377,8 @@ local defs = {
 			type="class",
 			scope=scope,
 			name=name,
-			extendslist=extendslist,
-			implementslist=implementslist,
+			extends_list=extendslist,
+			implements_list=implementslist,
 			block=block
 		}
 	end,
@@ -467,7 +477,7 @@ local defs = {
 		end
 		return {
 			type="table",
-			fieldlist=fieldlist
+			field_list=fieldlist
 		}
 	end,
 	["anon_function"]=function(body)
@@ -531,10 +541,10 @@ local defs = {
 		}
 	end,
 	["return"]=function(exprlist, stmt_if)
-		if exprlist == "" then exprlist = {type="exprlist"} end
+		if exprlist == "" then exprlist = {type="expr_list"} end
 		return {
 			type="return",
-			exprlist=exprlist,
+			expr_list=exprlist,
 			stmt_if=stmt_if
 		}
 	end,
@@ -543,30 +553,30 @@ local defs = {
 		return climbPrecedence({...})
 	end,
 
-	varlist=function(...)
+	var_list=function(...)
 		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="varlist"} end
-		return {type="varlist", ...}
+		if t[1] == "" and #t == 1 then return {type="var_list"} end
+		return {type="var_list", ...}
 	end,
-	exprlist=function(...)
+	expr_list=function(...)
 		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="exprlist"} end
-		return {type="exprlist", ...}
+		if t[1] == "" and #t == 1 then return {type="expr_list"} end
+		return {type="expr_list", ...}
 	end,
-	namelist=function(...)
+	name_list=function(...)
 		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="namelist"} end
-		return {type="namelist", ...}
+		if t[1] == "" and #t == 1 then return {type="name_list"} end
+		return {type="name_list", ...}
 	end,
-	fieldlist=function(...)
+	field_list=function(...)
 		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="fieldlist"} end
-		return {type="fieldlist", ...}
+		if t[1] == "" and #t == 1 then return {type="field_list"} end
+		return {type="field_list", ...}
 	end,
-	decoratorlist=function(...)
+	decorator_list=function(...)
 		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="decoratorlist"} end
-		return {type="decoratorlist", ...}
+		if t[1] == "" and #t == 1 then return {type="decorator_list"} end
+		return {type="decorator_list", ...}
 	end,
 
 	param=function(name, param_type)
@@ -576,10 +586,10 @@ local defs = {
 			param_type=param_type
 		}
 	end,
-	parlist=function(...)
+	par_list=function(...)
 		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="parlist"} end
-		return {type="parlist", ...}
+		if t[1] == "" and #t == 1 then return {type="par_list"} end
+		return {type="par_list", ...}
 	end,
 
 	Comment=function(comment)
@@ -603,10 +613,10 @@ local defs = {
 	end,
 
 	-- Typeing
-	typelist=function(...)
+	type_list=function(...)
 		local t = {...}
-		if t[1] == "" and #t == 1 then return {type="typelist"} end
-		return {type="typelist", ...}
+		if t[1] == "" and #t == 1 then return {type="type_list"} end
+		return {type="type_list", ...}
 	end,
 	type=function(name)
 		return {

@@ -10,7 +10,7 @@ stmt	<- Sc (
 		 / call
 		 / return
 		 / ('::' Sc ({NAME}/{}->MISS_NAME) Sc '::') -> label
-		 / (BREAK (Sc exprlist)?? (IF Sc expect_expr)?) -> break
+		 / (BREAK (Sc expr_list)?? (IF Sc expect_expr)?) -> break
 		 / (CONTINUE (IF Sc expect_expr)?) -> continue
 		 / (GOTO Sc ({NAME}/{}->MISS_NAME) (IF Sc expect_expr)?) -> goto
 		 / do_stmt
@@ -20,17 +20,17 @@ stmt	<- Sc (
 		 / for_range_stmt
 		 / for_each_stmt
 		 / function_stmt
+		 / attrib_assign_stmt
 		 / scoped_assign_stmt
-		 /* / LOCAL '<' NAME '>' NAME '=' expect_expr */
 		 / interface_stmt
 		 / class_stmt
 		 / expr {} -> STMT_EXPR
 		 )
 
-_decorator_call	<- '(' Sc (exprlist/{}->MISS_DEC_ARGS) Sc (')'/({} {}->')')->MISSING)
+_decorator_call	<- '(' Sc (expr_list/{}->MISS_DEC_ARGS) Sc (')'/({} {}->')')->MISSING)
 decorator		<- ('@' Sc (var_lcall/{}->MISS_EXPR) (_decorator_call)?) -> decorator
-decoratorlist	<- (Sc decorator)+ -> decoratorlist
-decorator_stmt	<- (decoratorlist Sc (function_stmt/{}->MISS_DEC)) -> decorate
+decorator_list	<- (Sc decorator)+ -> decorator_list
+decorator_stmt	<- (decorator_list Sc (function_stmt/{}->MISS_DEC)) -> decorate
 
 do_stmt			<- (DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'do') -> UNPARSED_INPUT)) -> do
 while_stmt		<- (WHILE Sc expect_expr DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'while') -> UNPARSED_INPUT)) -> while
@@ -40,24 +40,25 @@ if_stmt			<- (IF Sc expect_expr THEN block
 					(END / ({} {(!END .)* EXPECT_END} {}->'if') -> UNPARSED_INPUT)
 				   ) -> if
 for_range_stmt	<- (FOR Sc ({NAME}/{}->MISS_NAME) Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT EXPECT_END)) -> for_range
-for_each_stmt	<- (FOR Sc namelist IN Sc exprlist DO block (END / ({} {(!END .)* EXPECT_END} {}->'for each') -> UNPARSED_INPUT)) -> for_each
+for_each_stmt	<- (FOR Sc name_list IN Sc expr_list DO block (END / ({} {(!END .)* EXPECT_END} {}->'for each') -> UNPARSED_INPUT)) -> for_each
 function_stmt	<- (Ec FUNCTION Sc (funcname/{}->MISS_FUNCNAME) Sc funcbody) -> function
 				 / (OptScopeDef FUNCTION Sc ({NAME}/{}->MISS_NAME) Sc funcbody) -> function
-assign_part		<- (typedeflist Sc)?? '=' Sc exprlist
-				 / typedeflist
-assign_stmt		<- (Ec varlist Sc assign_part) -> assign
-scoped_assign_stmt	<- (ScopeDef Sc namelist (Sc assign_part)??)  -> assign
+assign_part		<- (typedef_list Sc)?? '=' Sc expr_list
+				 / typedef_list
+assign_stmt		<- (Ec var_list Sc assign_part) -> assign
+scoped_assign_stmt	<- (ScopeDef Sc name_list (Sc assign_part)??) -> assign
+attrib_assign_stmt	<- ({LOCAL} Sc '<' Sc {NAME/{}->MISS_NAME} Sc '>' Sc {NAME/{}->MISS_NAME} Sc (typedef Sc)?? Sc '=' Sc expect_expr) -> attrib_assign
 interface_stmt	<- (OptScopeDef INTERFACE Sc ({NAME}/{}->MISS_NAME) ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT)) -> interface
 
 class_block_stmt	<- Sc (
 					   ';'
 					 /* is not actually Global, its just so tranilation does not add 'local' if default_locals */
-					 / ({}->'global' namelist Sc assign_part) -> assign
+					 / ({}->'global' name_list Sc assign_part) -> assign
 					 / decorator_stmt
 					 / function_stmt
 					 )
 class_block		<- Sp* (Scc class_block_stmt* Scc) -> class_block
-class_stmt		<- (OptScopeDef CLASS Sc ({NAME}/ErrC {}->MISS_NAME) (EXTENDS Sc varlist)?? (IMPLEMENTS Sc varlist)??
+class_stmt		<- (OptScopeDef CLASS Sc ({NAME}/ErrC {}->MISS_NAME) (EXTENDS Sc var_list)?? (IMPLEMENTS Sc var_list)??
 						class_block
 				   (END / ({} {(!END .)*} {}->'class') -> UNPARSED_INPUT EXPECT_END)) -> class
 
@@ -95,17 +96,17 @@ index	<- ({} (
 var		<- ({} Ec {NAME} {} Sc index?) -> index
 		 / ({} Ec group {} Sc index) -> index
 
-varlist		<- (var (Sc ',' Sc var)*) -> varlist
-exprlist	<- (expr (Sc ',' Sc expect_expr)*) -> exprlist
-opt_exprlist	<- (expr (Sc ',' Sc expect_expr)*)? -> exprlist
-namelist	<- ({NAME} (Sc ',' Sc {NAME})*) -> namelist
+var_list		<- (var (Sc ',' Sc var)*) -> var_list
+expr_list	<- (expr (Sc ',' Sc expect_expr)*) -> expr_list
+opt_expr_list	<- (expr (Sc ',' Sc expect_expr)*)? -> expr_list
+name_list	<- ({NAME} (Sc ',' Sc {NAME})*) -> name_list
 
 param		<- ({NAME/VAR_ARGS} typedef?) -> param
-parlist		<- (param (Sc ',' Sc param)*) -> parlist
-opt_parlist	<- (param (Sc ',' Sc param)*)? -> parlist
-funcbody	<- (('('/({} {}->'(')->MISSING) Sc opt_parlist Sc (')'/({} {}->')')->MISSING) (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT)) -> funcbody
+par_list		<- (param (Sc ',' Sc param)*) -> par_list
+opt_par_list	<- (param (Sc ',' Sc param)*)? -> par_list
+funcbody	<- (('('/({} {}->'(')->MISSING) Sc opt_par_list Sc (')'/({} {}->')')->MISSING) (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT)) -> funcbody
 
-return	<- (RETURN (Sc exprlist)?? (IF Sc expect_expr)?) -> return Sc ';'?
+return	<- (RETURN (Sc expr_list)?? (IF Sc expect_expr)?) -> return Sc ';'?
 
 funcindex	<- ({} {DOT/COLON} Sc ({NAME}/{}->MISS_NAME) {} (Sc funcindex)?) -> index
 funcname	<- ({} Ec             ({NAME}/{}->MISS_NAME) {} (Sc funcindex)?) -> index
@@ -116,13 +117,13 @@ index_lcall	<- ({} (
 				) {} Sc (index_lcall / &args)) -> index
 			 / (args (index_lcall / &args)) -> call
 var_lcall	<- ({} Ec {NAME} {} Sc index_lcall?) -> index
-args		<- '(' Sc opt_exprlist Sc (')'/({} {}->')')->MISSING) / table / String
+args		<- '(' Sc opt_expr_list Sc (')'/({} {}->')')->MISSING) / table / String
 call		<- ({} Ec (group / var_lcall) {} args -> call) -> index
 
 field			<- ('[' Sc expr Sc (']'/({} {}->']')->MISSING) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) -> field
-fieldlist		<- (field (Sc FIELD_SEP Sc field)*) -> fieldlist (Sc FIELD_SEP)?
-opt_fieldlist	<- (field (Sc FIELD_SEP Sc field)*)? -> fieldlist (Sc FIELD_SEP)?
-table			<- ('{' Sc opt_fieldlist Sc ('}'/({} {}->'}')->MISSING)) -> table
+field_list		<- (field (Sc FIELD_SEP Sc field)*) -> field_list (Sc FIELD_SEP)?
+opt_field_list	<- (field (Sc FIELD_SEP Sc field)*)? -> field_list (Sc FIELD_SEP)?
+table			<- ('{' Sc opt_field_list Sc ('}'/({} {}->'}')->MISSING)) -> table
 
 type		<- ({ARRAY} Sc '[' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_array
 			 / ({TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_table
@@ -130,12 +131,12 @@ type		<- ({ARRAY} Sc '[' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_array
 			 / Sc {NAME/NIL} -> type !(Sc args)
 type_expr	<- (type Sc (OR/'|' Sc) type_expr) -> type_or
 			 / type
-typelist	<- (type_expr (Sc ',' Sc type_expr)*) -> typelist
+type_list	<- (type_expr (Sc ',' Sc type_expr)*) -> type_list
 
-type_args	<- '(' Sc opt_parlist Sc (')'/({} {}->')')->MISSING)
+type_args	<- '(' Sc opt_par_list Sc (')'/({} {}->')')->MISSING)
 type_return	<- '->' Sc type_expr
 typedef		<- ':' Sc type_expr
-typedeflist	<- ':' Sc typelist
+typedef_list	<- ':' Sc type_list
 
 /* The rest of the needed stuff */
 Sc	<- {:_:Scc:}  /* Space Comments (stops captureing anything, its complicated ish)*/

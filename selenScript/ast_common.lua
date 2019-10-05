@@ -7,8 +7,8 @@ local common = {}
 
 function common.assign_local(ast, file)
 	local isNamesOnly = true
-	if ast.varlist.type == "varlist" then
-		for i, v in ipairs(ast.varlist) do
+	if ast.var_list.type == "var_list" then
+		for i, v in ipairs(ast.var_list) do
 			if v.expr ~= nil or v.index ~= nil then
 				isNamesOnly = false
 				break

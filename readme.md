@@ -244,8 +244,3 @@ DreadberryJam - Name Suggestion
 
 Where ever I borrowed code for tests  
 and anyone who finds bugs and reports them  
-
-# The DLL
-Woops, again...  
-the dll is just LPegLabel compiled for LuaJit  
-forgot to add a .gitignore again but its there now  

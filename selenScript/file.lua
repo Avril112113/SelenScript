@@ -124,7 +124,7 @@ function file:changed()
 end
 
 function file:create_new_vm()
-	local ok, errOrVm = pcall(vm.new, self.ast, self)
+	local ok, errOrVm = xpcall(vm.new, function(e) return debug.traceback(e) end, self.ast, self)
 	if not ok then
 		self:add_diagnostic {
 			serverity="warn",
