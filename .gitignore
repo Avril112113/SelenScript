@@ -3,3 +3,4 @@ tests/test/test.lua
 tests/test/__sls_provided_deps.lua
 selenscript_trans/**/*
 **/*.dll
+old/*

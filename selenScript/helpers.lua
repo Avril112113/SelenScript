@@ -1,4 +1,4 @@
--- contains helpers for testing, debugging or use in the transpiler
+-- contains helpers for testing, debugging or use in other areas of selenscript
 
 local provided = require "selenScript.provided"
 
@@ -17,7 +17,7 @@ local function strValueFromType(v)
 	return tostring(v)
 end
 
---- Checks if 2 tables are the same
+--- Checks if 2 tables are the same recursively
 ---@param a table
 ---@param b table
 local function tblEqual(a, b)
@@ -47,6 +47,8 @@ local function tblPrint(a, b, path)
 	end
 end
 
+--- Checks if the given table is empty (ipairs)
+---@param tbl table
 local function isEmptyTable(tbl)
 	for i, v in ipairs(tbl) do return false end
 	return true
@@ -164,23 +166,6 @@ local function str_dep(dep_name, dep, gotten_deps)
 	return str .. dep.lua
 end
 
-local default_global_any = {}  -- only used for comparison
-local function default_globals()
-	return {
-		_G=default_global_any,
-		_ENV=default_global_any,
-		debug=default_global_any,  -- TODO
-		os=default_global_any,  -- TODO
-		io=default_global_any,  -- TODO
-		math=default_global_any,  -- TODO
-		table=default_global_any,  -- TODO
-		utf8=default_global_any,  -- TODO
-		string=default_global_any,  -- TODO
-		package=default_global_any,  -- TODO
-		-- TODO: basic function https://www.lua.org/work/doc/manual.html#6.1
-	}
-end
-
 local function cleanupPath(path)
 	return path:gsub("\\", "/"):gsub("//", "/"):gsub("/$", "")
 end
@@ -195,7 +180,5 @@ return {
 	reconstructMath=reconstructMath,
 	default_value=default_value,
 	str_dep=str_dep,
-	default_globals=default_globals,
-	default_global_any=default_global_any,
 	cleanupPath=cleanupPath
 }
