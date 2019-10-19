@@ -100,46 +100,12 @@ baz = for i,v in pairs(t) do
 end
 ```
 
-Class's  
-```Lua
-class FooClass
-	clsVar = 300
-
-	function __new(self)
-		self.objVar = 222
-	end
-	function __tostring(self)
-		return tostring(self)
-	end
-	-- all metamethods work here
-end
-
-foo = FooClass()
-print(foo.clsVar == FooClass.clsVar) -- Result: true
-print(foo.objVar == 222, FooClass.objVar == nil) -- Result: true, true
-foo.clsVar = -300
-print(foo.clsVar == FooClass.clsVar) -- Result: false
-
--- Full Syntax Potential
-class BarClass extends FooClass implements SomeInterface
-	foo: string
-	bar = "hi"
-
-	@decorator
-	function f()
-	end
-
-	function f2()
-	end
-end
-```
-
 Interface's  
 ```Lua
 interface FooBar
 	-- basically just a bunch of type definition's
 	-- this helps to define the structure of a table
-	-- or things a class should implement/define
+	-- or things a table should implement/define
 	foo: string
 	bar: number
 end
@@ -150,14 +116,17 @@ end
 interface Jsonable
 	jsonify: function->any
 end
-class Person implements Jsonable, FooBar
-	foo = "hi from a class"
-	bar: number  -- wants explicit definition
-
-	function jsonify(self)
-		return self.foo
+@implements(Jsonable, FooBar)  -- TODO: there is planned to have some fancy syntax stuff later but for now its decorator
+Person = {
+	foo="Im foo",
+	bar="and im foo's big brother",
+	function jsonify()
+		return {
+			foo=self.foo,
+			bar=self.bar
+		}
 	end
-end
+}
 ```
 
 Decorators (similar to Python)  

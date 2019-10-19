@@ -23,7 +23,6 @@ stmt	<- Sc (
 		 / attrib_assign_stmt
 		 / scoped_assign_stmt
 		 / interface_stmt
-		 / class_stmt
 		 / expr {} -> STMT_EXPR
 		 )
 
@@ -49,18 +48,6 @@ assign_stmt		<- (Ec var_list Sc assign_part) -> assign
 scoped_assign_stmt	<- (ScopeDef Sc name_list (Sc assign_part)??) -> assign
 attrib_assign_stmt	<- ({LOCAL} Sc '<' Sc {NAME/{}->MISS_NAME} Sc '>' Sc {NAME/{}->MISS_NAME} Sc (typedef Sc)?? Sc '=' Sc expect_expr) -> attrib_assign
 interface_stmt	<- (OptScopeDef INTERFACE Sc ({NAME}/{}->MISS_NAME) ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT)) -> interface
-
-class_block_stmt	<- Sc (
-					   ';'
-					 /* is not actually Global, its just so tranilation does not add 'local' if default_locals */
-					 / ({}->'global' name_list Sc assign_part) -> assign
-					 / decorator_stmt
-					 / function_stmt
-					 )
-class_block		<- Sp* (Scc class_block_stmt* Scc) -> class_block
-class_stmt		<- (OptScopeDef CLASS Sc ({NAME}/ErrC {}->MISS_NAME) (EXTENDS Sc var_list)?? (IMPLEMENTS Sc var_list)??
-						class_block
-				   (END / ({} {(!END .)*} {}->'class') -> UNPARSED_INPUT EXPECT_END)) -> class
 
 expect_expr	<- expr / {}->MISS_EXPR
 expr	<- ((value/unary) (Sc {BINARY_OP} Sc (value/unary))+) -> math
@@ -215,7 +202,7 @@ RESERVED	<- RESERVED_STMT / NIL / TRUE / FALSE
 /* NOTE: this might be out of date, please make sure it is */
 RESERVED_STMT	<- AND / OR / DO / BREAK / ELSE / ELSEIF / END / IF / FOR / GOTO
 				 / FUNCTION / IN / LOCAL / THEN / REPEAT / RETURN / NOT / WHILE / UNTIL
-				 / CONTINUE / AS / CLASS / EXTENDS / IMPLEMENTS / INTERFACE / GLOBAL
+				 / CONTINUE / AS / EXTENDS / IMPLEMENTS / INTERFACE / GLOBAL
 
 AND         <- Sc 'and' Cut
 NOT         <- Sc 'not' Cut
@@ -238,7 +225,6 @@ AS          <- Sc 'as'  Cut
 END         <- Sc 'end'  Cut
 EXPECT_END	<- END / ({} {}->'end')->MISSING
 
-CLASS       <- Sc 'class' Cut
 EXTENDS     <- Sc 'extends' Cut
 IMPLEMENTS  <- Sc 'implements' Cut
 ELSE        <- Sc 'else' Cut

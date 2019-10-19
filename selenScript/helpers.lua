@@ -1,7 +1,5 @@
 -- contains helpers for testing, debugging or use in other areas of selenscript
 
-local provided = require "selenScript.provided"
-
 
 --- Converts a value to a more readable string repersentation based on its type
 ---@param v any
@@ -156,16 +154,6 @@ local function default_value(value, default)
 	end
 end
 
-local function str_dep(dep_name, dep, gotten_deps)
-	if gotten_deps[dep_name] ~= nil then return "" end
-	local str = ""
-	for _, dep_name in pairs(dep.deps) do
-		local dep_ = provided[dep_name]
-		str = str .. dep_.lua
-	end
-	return str .. dep.lua
-end
-
 local function cleanupPath(path)
 	return path:gsub("\\", "/"):gsub("//", "/"):gsub("/$", "")
 end
@@ -179,6 +167,5 @@ return {
 	serializeTable=serializeTable,
 	reconstructMath=reconstructMath,
 	default_value=default_value,
-	str_dep=str_dep,
 	cleanupPath=cleanupPath
 }

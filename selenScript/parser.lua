@@ -364,24 +364,6 @@ local defs = {
 			...
 		}
 	end,
-	class_block=function(...)
-		local t = {...}
-		if t[1] == '' and #t == 1 then return {type="class_block"} end
-		return {
-			type="class_block",
-			...
-		}
-	end,
-	class=function(scope, name, extendslist, implementslist, block)
-		return {
-			type="class",
-			scope=scope,
-			name=name,
-			extends_list=extendslist,
-			implements_list=implementslist,
-			block=block
-		}
-	end,
 
 	if_expr=function(condition, lhs, rhs, ...)
 		local t = {...}
@@ -665,14 +647,14 @@ local function parse(codeStr)
 	local ast, errMsg, errPos = grammar:match(codeStr)
 	local endTime = os.clock()
 
-	local _errors = errors
+	local errors_ = errors
 	errors = nil
 	return {
-		errors=_errors,
+		errors=errors_,
 		ast=ast,
 		parseTime=endTime-startTime,
-		errMsg=errMsg,  -- these errors should not be used
-		errPos=errPos  -- these errors should not be used
+		errMsg=errMsg,  -- this should always be nil
+		errPos=errPos  -- this should always be nil
 	}
 end
 
