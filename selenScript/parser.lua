@@ -530,9 +530,9 @@ local defs = {
 	table=function(start, fieldlist, finish)
 		local index = 0
 		for i, field in ipairs(fieldlist) do
-			if field.name == nil and field.expr.type ~= "var_args" then
+			if field.key == nil and field.value.type ~= "var_args" then
 				index = index + 1
-				field.name = {
+				field.key = {
 					type="Int",
 					start=field.start,
 					finish=field.finish,
@@ -593,19 +593,19 @@ local defs = {
 	end,
 	field=function(...)
 		local t = {...}
-		local name, expr
+		local key, value
 		local start, finish = table.remove(t, 1), table.remove(t, #t)
 		if #t == 1 then
-			expr = t[1]
+			value = t[1]
 		else
-			name, expr = t[1], t[2]
+			key, value = t[1], t[2]
 		end
 		return {
 			type="field",
 			start=start,
 			finish=finish,
-			name=name,
-			expr=expr
+			key=key,
+			value=value
 		}
 	end,
 
