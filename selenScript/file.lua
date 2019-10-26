@@ -130,7 +130,8 @@ function file:symbolize()
 			symbolize(block)
 		elseif ast.type == "assign" then
 			for i, var in ipairs(ast.var_list) do
-				local value = ast.expr_list[i]
+				local value = (ast.expr_list ~= nil and ast.expr_list[i]) or nil
+
 				local name
 				if type(var) == "string" then
 					name = var
@@ -143,8 +144,12 @@ function file:symbolize()
 					return
 				end
 
-				symbolize(value)
-				createSymbol(name, ast, helpers.deepCopy(value))
+				local symbolValue = nil
+				if value ~= nil then
+					symbolize(value)
+					symbolValue = helpers.deepCopy(value)
+				end
+				createSymbol(name, ast, symbolValue)
 			end
 		elseif ast.type == "index" then
 			if ast.index == nil then
@@ -183,7 +188,9 @@ function file:symbolize()
 			return
 		end
 	end
+	local startTime = os.clock()
 	symbolize(self.ast)
+	return os.clock() - startTime
 end
 
 
