@@ -41,10 +41,10 @@ if_stmt	<- ({} IF Sc expect_expr THEN block
 			(END / ({} {(!END .)* EXPECT_END} {}->'if') -> UNPARSED_INPUT)
 		   {}) -> if
 
-for_range_stmt	<- ({} FOR Sc EXP_CP_NAME Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)* EXPECT_END} {}->'for range') -> UNPARSED_INPUT) {}) -> for_range
+for_range_stmt	<- ({} FOR Sc {} EXP_CP_NAME {} Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)* EXPECT_END} {}->'for range') -> UNPARSED_INPUT) {}) -> for_range
 for_each_stmt	<- ({} FOR Sc name_list IN Sc expr_list DO block (END / ({} {(!END .)* EXPECT_END} {}->'for each') -> UNPARSED_INPUT) {}) -> for_each
 
-function_stmt	<- ({} Ec FUNCTION Sc (funcname/{}->MISS_FUNCNAME) Sc funcbody {}) -> function
+function_stmt	<- ({} Ec FUNCTION Sc {} (funcname/{}->MISS_FUNCNAME) {} Sc funcbody {}) -> function
 				 / ({} OptScopeDef FUNCTION Sc EXP_CP_NAME Sc funcbody {}) -> function
 
 assign_part			<- (typedef_list Sc)?? '=' Sc expr_list
@@ -84,39 +84,39 @@ value	<- ({} NIL {}) -> nil
 group	<- '(' Sc expect_expr Sc (')'/({} {}->')')->MISSING)
 
 index	<- ({} (
-				{'['} Sc expect_expr Sc (']'/({} {}->']')->MISSING)
-			  / {DOT} Sc EXP_CP_NAME
+				{'['} Sc {} expect_expr {} Sc (']'/({} {}->']')->MISSING)
+			  / {DOT} Sc {} EXP_CP_NAME {}
 		       )
 			Sc index??
 		   {}) -> index
-		 / ({} {COLON} Sc EXP_CP_NAME ({} args index?? {}) -> call {}) -> index
+		 / ({} {COLON} Sc {} EXP_CP_NAME {} ({} args index?? {}) -> call {}) -> index
 		 / ({} args index?? {}) -> call
-var		<- ({} Ec {NAME} Sc index?? {}) -> index
-		 / ({} Ec group Sc index {}) -> index
+var		<- ({} Ec {} {NAME} {} Sc index?? {}) -> index
+		 / ({} Ec {} group  {} Sc index   {}) -> index
 
 var_list		<- ({} var (Sc ',' Sc var)* {}) -> var_list
 expr_list		<- ({} expr (Sc ',' Sc expect_expr)* {}) -> expr_list
 opt_expr_list	<- ({} (expr (Sc ',' Sc expect_expr)*)? {}) -> expr_list
-name_list		<- ({} {NAME} (Sc ',' Sc EXP_CP_NAME)* {}) -> name_list
+name_list		<- ({} {} {NAME} {} (Sc ',' Sc {} EXP_CP_NAME {})* {}) -> name_list
 
-param			<- ({} {NAME/VAR_ARGS} typedef?? {}) -> param
+param			<- ({} {NAME/VAR_ARGS} {} typedef?? {}) -> param
 par_list		<- ({} param (Sc ',' Sc param)* {}) -> par_list
 opt_par_list	<- ({} (param (Sc ',' Sc param)*)? {}) -> par_list
 funcbody		<- ({} ('('/({} {}->'(')->MISSING) Sc opt_par_list Sc (')'/({} {}->')')->MISSING) (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT) {}) -> funcbody
 
 return		<- ({} RETURN (Sc expr_list)?? (IF Sc expect_expr)?? {}) -> return Sc ';'?
 
-funcindex	<- ({} {DOT/COLON} Sc EXP_CP_NAME (Sc funcindex)?? {}) -> index
-funcname	<- ({} Ec             EXP_CP_NAME (Sc funcindex)?? {}) -> index
+funcindex	<- ({} {DOT/COLON} Sc {} EXP_CP_NAME {} (Sc funcindex)?? {}) -> index
+funcname	<- ({} Ec             {} EXP_CP_NAME {} (Sc funcindex)?? {}) -> index
 
 index_lcall	<- ({} (
-					{'['} Sc expr Sc (']'/({} {}->']')->MISSING)
-				  / {DOT/COLON} Sc EXP_CP_NAME
+					{'['} Sc {} expr {} Sc (']'/({} {}->']')->MISSING)
+				  / {DOT/COLON} Sc {} EXP_CP_NAME {}
 				) Sc (index_lcall / &args NILCP) {}) -> index
 			 / ({} args (index_lcall / &args NILCP) {}) -> call
-var_lcall	<- ({} Ec {NAME} Sc index_lcall?? {}) -> index
+var_lcall	<- ({} Ec {} {NAME} {} Sc index_lcall?? {}) -> index
 args		<- '(' Sc opt_expr_list Sc (')'/({} {}->')')->MISSING) / table / String
-call		<- ({} Ec (group / var_lcall) ({} args NILCP {}) -> call {}) -> index
+call		<- ({} Ec {} (group / var_lcall) {} ({} args NILCP {}) -> call {}) -> index
 
 field			<- ({} ('[' Sc expr Sc (']'/({} {}->']')->MISSING) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) {}) -> field
 field_list		<- ({} field (Sc FIELD_SEP Sc field)* {}) -> field_list (Sc FIELD_SEP)?

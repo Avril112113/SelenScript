@@ -223,597 +223,643 @@ local defs = {
 	nl=lpl.P'\r\n' + lpl.S'\r\n',
 	dbg=function(...)
 		print("dbg:", ...)
-	end,
-
-	-- AST Building
-	block=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="block",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-
-	assign=function(start, scope, varlist, typelist, exprlist, finish)
-		return {
-			type="assign",
-			start=start,
-			finish=finish,
-			scope=scope,
-			var_list=varlist,
-			type_list=typelist,
-			expr_list=exprlist
-		}
-	end,
-	attrib_assign=function(start, scope, startName, name, finishName, attrib, startTypedef, typedef, finishTypedef, startExpr, expr, finish)
-		return {
-			type="assign",
-			start=start,
-			finish=finish,
-			scope=scope,
-			var_list={
-				type="name_list",
-				start=startName,
-				finish=finishName,
-				name
-			},
-			attrib=attrib,
-			type_list={
-				type="type_list",
-				start=startTypedef,
-				finish=finishTypedef,
-				typedef
-			},
-			expr_list={
-				type="expr_list",
-				start=startExpr,
-				finish=finish,
-				expr
-			}
-		}
-	end,
-	label=function(start, label, finish)
-		return {
-			type="label",
-			start=start,
-			finish=finish,
-			label=label
-		}
-	end,
-	["break"]=function(start, exprlist, stmt_if, finish)
-		return {
-			type="break",
-			start=start,
-			finish=finish,
-			expr_list=exprlist,
-			stmt_if=stmt_if
-		}
-	end,
-	["continue"]=function(start, stmt_if, finish)
-		return {
-			type="continue",
-			start=start,
-			finish=finish,
-			stmt_if=stmt_if
-		}
-	end,
-	["goto"]=function(start, label, stmt_if, finish)
-		return {
-			type="goto",
-			start=start,
-			finish=finish,
-			label=label,
-			stmt_if=stmt_if
-		}
-	end,
-	["do"]=function(start, block, finish)
-		return {
-			type="do",
-				start=start,
-				finish=finish,
-			block=block
-		}
-	end,
-	["while"]=function(start, condition, block, finish)
-		return {
-			type="while",
-			start=start,
-			finish=finish,
-			condition=condition,
-			block=block
-		}
-	end,
-	["repeat"]=function(start, block, condition, finish)
-		return {
-			type="repeat",
-			start=start,
-			finish=finish,
-			block=block,
-			condition=condition
-		}
-	end,
-	["elseif"]=function(start, condition, block, finish)
-		return {
-			type="elseif",
-			start=start,
-			finish=finish,
-			condition=condition,
-			block=block
-		}
-	end,
-	["else"]=function(start, block, finish)
-		return {
-			type="else",
-			start=start,
-			finish=finish,
-			block=block
-		}
-	end,
-	["if"]=function(start, condition, block, ...)
-		local t = {...}
-		local finish = table.remove(t, #t)
-		local last = table.remove(t, 1)
-		local next = last
-		while #t > 0 do
-			local ast = table.remove(t, 1)
-			last.next = ast
-			last = ast
-		end
-		return {
-			type="if",
-			start=start,
-			finish=finish,
-			condition=condition,
-			block=block,
-			next=next
-		}
-	end,
-	decorator=function(start, index, call, finish)
-		return {
-			type="decorator",
-			start=start,
-			finish=finish,
-			index=index,
-			call=call
-		}
-	end,
-	decorate=function(start, decoratorlist, expr, finish)
-		return {
-			type="decorate",
-			start=start,
-			finish=finish,
-			decorators=decoratorlist,
-			expr=expr
-		}
-	end,
-	["function"]=function(start, scope, funcname, body, finish)
-		return {
-			type="function",
-			start=start,
-			finish=finish,
-			scope=scope,
-			funcname=funcname,
-			body=body
-		}
-	end,
-	for_range=function(start, varname, from, to, step, block, finish)
-		return {
-			type="for_range",
-			start=start,
-			finish=finish,
-			varname=varname,
-			from=from,
-			to=to,
-			step=step,
-			block=block
-		}
-	end,
-	for_each=function(start, namelist, exprlist, block, finish)
-		return {
-			type="for_each",
-			start=start,
-			finish=finish,
-			name_list=namelist,
-			expr_list=exprlist,
-			block=block
-		}
-	end,
-	interface=function(start, scope, name, ...)
-		local t = {...}
-		local finish = table.remove(t, #t)
-		return {
-			type="interface",
-			start=start,
-			finish=finish,
-			scope=scope,
-			name=name,
-			unpack(t)
-		}
-	end,
-
-	if_expr=function(start, condition, trueExpr, falseExpr, finish)
-		return {
-			type="if_expr",
-			start=start,
-			finish=finish,
-			trueExpr=trueExpr,
-			condition=condition,
-			falseExpr=falseExpr
-		}
-	end,
-	String=function(start, quote, value, finish)  -- NOTE: used by Comment as well
-		return {
-			type="String",
-			start=start,
-			finish=finish,
-			quote=quote,
-			value=value,
-			isEqualValue=function(self, other)
-				return stringTypes[other.type] == true and self.value == other.value
-			end
-		}
-	end,
-	LongString=function(start, eqStart, eqFinish, value, finish)  -- NOTE: used by LongComment as well
-		local quoteEqLen = eqFinish-eqStart
-		local quote = "[" .. string.rep("=", quoteEqLen) .. "["
-		return {
-			type="LongString",
-			start=start,
-			finish=finish,
-			quote=quote,
-			quoteEqLen=quoteEqLen,
-			value=value,
-			isEqualValue=function(self, other)
-				return stringTypes[other.type] == true and self.value == other.value
-			end
-		}
-	end,
-	FormatString=function(start, quote, ...)
-		local parts = {...}
-		local finish = table.remove(parts, #parts)
-		for i, v in pairs(parts) do
-			if type(v) == "string" then
-				parts[i] = v:gsub("{{", "{"):gsub("}}", "}")
-			end
-		end
-		return {
-			type="FormatString",
-			start=start,
-			finish=finish,
-			quote=quote,
-			parts=parts
-		}
-	end,
-	STRFormat=function(expr)
-		return {
-			type="STRFormat",
-			expr=expr
-		}
-	end,
-	Int=function(start, value, finish)
-		return {
-			type="Int",
-			start=start,
-			finish=finish,
-			value=value,
-			isEqualValue=function(self, other)
-				-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
-				return self.type == other.type and self.value:lower() == other.value:lower()
-			end
-		}
-	end,
-	Float=function(start, value, finish)
-		return {
-			type="Float",
-			start=start,
-			finish=finish,
-			value=value,
-			isEqualValue=function(self, other)
-				-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
-				return self.type == other.type and self.value:lower() == other.value:lower()
-			end
-		}
-	end,
-	Hex=function(start, value, finish)
-		return {
-			type="Hex",
-			start=start,
-			finish=finish,
-			value=value,
-			isEqualValue=function(self, other)
-				return self.type == other.type and self.value:lower() == other.value:lower()
-			end
-		}
-	end,
-	["nil"]=function(start, finish)
-		return {
-			type="nil",
-			start=start,
-			finish=finish,
-			isEqualValue=function(self, other)
-				return self.type == other.type
-			end
-		}
-	end,
-	bool=function(start, valueStr, finish)
-		local value
-		if valueStr == "true" then
-			value = true
-		else
-			value = false
-		end
-		return {
-			type="bool",
-			start=start,
-			finish=finish,
-			value=value,
-			isEqualValue=function(self, other)
-				return self.type == other.type and self.value:lower() == other.value:lower()
-			end
-		}
-	end,
-	table=function(start, fieldlist, finish)
-		local index = 0
-		for i, field in ipairs(fieldlist) do
-			if field.key == nil and field.value.type ~= "var_args" then
-				index = index + 1
-				field.key = {
-					type="Int",
-					start=field.start,
-					finish=field.finish,
-					value=tostring(index)
-				}
-			end
-		end
-		return {
-			type="table",
-			start=start,
-			finish=finish,
-			field_list=fieldlist
-		}
-	end,
-	["anon_function"]=function(start, body, finish)
-		return {
-			type="anon_function",
-			start=start,
-			finish=finish,
-			body=body
-		}
-	end,
-	var_args=function(start, finish)
-		return {
-			type="var_args",
-			start=start,
-			finish=finish
-		}
-	end,
-
-	index=function(start, op, nameOrExpr, index, finish)
-		local name
-		local expr
-		if type(nameOrExpr) == "string" then
-			name = nameOrExpr
-		else
-			expr = nameOrExpr
-		end
-		return {
-			type="index",
-			start=start,
-			finish=finish,
-			op=op,
-			name=name,
-			expr=expr,
-			index=index
-		}
-	end,
-	call=function(start, args, index, finish)
-		if index == "" then index = nil end
-		return {
-			type="call",
-			start=start,
-			finish=finish,
-			args=args,
-			index=index
-		}
-	end,
-	field=function(...)
-		local t = {...}
-		local key, value
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		if #t == 1 then
-			value = t[1]
-		else
-			key, value = t[1], t[2]
-		end
-		return {
-			type="field",
-			start=start,
-			finish=finish,
-			key=key,
-			value=value
-		}
-	end,
-
-	funcbody=function(start, args, return_type, block, finish)
-		return {
-			type="funcbody",
-			start=start,
-			finish=finish,
-			args=args,
-			return_type=return_type,
-			block=block
-		}
-	end,
-	["return"]=function(start, exprlist, stmt_if, finish)
-		return {
-			type="return",
-			start=start,
-			finish=finish,
-			expr_list=exprlist,
-			stmt_if=stmt_if
-		}
-	end,
-
-	math=function(...)
-		return climbPrecedence({...})
-	end,
-	math_op=function(start, op, finish)
-		return {
-			type="math_op",
-			op=op,
-			start=start,
-			finish=finish
-		}
-	end,
-
-	var_list=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="var_list",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-	expr_list=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="expr_list",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-	name_list=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="name_list",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-	field_list=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="field_list",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-	decorator_list=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="decorator_list",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-
-	param=function(start, name, param_type, finish)
-		return {
-			type="param",
-			start=start,
-			finish=finish,
-			name=name,
-			param_type=param_type
-		}
-	end,
-	par_list=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="par_list",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-
-	Comment=function(start, comment, finish)
-		return {
-			type="Comment",
-			start=start,
-			finish=finish,
-			comment=comment
-		}
-	end,
-	LongComment=function(start, comment, finish)
-		return {
-			type="LongComment",
-			start=start,
-			finish=finish,
-			comment=comment
-		}
-	end,
-
-	-- Typeing
-	type_list=function(...)
-		local t = {...}
-		local start, finish = table.remove(t, 1), table.remove(t, #t)
-		return {
-			type="type_list",
-			start=start,
-			finish=finish,
-			unpack(t)
-		}
-	end,
-	type=function(start, name, finish)
-		return {
-			type="type",
-			start=start,
-			finish=finish,
-			name=name
-		}
-	end,
-	type_array=function(start, name, valuetype, finish)
-		return {
-			type="type_array",
-			start=start,
-			finish=finish,
-			name=name,
-			valuetype=valuetype
-		}
-	end,
-	type_table=function(start, name, keytype, valuetype, finish)
-		return {
-			type="type_table",
-			start=start,
-			finish=finish,
-			name=name,
-			keytype=keytype,
-			valuetype=valuetype
-		}
-	end,
-	type_function=function(start, type_args, type_return, finish)
-		return {
-			type="type_function",
-			start=start,
-			finish=finish,
-			type_args=type_args,
-			type_return=type_return
-		}
-	end,
-	type_or=function(start, a, b, finish)
-		return {
-			type="type_or",
-			start=start,
-			finish=finish,
-			a=a,
-			b=b
-		}
-	end,
+	end
 }
+--- AST Building
+function defs.block(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return {
+		type="block",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+
+function defs.assign(start, scope, varlist, typelist, exprlist, finish)
+	return {
+		type="assign",
+		start=start,
+		finish=finish,
+		scope=scope,
+		var_list=varlist,
+		type_list=typelist,
+		expr_list=exprlist
+	}
+end
+function defs.attrib_assign(start, scope, startName, name, finishName, attrib, startTypedef, typedef, finishTypedef, startExpr, expr, finish)
+	return {
+		type="assign",
+		start=start,
+		finish=finish,
+		scope=scope,
+		var_list=defs.name_list(startName, name, finishName),
+		attrib=attrib,
+		type_list=defs.type_list(startTypedef, typedef, finishTypedef),
+		expr_list=defs.expr_list(startExpr, expr, finish)
+	}
+end
+function defs.label(start, label, finish)
+	return {
+		type="label",
+		start=start,
+		finish=finish,
+		label=label
+	}
+end
+defs["break"] = function(start, exprlist, stmt_if, finish)
+	return {
+		type="break",
+		start=start,
+		finish=finish,
+		expr_list=exprlist,
+		stmt_if=stmt_if
+	}
+end
+function defs.continue(start, stmt_if, finish)
+	return {
+		type="continue",
+		start=start,
+		finish=finish,
+		stmt_if=stmt_if
+	}
+end
+defs["goto"] = function(start, label, stmt_if, finish)
+	return {
+		type="goto",
+		start=start,
+		finish=finish,
+		label=label,
+		stmt_if=stmt_if
+	}
+end
+defs["do"] = function(start, block, finish)
+	return {
+		type="do",
+			start=start,
+			finish=finish,
+		block=block
+	}
+end
+defs["while"] = function(start, condition, block, finish)
+	return {
+		type="while",
+		start=start,
+		finish=finish,
+		condition=condition,
+		block=block
+	}
+end
+defs["repeat"] = function(start, block, condition, finish)
+	return {
+		type="repeat",
+		start=start,
+		finish=finish,
+		block=block,
+		condition=condition
+	}
+end
+defs["elseif"] = function(start, condition, block, finish)
+	return {
+		type="elseif",
+		start=start,
+		finish=finish,
+		condition=condition,
+		block=block
+	}
+end
+defs["else"] = function(start, block, finish)
+	return {
+		type="else",
+		start=start,
+		finish=finish,
+		block=block
+	}
+end
+defs["if"] = function(start, condition, block, ...)
+	local t = {...}
+	local finish = table.remove(t, #t)
+	local last = table.remove(t, 1)
+	local next = last
+	while #t > 0 do
+		local ast = table.remove(t, 1)
+		last.next = ast
+		last = ast
+	end
+	return {
+		type="if",
+		start=start,
+		finish=finish,
+		condition=condition,
+		block=block,
+		next=next
+	}
+end
+function defs.decorator(start, index, call, finish)
+	return {
+		type="decorator",
+		start=start,
+		finish=finish,
+		index=index,
+		call=call
+	}
+end
+function defs.decorate(start, decoratorlist, expr, finish)
+	return {
+		type="decorate",
+		start=start,
+		finish=finish,
+		decorators=decoratorlist,
+		expr=expr
+	}
+end
+defs["function"] = function(start, scope, startFuncname, funcname, finishFuncname, body, finish)
+	return {
+		type="function",
+		start=start,
+		finish=finish,
+		scope=scope,
+		funcname=defs.String(startFuncname, "", funcname, finishFuncname),
+		body=body
+	}
+end
+function defs.for_range(start, startVarname, varname, finishVarname, from, to, step, block, finish)
+	return {
+		type="for_range",
+		start=start,
+		finish=finish,
+		varname=defs.String(startVarname, "", varname, finishVarname),
+		from=from,
+		to=to,
+		step=step,
+		block=block
+	}
+end
+function defs.for_each(start, namelist, exprlist, block, finish)
+	return {
+		type="for_each",
+		start=start,
+		finish=finish,
+		name_list=namelist,
+		expr_list=exprlist,
+		block=block
+	}
+end
+function defs.interface(start, scope, name, ...)
+	local t = {...}
+	local finish = table.remove(t, #t)
+	return {
+		type="interface",
+		start=start,
+		finish=finish,
+		scope=scope,
+		name=name,
+		unpack(t)
+	}
+end
+
+function defs.if_expr(start, condition, trueExpr, falseExpr, finish)
+	return {
+		type="if_expr",
+		start=start,
+		finish=finish,
+		trueExpr=trueExpr,
+		condition=condition,
+		falseExpr=falseExpr
+	}
+end
+function defs.String(start, quote, value, finish)  -- NOTE: used by Comment as well
+	return {
+		type="String",
+		start=start,
+		finish=finish,
+		quote=quote,
+		value=value,
+		toString=function(self, parent)
+			return self.quote .. self.value .. self.quote
+		end,
+		isEqualValue=function(self, other)
+			return stringTypes[other.type] == true and self.value == other.value
+		end
+	}
+end
+function defs.LongString(start, eqStart, eqFinish, value, finish)  -- NOTE: used by LongComment as well
+	local quoteEqLen = eqFinish-eqStart
+	local quote = "[" .. string.rep("=", quoteEqLen) .. "["
+	local endQuote = "]" .. string.rep("=", quoteEqLen) .. "]"
+	return {
+		type="LongString",
+		start=start,
+		finish=finish,
+		quote=quote,
+		endQuote=endQuote,
+		quoteEqLen=quoteEqLen,
+		value=value,
+		toString=function(self, parent)
+			return self.quote .. self.value .. self.endQuote
+		end,
+		isEqualValue=function(self, other)
+			return stringTypes[other.type] == true and self.value == other.value
+		end
+	}
+end
+function defs.FormatString(start, quote, ...)
+	local parts = {...}
+	local finish = table.remove(parts, #parts)
+	for i, v in pairs(parts) do
+		if type(v) == "string" then
+			parts[i] = v:gsub("{{", "{"):gsub("}}", "}")
+		end
+	end
+	return {
+		type="FormatString",
+		start=start,
+		finish=finish,
+		quote=quote,
+		parts=parts
+	}
+end
+function defs.STRFormat(expr)
+	return {
+		type="STRFormat",
+		expr=expr
+	}
+end
+function defs.Int(start, value, finish)
+	return {
+		type="Int",
+		start=start,
+		finish=finish,
+		value=value,
+		toString=function(self, parent)
+			return tostring(self.value)
+		end,
+		isEqualValue=function(self, other)
+			-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
+			return self.type == other.type and self.value:lower() == other.value:lower()
+		end
+	}
+end
+function defs.Float(start, value, finish)
+	return {
+		type="Float",
+		start=start,
+		finish=finish,
+		value=value,
+		toString=function(self, parent)
+			return tostring(self.value)
+		end,
+		isEqualValue=function(self, other)
+			-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
+			return self.type == other.type and self.value:lower() == other.value:lower()
+		end
+	}
+end
+function defs.Hex(start, value, finish)
+	return {
+		type="Hex",
+		start=start,
+		finish=finish,
+		value=value,
+		toString=function(self, parent)
+			return tostring(self.value)
+		end,
+		isEqualValue=function(self, other)
+			return self.type == other.type and self.value:lower() == other.value:lower()
+		end
+	}
+end
+defs["nil"] = function(start, finish)
+	return {
+		type="nil",
+		start=start,
+		finish=finish,
+		toString=function(self, parent)
+			return "nil"
+		end,
+		isEqualValue=function(self, other)
+			return self.type == other.type
+		end
+	}
+end
+function defs.bool(start, valueStr, finish)
+	local value
+	if valueStr == "true" then
+		value = true
+	else
+		value = false
+	end
+	return {
+		type="bool",
+		start=start,
+		finish=finish,
+		value=value,
+		toString=function(self, parent)
+			return tostring(self.value)
+		end,
+		isEqualValue=function(self, other)
+			return self.type == other.type and self.value:lower() == other.value:lower()
+		end
+	}
+end
+function defs.table(start, fieldlist, finish)
+	local index = 0
+	for i, field in ipairs(fieldlist) do
+		if field.key == nil and field.value.type ~= "var_args" then
+			index = index + 1
+			field.key = defs.Int(field.start, tostring(index), field.finish)
+		end
+	end
+	return {
+		type="table",
+		start=start,
+		finish=finish,
+		field_list=fieldlist
+	}
+end
+function defs.anon_function(start, body, finish)
+	return {
+		type="anon_function",
+		start=start,
+		finish=finish,
+		body=body
+	}
+end
+function defs.var_args(start, finish)
+	return {
+		type="var_args",
+		start=start,
+		finish=finish
+	}
+end
+
+function defs.index(start, op, exprStart, expr, exprFinish, index, finish)
+	if type(expr) == "string" then
+		expr = defs.String(exprStart, "", expr, exprFinish)
+	else
+		expr = expr
+	end
+	return {
+		type="index",
+		start=start,
+		finish=finish,
+		op=op,
+		expr=expr,
+		index=index,
+		toString=function(self, parent)
+			local str = ""
+			if parent ~= nil and parent.type == "index" then
+				str = str .. "."
+			end
+			if self.expr ~= nil then
+				if self.expr.toString ~= nil then
+					str = str .. self.expr:toString(self)
+				else
+					return "<type " .. tostring(self.expr.type) .. " is missing toString()>"
+				end
+			else
+				return "<index missing expr>"
+			end
+			if self.index ~= nil then
+				if self.index.toString ~= nil then
+					str = str .. self.index:toString(self)
+				else
+					return "<type " .. tostring(self.index.type) .. " is missing toString()>"
+				end
+			end
+			return str
+		end
+	}
+end
+function defs.call(start, args, index, finish)
+	if index == "" then index = nil end
+	return {
+		type="call",
+		start=start,
+		finish=finish,
+		args=args,
+		index=index,
+		toString=function(self, parent)
+			local str = ""
+			if self.expr ~= nil then
+				if self.expr.toString ~= nil then
+					str = str .. "()"
+				else
+					return "<type " .. tostring(self.expr.type) .. " is missing toString()>"
+				end
+			else
+				return "<index missing expr>"
+			end
+			if self.index ~= nil then
+				if self.index.toString ~= nil then
+					str = str .. self.index:toString(self)
+				else
+					return "<type " .. tostring(self.index.type) .. " is missing toString()>"
+				end
+			end
+			return str
+		end
+	}
+end
+function defs.field(...)
+	local t = {...}
+	local key, value
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	if #t == 1 then
+		value = t[1]
+	else
+		key, value = t[1], t[2]
+	end
+	return {
+		type="field",
+		start=start,
+		finish=finish,
+		key=key,
+		value=value
+	}
+end
+
+function defs.funcbody(start, args, return_type, block, finish)
+	return {
+		type="funcbody",
+		start=start,
+		finish=finish,
+		args=args,
+		return_type=return_type,
+		block=block
+	}
+end
+defs["return"] = function(start, exprlist, stmt_if, finish)
+	return {
+		type="return",
+		start=start,
+		finish=finish,
+		expr_list=exprlist,
+		stmt_if=stmt_if
+	}
+end
+
+function defs.math(...)
+	return climbPrecedence({...})
+end
+function defs.math_op(start, op, finish)
+	return {
+		type="math_op",
+		op=op,
+		start=start,
+		finish=finish
+	}
+end
+
+function defs.var_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return {
+		type="var_list",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+function defs.expr_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return {
+		type="expr_list",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+function defs.name_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	local namelist = {
+		type="name_list",
+		start=start,
+		finish=finish
+	}
+	while #t > 0 do
+		local nameStart, name, nameFinish = table.remove(t, 1), table.remove(t, 1), table.remove(t, 1)
+		table.insert(namelist, defs.String(nameStart, "", name, nameFinish))
+	end
+	return namelist
+end
+function defs.field_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return {
+		type="field_list",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+function defs.decorator_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return {
+		type="decorator_list",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+
+function defs.param(start, name, nameFinish, param_type, finish)
+	return {
+		type="param",
+		start=start,
+		finish=finish,
+		name=defs.String(start, "", name, nameFinish),
+		param_type=param_type
+	}
+end
+function defs.par_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return {
+		type="par_list",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+
+function defs.Comment(start, comment, finish)
+	return {
+		type="Comment",
+		start=start,
+		finish=finish,
+		comment=comment
+	}
+end
+function defs.LongComment(start, comment, finish)
+	return {
+		type="LongComment",
+		start=start,
+		finish=finish,
+		comment=comment
+	}
+end
+
+-- Typeing
+function defs.type_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return {
+		type="type_list",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+function defs.type(start, name, finish)
+	return {
+		type="type",
+		start=start,
+		finish=finish,
+		name=name
+	}
+end
+function defs.type_array(start, name, valuetype, finish)
+	return {
+		type="type_array",
+		start=start,
+		finish=finish,
+		name=name,
+		valuetype=valuetype
+	}
+end
+function defs.type_table(start, name, keytype, valuetype, finish)
+	return {
+		type="type_table",
+		start=start,
+		finish=finish,
+		name=name,
+		keytype=keytype,
+		valuetype=valuetype
+	}
+end
+function defs.type_function(start, type_args, type_return, finish)
+	return {
+		type="type_function",
+		start=start,
+		finish=finish,
+		type_args=type_args,
+		type_return=type_return
+	}
+end
+function defs.type_or(start, a, b, finish)
+	return {
+		type="type_or",
+		start=start,
+		finish=finish,
+		a=a,
+		b=b
+	}
+end
 local grammar = re.compile(grammarStr, defs)
 
 
