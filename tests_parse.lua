@@ -1,3 +1,7 @@
+local breakOnParseError = true
+local breakOnSymbolizeDiagnostic = true
+
+
 local selenScript = require "selenScript"
 
 
@@ -42,9 +46,43 @@ end
 
 
 print(tostring(#files) .. " files to test...")
-local totalTime = 0
+local totalParseTime = 0
+local totalSymbolizeTime = 0
+local testStartTime = os.clock()
 for _, path in ipairs(files) do
-	print("Parsing", path)
+	print("--- Parsing " .. tostring(path) .. " ---")
+	local program = selenScript.program.new()
+	local file = selenScript.file.new(path)
+	totalParseTime = totalParseTime + file.parseResult.parseTime
+
+	if #file.parseResult.errors > 0 then
+		print("- Parse Errors -")
+		for _, err in ipairs(file.parseResult.errors) do
+			print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " ..  err.msg)
+		end
+		if breakOnParseError then break end
+	end
+
+	program:addFile(file)
+	local symbolizeTime = file:symbolize()
+	totalSymbolizeTime = totalSymbolizeTime + symbolizeTime
+
+	if #file.symbolizeDiagnostics > 0 then
+		print("- Symbolize Diagnostics -")
+		for _, err in ipairs(file.symbolizeDiagnostics) do
+			local str = err.msg
+			if err.start ~= nil then
+				str = tostring(err.start) .. " " .. str
+				if err.finish ~= nil then
+					str = ":" .. tostring(err.finish) .. " " .. str
+				end
+			end
+			print(str)
+		end
+		if breakOnSymbolizeDiagnostic then break end
+	end
+
+	--[[
 	local f = io.open(path, "r")
 	local data = f:read("*a")
 	f:close()
@@ -59,6 +97,10 @@ for _, path in ipairs(files) do
 		end
 		break
 	end
+	]]
 end
 
-print("Parsing test files took " .. tostring(totalTime) .. "s")
+local testProcessTime = os.clock() - testStartTime
+print("\nTotal time taken processing test files " .. tostring(testProcessTime) .. "s")
+print("Parsing test files took " .. tostring(totalParseTime) .. "s")
+print("Symbolizing test files took " .. tostring(totalSymbolizeTime) .. "s")
