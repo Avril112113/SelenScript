@@ -1,5 +1,5 @@
-local breakOnParseError = true
-local breakOnSymbolizeDiagnostic = true
+local breakOnParseError = false
+local breakOnSymbolizeDiagnostic = false
 
 
 local selenScript = require "selenScript"
