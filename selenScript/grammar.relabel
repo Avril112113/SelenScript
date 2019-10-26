@@ -1,7 +1,7 @@
 /* Based on lua 5.4 grammar from the docs/reference */
 /* assisted from https://github.com/sumneko/lua-language-server/blob/master/server/src/parser/grammar.lua */
 chunk	<- block Sp* (!. / ({} {.*} {}->'chunk') -> UNPARSED_INPUT)
-block	<- Sp* (Scc stmt* Scc) -> block
+block	<- Sp* ({} Scc stmt* Scc {}) -> block
 
 stmt	<- Sc (
 		   ';'
@@ -9,13 +9,13 @@ stmt	<- Sc (
 		 / assign_stmt
 		 / call
 		 / return
-		 / ('::' Sc ({NAME}/{}->MISS_NAME) Sc '::') -> label
-		 / (BREAK (Sc expr_list)?? (IF Sc expect_expr)?) -> break
-		 / (CONTINUE (IF Sc expect_expr)?) -> continue
-		 / (GOTO Sc ({NAME}/{}->MISS_NAME) (IF Sc expect_expr)?) -> goto
+		 / ({} '::' Sc EXP_CP_NAME Sc '::' {}) -> label
+		 / ({} BREAK (Sc expr_list)?? (IF Sc expect_expr)?? {}) -> break
+		 / ({} CONTINUE (IF Sc expect_expr)?? {}) -> continue
+		 / ({} GOTO Sc EXP_CP_NAME (IF Sc expect_expr)?? {}) -> goto
 		 / do_stmt
 		 / while_stmt
-		 / (REPEAT block UNTIL Sc expect_expr) -> repeat
+		 / ({} REPEAT block UNTIL Sc expect_expr {}) -> repeat
 		 / if_stmt
 		 / for_range_stmt
 		 / for_each_stmt
@@ -23,49 +23,60 @@ stmt	<- Sc (
 		 / attrib_assign_stmt
 		 / scoped_assign_stmt
 		 / interface_stmt
-		 / expr {} -> STMT_EXPR
-		 )
+		 / (expr {}) -> STMT_EXPR
+		)
 
-_decorator_call	<- '(' Sc (expr_list/{}->MISS_DEC_ARGS) Sc (')'/({} {}->')')->MISSING)
-decorator		<- ('@' Sc (var_lcall/{}->MISS_EXPR) (_decorator_call)?) -> decorator
-decorator_list	<- (Sc decorator)+ -> decorator_list
-decorator_stmt	<- (decorator_list Sc (function_stmt/{}->MISS_DEC)) -> decorate
+decorator_call	<- '(' Sc (expr_list/{}->MISS_DEC_ARGS) Sc (')'/({} {}->')')->MISSING)
+decorator		<- ({} '@' Sc (var_lcall/{}->MISS_EXPR) (decorator_call)?? {}) -> decorator
+decorator_list	<- ({} (Sc decorator)+ {}) -> decorator_list
+decorator_stmt	<- ({} decorator_list Sc (function_stmt/{}->MISS_DEC) {}) -> decorate
 
-do_stmt			<- (DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'do') -> UNPARSED_INPUT)) -> do
-while_stmt		<- (WHILE Sc expect_expr DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'while') -> UNPARSED_INPUT)) -> while
-if_stmt			<- (IF Sc expect_expr THEN block
-					((ELSEIF Sc expect_expr THEN block) -> elseif)*
-					(ELSE block -> else)?
-					(END / ({} {(!END .)* EXPECT_END} {}->'if') -> UNPARSED_INPUT)
-				   ) -> if
-for_range_stmt	<- (FOR Sc ({NAME}/{}->MISS_NAME) Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)*} {}->'for range') -> UNPARSED_INPUT EXPECT_END)) -> for_range
-for_each_stmt	<- (FOR Sc name_list IN Sc expr_list DO block (END / ({} {(!END .)* EXPECT_END} {}->'for each') -> UNPARSED_INPUT)) -> for_each
-function_stmt	<- (Ec FUNCTION Sc (funcname/{}->MISS_FUNCNAME) Sc funcbody) -> function
-				 / (OptScopeDef FUNCTION Sc ({NAME}/{}->MISS_NAME) Sc funcbody) -> function
-assign_part		<- (typedef_list Sc)?? '=' Sc expr_list
-				 / typedef_list
-assign_stmt		<- (Ec var_list Sc assign_part) -> assign
-scoped_assign_stmt	<- (ScopeDef Sc name_list (Sc assign_part)??) -> assign
-attrib_assign_stmt	<- ({LOCAL} Sc '<' Sc {NAME/{}->MISS_NAME} Sc '>' Sc {NAME/{}->MISS_NAME} Sc (typedef Sc)?? Sc '=' Sc expect_expr) -> attrib_assign
-interface_stmt	<- (OptScopeDef INTERFACE Sc ({NAME}/{}->MISS_NAME) ((Sc {NAME} typedef)->param)* (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT)) -> interface
+do_stmt	<- ({} DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'do') -> UNPARSED_INPUT) {}) -> do
 
-expect_expr	<- expr / {}->MISS_EXPR
-expr	<- ((value/unary) (Sc {BINARY_OP} Sc (value/unary))+) -> math
+while_stmt	<- ({} WHILE Sc expect_expr DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'while') -> UNPARSED_INPUT) {}) -> while
+
+if_stmt	<- ({} IF Sc expect_expr THEN block
+			(({} ELSEIF Sc expect_expr THEN block {}) -> elseif)*
+			(({} ELSE block {}) -> else)?
+			(END / ({} {(!END .)* EXPECT_END} {}->'if') -> UNPARSED_INPUT)
+		   {}) -> if
+
+for_range_stmt	<- ({} FOR Sc EXP_CP_NAME Sc '=' Sc expect_expr Sc ',' Sc expect_expr (Sc ',' Sc expect_expr)?? DO block (END / ({} {(!END .)* EXPECT_END} {}->'for range') -> UNPARSED_INPUT) {}) -> for_range
+for_each_stmt	<- ({} FOR Sc name_list IN Sc expr_list DO block (END / ({} {(!END .)* EXPECT_END} {}->'for each') -> UNPARSED_INPUT) {}) -> for_each
+
+function_stmt	<- ({} Ec FUNCTION Sc (funcname/{}->MISS_FUNCNAME) Sc funcbody {}) -> function
+				 / ({} OptScopeDef FUNCTION Sc EXP_CP_NAME Sc funcbody {}) -> function
+
+assign_part			<- (typedef_list Sc)?? '=' Sc expr_list
+					 / typedef_list NILCP
+assign_stmt			<- ({} Ec var_list Sc assign_part {}) -> assign
+scoped_assign_stmt	<- ({} ScopeDef Sc name_list Sc (assign_part / NILCP NILCP) {}) -> assign
+attrib_assign_stmt	<- ({} {LOCAL} Sc {} EXP_CP_NAME {} Sc '<' Sc {NAME/{}->MISS_NAME} Sc ('>'/({} {}->'>')->MISSING) Sc ({} typedef {} Sc)?? Sc '=' Sc {} expect_expr {}) -> attrib_assign
+
+interface_stmt	<- ({} OptScopeDef INTERFACE Sc EXP_CP_NAME interface_block (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT) {}) -> interface
+interface_block	<- Sc ((
+						interface_var
+					  / function_stmt
+					) Sc)*
+interface_var	<- ({} {NAME} typedef {}) -> param
+
+expect_expr	<- expr / {}->MISS_EXPR NILCP
+expr	<- ((value/unary) (Sc ({} {BINARY_OP} {})->math_op Sc (value/unary))+) -> math
 		 / unary -> math
 		 / do_stmt
 		 / while_stmt
 		 / for_range_stmt
 		 / for_each_stmt
-		 / (IF Sc expr THEN Sc expr ELSE Sc expr) -> if_expr
+		 / ({} IF Sc expr THEN Sc expr ELSE Sc expr {}) -> if_expr
 		 / value
-unary	<- {UNARY_OP} Sc (unary/value)
+unary	<- ({} {UNARY_OP} {})->math_op Sc (unary/value)
 
-value	<- NIL -> nil
-		 / ({TRUE} / {FALSE}) -> bool
+value	<- ({} NIL {}) -> nil
+		 / ({} ({TRUE} / {FALSE}) {}) -> bool
 		 / Number
 		 / String
-		 / VAR_ARGS -> var_args
-		 / (FUNCTION Sc funcbody) -> anon_function
+		 / ({} VAR_ARGS {}) -> var_args
+		 / ({} FUNCTION Sc funcbody {}) -> anon_function
 		 / var
 		 / group
 		 / table
@@ -74,58 +85,60 @@ group	<- '(' Sc expect_expr Sc (')'/({} {}->')')->MISSING)
 
 index	<- ({} (
 				{'['} Sc expect_expr Sc (']'/({} {}->']')->MISSING)
-			  / {DOT}   Sc ({NAME}/{}->MISS_NAME)
+			  / {DOT} Sc EXP_CP_NAME
 		       )
-			{} Sc index?
-		   ) -> index
-		 / ({} {COLON} Sc ({NAME}/{}->MISS_NAME) {} (args index?) -> call) -> index
-		 / (args index?) -> call
-var		<- ({} Ec {NAME} {} Sc index?) -> index
-		 / ({} Ec group {} Sc index) -> index
+			Sc index??
+		   {}) -> index
+		 / ({} {COLON} Sc EXP_CP_NAME ({} args index?? {}) -> call {}) -> index
+		 / ({} args index?? {}) -> call
+var		<- ({} Ec {NAME} Sc index?? {}) -> index
+		 / ({} Ec group Sc index {}) -> index
 
-var_list		<- (var (Sc ',' Sc var)*) -> var_list
-expr_list	<- (expr (Sc ',' Sc expect_expr)*) -> expr_list
-opt_expr_list	<- (expr (Sc ',' Sc expect_expr)*)? -> expr_list
-name_list	<- ({NAME} (Sc ',' Sc {NAME})*) -> name_list
+var_list		<- ({} var (Sc ',' Sc var)* {}) -> var_list
+expr_list		<- ({} expr (Sc ',' Sc expect_expr)* {}) -> expr_list
+opt_expr_list	<- ({} (expr (Sc ',' Sc expect_expr)*)? {}) -> expr_list
+name_list		<- ({} {NAME} (Sc ',' Sc EXP_CP_NAME)* {}) -> name_list
 
-param		<- ({NAME/VAR_ARGS} typedef?) -> param
-par_list		<- (param (Sc ',' Sc param)*) -> par_list
-opt_par_list	<- (param (Sc ',' Sc param)*)? -> par_list
-funcbody	<- (('('/({} {}->'(')->MISSING) Sc opt_par_list Sc (')'/({} {}->')')->MISSING) (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT)) -> funcbody
+param			<- ({} {NAME/VAR_ARGS} typedef?? {}) -> param
+par_list		<- ({} param (Sc ',' Sc param)* {}) -> par_list
+opt_par_list	<- ({} (param (Sc ',' Sc param)*)? {}) -> par_list
+funcbody		<- ({} ('('/({} {}->'(')->MISSING) Sc opt_par_list Sc (')'/({} {}->')')->MISSING) (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT) {}) -> funcbody
 
-return	<- (RETURN (Sc expr_list)?? (IF Sc expect_expr)?) -> return Sc ';'?
+return		<- ({} RETURN (Sc expr_list)?? (IF Sc expect_expr)?? {}) -> return Sc ';'?
 
-funcindex	<- ({} {DOT/COLON} Sc ({NAME}/{}->MISS_NAME) {} (Sc funcindex)?) -> index
-funcname	<- ({} Ec             ({NAME}/{}->MISS_NAME) {} (Sc funcindex)?) -> index
+funcindex	<- ({} {DOT/COLON} Sc EXP_CP_NAME (Sc funcindex)?? {}) -> index
+funcname	<- ({} Ec             EXP_CP_NAME (Sc funcindex)?? {}) -> index
 
 index_lcall	<- ({} (
 					{'['} Sc expr Sc (']'/({} {}->']')->MISSING)
-				  / {DOT/COLON} Sc ({NAME}/{}->MISS_NAME)
-				) {} Sc (index_lcall / &args)) -> index
-			 / (args (index_lcall / &args)) -> call
-var_lcall	<- ({} Ec {NAME} {} Sc index_lcall?) -> index
+				  / {DOT/COLON} Sc EXP_CP_NAME
+				) Sc (index_lcall / &args NILCP) {}) -> index
+			 / ({} args (index_lcall / &args NILCP) {}) -> call
+var_lcall	<- ({} Ec {NAME} Sc index_lcall?? {}) -> index
 args		<- '(' Sc opt_expr_list Sc (')'/({} {}->')')->MISSING) / table / String
-call		<- ({} Ec (group / var_lcall) {} args -> call) -> index
+call		<- ({} Ec (group / var_lcall) ({} args NILCP {}) -> call {}) -> index
 
-field			<- ('[' Sc expr Sc (']'/({} {}->']')->MISSING) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) -> field
-field_list		<- (field (Sc FIELD_SEP Sc field)*) -> field_list (Sc FIELD_SEP)?
-opt_field_list	<- (field (Sc FIELD_SEP Sc field)*)? -> field_list (Sc FIELD_SEP)?
-table			<- ('{' Sc opt_field_list Sc ('}'/({} {}->'}')->MISSING)) -> table
+field			<- ({} ('[' Sc expr Sc (']'/({} {}->']')->MISSING) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) {}) -> field
+field_list		<- ({} field (Sc FIELD_SEP Sc field)* {}) -> field_list (Sc FIELD_SEP)?
+opt_field_list	<- ({} (field (Sc FIELD_SEP Sc field)*)? {}) -> field_list (Sc FIELD_SEP)?
+table			<- ({} '{' Sc opt_field_list Sc ('}'/({} {}->'}')->MISSING) {}) -> table
 
-type		<- ({ARRAY} Sc '[' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_array
-			 / ({TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/({} {}->']')->MISSING)) -> type_table
-			 / (FUNCTION (Sc type_args)?? (Sc type_return)??) -> type_function
-			 / Sc {NAME/NIL} -> type !(Sc args)
-type_expr	<- (type Sc (OR/'|' Sc) type_expr) -> type_or
+type		<- ({} {ARRAY} Sc '[' type_expr Sc (']'/({} {}->']')->MISSING) {}) -> type_array
+			 / ({} {TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/({} {}->']')->MISSING) {}) -> type_table
+			 / ({} FUNCTION (Sc type_args)?? (Sc type_return)?? {}) -> type_function
+			 / Sc ({} {NAME/NIL} {}) -> type !(Sc args)
+type_expr	<- ({} type Sc (OR/'|' Sc) type_expr {}) -> type_or
 			 / type
-type_list	<- (type_expr (Sc ',' Sc type_expr)*) -> type_list
+type_list	<- ({} type_expr (Sc ',' Sc type_expr)* {}) -> type_list
 
-type_args	<- '(' Sc opt_par_list Sc (')'/({} {}->')')->MISSING)
-type_return	<- '->' Sc type_expr
-typedef		<- ':' Sc type_expr
+type_args		<- '(' Sc opt_par_list Sc (')'/({} {}->')')->MISSING)
+type_return		<- '->' Sc type_expr
+typedef			<- ':' Sc type_expr
 typedef_list	<- ':' Sc type_list
 
 /* The rest of the needed stuff */
+NILCP <- {}->{nil}
+
 Sc	<- {:_:Scc:}  /* Space Comments (stops captureing anything, its complicated ish)*/
 Scc	<- (Comment / Sp)*  /* Space Comments Capture */
 Sp	<- ' ' / %nl / %esc_t  /* SPace */
@@ -150,34 +163,35 @@ EChar	<- 'a'
 
 STRFormat	<- ('{'!'{' expr ('}' !'}' / ({} {}->'}')->MISSING)) -> STRFormat
 
-LongString	<- ('[' {} {:eq: '='* :} {} '[' %nl? {(!LongStringClose .)*} (LongStringClose / {} -> MISS_LONG_BRACKET)) -> LongString
+LongString	<- ({} '[' {} {:eq: '='* :} {} '[' %nl? {(!LongStringClose .)*} (LongStringClose / {} -> MISS_LONG_BRACKET) {}) -> LongString
 LongStringClose	<-  ']' =eq ']'
 
-Comment		 <- LongComment / ('--' {(!%nl .)*}) -> Comment
-LongComment	 <- '--' LongString -> LongComment
+Comment		 <- LongComment / ({} '--' {(!%nl .)*} {}) -> Comment
+LongComment	 <- ({} '--' LongString {}) -> LongComment
 
-String	<- ({'"'} {~(Esc / !%nl !'"' .)*~} ('"' / ({} {}->'"') -> MISSING)) -> String
-		 / ({"'"} {~(Esc / !%nl !"'" .)*~} ("'" / ({} {}->"'") -> MISSING)) -> String
-		 / ('f' {'"'} (STRFormat / {~(Esc / !%nl !'"' !STRFormat .)+~})* ('"' / ({} {}->'"') -> MISSING)) -> FormatString
-		 / ('f' {"'"} (STRFormat / {~(Esc / !%nl !"'" !STRFormat .)+~})* ("'" / ({} {}->"'") -> MISSING)) -> FormatString
-		 / LongString
+String	<- LongString
+		 / ({} {'"'} {~(Esc / !%nl !'"' .)*~} ('"' / ({} {}->'"') -> MISSING) {}) -> String
+		 / ({} {"'"} {~(Esc / !%nl !"'" .)*~} ("'" / ({} {}->"'") -> MISSING) {}) -> String
+		 / ({} 'f' {'"'} (STRFormat / {~(Esc / !%nl !'"' !STRFormat .)+~})* ('"' / ({} {}->'"') -> MISSING) {}) -> FormatString
+		 / ({} 'f' {"'"} (STRFormat / {~(Esc / !%nl !"'" !STRFormat .)+~})* ("'" / ({} {}->"'") -> MISSING) {}) -> FormatString
 Number	<- Float / Hex / Int
-NUM_E	<- [eE] ({[+-]?} / {}->'+') {[0-9]+}
-Int		<- {[0-9]+NUM_E?} -> Int
-Float	<- ({[0-9]* DOT [0-9]+ NUM_E?} / {[0-9]+ DOT [0-9]* NUM_E?}) -> Float
-Hex		<- ('0' [xX] {X16+ NUM_E?}) -> Hex
+NUM_E	<- [eE] ([+-]? / {}->'+') [0-9]+
+Int		<- ({} {[0-9]+NUM_E?} {}) -> Int
+Float	<- ({} ({[0-9]* DOT [0-9]+ NUM_E?} / {[0-9]+ DOT [0-9]* NUM_E?}) {}) -> Float
+Hex		<- ({} '0' [xX] {X16+ NUM_E?} {}) -> Hex
 
 ScopeDef	<- {GLOBAL/LOCAL}
 OptScopeDef	<- ScopeDef/Ec
 Ec			<- {}->''  /* Empty Capture */
-ErrC		<- {}->'--[[ERROR]]'  /* Error Capture */
 
 WORD        <-  [a-zA-Z0-9_]
 Cut         <-  !WORD
 Rest        <-  (!%nl .)*
 
 X16         <-  [a-fA-F0-9]
-NAME	<- (!RESERVED [a-zA-Z_][a-zA-Z_0-9]*) / RESERVED [a-zA-Z_0-9]+
+NAME		<- (!RESERVED [a-zA-Z_][a-zA-Z_0-9]*) / RESERVED [a-zA-Z_0-9]+
+EXPECT_NAME	<- NAME / {}->MISS_NAME
+EXP_CP_NAME	<- {NAME} / {}->MISS_NAME NILCP
 
 DOT			<- '.' !'.'
 CONCAT		<- '..' !'.'

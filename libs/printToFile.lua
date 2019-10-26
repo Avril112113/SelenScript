@@ -5,8 +5,13 @@ local _print = print
 function print(...)
 	local args = {...}
 	local str = ""
-	for i, v in ipairs(args) do
-		str = str .. tostring(v)
+	for i=1,#args do
+		local v = args[i]
+		if v == nil then
+			str = str .. "nil"
+		else
+			str = str .. tostring(v)
+		end
 		if #args ~= i then
 			str = str .. "\t"
 		end

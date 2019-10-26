@@ -1,6 +1,7 @@
 -- Copied from https://github.com/sqmedeiros/lpeglabel/blob/master/relabel.lua
 -- modified for ability to get a full trace
 -- added `??` for optional explisit nil capture, basically `CaptureSomething??` if CaptureSomething fails, returns nil to the function during ast build
+-- added `{nil}` to capture a nil value (`XXX->{nil}`)
 
 -- $Id: re.lua $
 
@@ -265,6 +266,7 @@ local exp = m.P{ "Exp",
                               ),
                           "ExpNumName")
                 + "->" * expect(S * ( m.Cg((String + num) * m.Cc(mt.__div))
+                                    + m.P"{nil}" * m.Cc(nil, function(patt) return m.Cc(nil) end)
                                     + m.P"{}" * m.Cc(nil, m.Ct)
                                     + defwithfunc(mt.__div)
                                     ),
