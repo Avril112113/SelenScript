@@ -40,8 +40,8 @@ function file:symbolize()
 	self.symbolizeDiagnostics = {}
 
 	local function getSymbol(name, ast)
-		if ast.locals ~= nil and ast.locals[name] ~= nil then
-			return ast.locals[name]
+		if ast.symbols ~= nil and ast.symbols[name] ~= nil then
+			return ast.symbols[name]
 		end
 		if ast.parent == nil then
 			return nil
@@ -49,8 +49,8 @@ function file:symbolize()
 		return getSymbol(name, ast.parent)
 	end
 	local function getSymbolTable(ast)
-		if ast.locals ~= nil then
-			return ast.locals
+		if ast.symbols ~= nil then
+			return ast.symbols
 		end
 		if ast.parent == nil then
 			return nil
@@ -94,7 +94,7 @@ function file:symbolize()
 	end
 	local function symbolize(ast)
 		if ast.type == "block" then
-			ast.locals = ast.locals or {}
+			ast.symbols = ast.symbols or {}
 			for i, stmt in ipairs(ast) do
 				symbolize(stmt)
 			end
@@ -120,8 +120,8 @@ function file:symbolize()
 			symbolize(ast.body)
 		elseif ast.type == "funcbody" then
 			local block = ast.block
-			local locals = {}
-			block.locals = locals
+			local symbols = {}
+			block.symbols = symbols
 
 			for _, arg in ipairs(ast.args) do
 				createSymbol(arg.name, block)
@@ -175,8 +175,8 @@ function file:symbolize()
 				return
 			end
 		elseif ast.type == "table" then
-			ast.symbols = {}
-			
+			local symbols = {}
+			ast.symbols = symbols
 		elseif ast.type == "Int" or ast.type == "Float" or ast.type == "Hex" or ast.type == "String" or ast.type == "LongString" or ast.type == "nil" then
 			-- Nothing to do
 		elseif ast.type == "LongComment" or ast.type == "Comment" then

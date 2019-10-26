@@ -111,7 +111,7 @@ function helpers.printAST(ast, indent, depth, fieldName, symbolValue)
 			else
 				helpers.printAST(v, indent, depth+1, i)
 			end
-		elseif i == "locals" or i == "symbols" then
+		elseif i == "symbols" then
 			print(string.rep(indent, depth+1) .. helpers.strValue(i) .. " ->")
 			helpers.printSymbols(v, indent, depth+2)
 		elseif type(v) == "table" and i ~= "parent" then
