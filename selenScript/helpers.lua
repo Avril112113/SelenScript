@@ -132,7 +132,7 @@ function helpers.printAST(ast, indent, depth, fieldName, symbolValue)
 			else
 				print(string.rep(indent, depth+1) .. helpers.strValue(i) .. " = " .. helpers.strValue(v))
 			end
-		elseif i ~= "type" and i ~= "parent" and i ~= "filepath" and i ~= "start" and i ~= "finish" then
+		elseif i ~= "type" and i ~= "parent" and i ~= "filepath" and i ~= "start" and i ~= "finish" and type(v) ~= "function" then
 			print(string.rep(indent, depth+1) .. helpers.strValue(i) .. " = " .. helpers.strValue(v))
 		end
 	end

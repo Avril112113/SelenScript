@@ -97,6 +97,11 @@ local function climbPrecedence(data, min_precedence)
 	return result
 end
 
+local stringTypes = {
+	String=true,
+	LongString=true,
+	FormatString=true
+}
 ---@class SS_DEFS
 local defs = {
 	-- Errors (handled so we can continue parsing)
@@ -445,7 +450,10 @@ local defs = {
 			start=start,
 			finish=finish,
 			quote=quote,
-			value=value
+			value=value,
+			isEqualValue=function(self, other)
+				return stringTypes[other.type] == true and self.value == other.value
+			end
 		}
 	end,
 	LongString=function(start, eqStart, eqFinish, value, finish)  -- NOTE: used by LongComment as well
@@ -457,7 +465,10 @@ local defs = {
 			finish=finish,
 			quote=quote,
 			quoteEqLen=quoteEqLen,
-			value=value
+			value=value,
+			isEqualValue=function(self, other)
+				return stringTypes[other.type] == true and self.value == other.value
+			end
 		}
 	end,
 	FormatString=function(start, quote, ...)
@@ -487,7 +498,11 @@ local defs = {
 			type="Int",
 			start=start,
 			finish=finish,
-			value=value
+			value=value,
+			isEqualValue=function(self, other)
+				-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
+				return self.type == other.type and self.value:lower() == other.value:lower()
+			end
 		}
 	end,
 	Float=function(start, value, finish)
@@ -495,7 +510,11 @@ local defs = {
 			type="Float",
 			start=start,
 			finish=finish,
-			value=value
+			value=value,
+			isEqualValue=function(self, other)
+				-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
+				return self.type == other.type and self.value:lower() == other.value:lower()
+			end
 		}
 	end,
 	Hex=function(start, value, finish)
@@ -503,7 +522,10 @@ local defs = {
 			type="Hex",
 			start=start,
 			finish=finish,
-			value=value
+			value=value,
+			isEqualValue=function(self, other)
+				return self.type == other.type and self.value:lower() == other.value:lower()
+			end
 		}
 	end,
 	["nil"]=function(start, finish)
@@ -511,6 +533,9 @@ local defs = {
 			type="nil",
 			start=start,
 			finish=finish,
+			isEqualValue=function(self, other)
+				return self.type == other.type
+			end
 		}
 	end,
 	bool=function(start, valueStr, finish)
@@ -524,7 +549,10 @@ local defs = {
 			type="bool",
 			start=start,
 			finish=finish,
-			value=value
+			value=value,
+			isEqualValue=function(self, other)
+				return self.type == other.type and self.value:lower() == other.value:lower()
+			end
 		}
 	end,
 	table=function(start, fieldlist, finish)
@@ -800,8 +828,10 @@ local function parse(file)
 	-- add parent to all nodes
 	local function setExtraData(_ast)
 		for i, v in pairs(_ast) do
-			if type(v) == "table" and v.type ~= nil and v.parent == nil then
-				v.parent = _ast
+			if type(v) == "table" and v.type ~= nil and i ~= "parent" then
+				if v.parent == nil then
+					v.parent = _ast
+				end
 				v.filepath = file.code
 				setExtraData(v)
 			end
