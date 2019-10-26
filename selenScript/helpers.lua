@@ -65,16 +65,26 @@ function helpers.isEmptyTable(tbl)
 	return true
 end
 
+function helpers._strNameForSymbol(key)
+	if key.value ~= nil then
+		return tostring(key.value)
+	elseif key.type == "index" then
+		if key.index == nil then
+			return helpers._strNameForSymbol(key.expr)
+		else
+			return "<multi index>"
+		end
+	end
+	return "<Type: " .. key.type .. ">"
+end
 ---@param symbols table
 ---@param indent string
 ---@param depth number
 function helpers.printSymbols(symbols, indent, depth)
-	local prefix = ""
-	if indent ~= nil and depth ~= nil then
-		prefix = string.rep(indent, depth)
-	end
+	indent = indent or "    "
+	depth = depth or 0
 	for _, symbol in pairs(symbols) do
-		print(prefix .. tostring(symbol.name) .. " Declarations: " .. tostring(#symbol.declarations) .. " References: " .. tostring(#symbol.references) .. " Value: ")
+		print(string.rep(indent, depth) .. helpers._strNameForSymbol(symbol.key) .. " Declarations: " .. tostring(#symbol.declarations) .. " References: " .. tostring(#symbol.references) .. " Value: ")
 		helpers.printAST(symbol.value, indent, depth+1, nil, symbol.value.type == "table")
 	end
 end

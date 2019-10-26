@@ -39,17 +39,27 @@ end
 function file:symbolize()
 	self.symbolizeDiagnostics = {}
 
-	local function getSymbol(name, ast)
-		if ast.symbols ~= nil and ast.symbols[name] ~= nil then
-			return ast.symbols[name]
+	local function getSymbol(key, ast)
+		if ast.type == "block" and ast.symbols ~= nil then
+			for symbolKey, symbol in pairs(ast.symbols) do
+				if symbolKey.isEqualValue ~= nil then
+					if symbolKey:isEqualValue(key) then
+						return symbol
+					end
+				else
+					table.insert(self.symbolizeDiagnostics, {
+						msg="INTERNAL: file:symbolize().getSymbol(): type " .. tostring(symbolKey.type) .. " is missing isEqualValue()"
+					})
+				end
+			end
 		end
 		if ast.parent == nil then
 			return nil
 		end
-		return getSymbol(name, ast.parent)
+		return getSymbol(key, ast.parent)
 	end
 	local function getSymbolTable(ast)
-		if ast.symbols ~= nil then
+		if ast.type == "block" and ast.symbols ~= nil then
 			return ast.symbols
 		end
 		if ast.parent == nil then
@@ -57,7 +67,7 @@ function file:symbolize()
 		end
 		return getSymbolTable(ast.parent)
 	end
-	local function createSymbol(name, ast, value)
+	local function createSymbol(key, ast, value)
 		local symbolTable
 		local symbol
 		if ast.scope == "local" then
@@ -65,7 +75,7 @@ function file:symbolize()
 		elseif ast.scope == "global" then
 			symbolTable = self.program.globals
 		else
-			symbol = getSymbol(name, ast)
+			symbol = getSymbol(key, ast)
 			if symbol ~= nil then
 			elseif self.program.settings.defaultLocals then
 				symbolTable = getSymbolTable(ast)
@@ -80,17 +90,17 @@ function file:symbolize()
 		elseif symbolTable ~= nil then
 			-- no definition or symbol yet, so we need to create them
 			symbol = Symbol.new {
-				name=name,
+				key=key,
 				value=value
 			}
-			symbol:addDeclaration(ast)
-			symbolTable[name] = symbol
+			symbolTable[key] = symbol
 		else
 			table.insert(self.symbolizeDiagnostics, {
 				msg="INTERNAL: createSymbol Wait What? how did we get here?"
 			})
 			return
 		end
+		return symbol
 	end
 	local function symbolize(ast)
 		if ast.type == "block" then
@@ -103,20 +113,10 @@ function file:symbolize()
 		elseif ast.type == "anon_function" then
 			symbolize(ast.body)
 		elseif ast.type == "function" then
-			local name
-			local var = ast.funcname
-			if type(var) == "string" then
-				name = var
-			elseif var.index == nil and var.name ~= nil then
-				name = var.name
-			else
-				table.insert(self.symbolizeDiagnostics, {
-					msg="UNIMPLEMENTED: file:symbolize().symbolize() type 'function': assignment into table"
-				})
-				return
+			local symbol = createSymbol(ast.funcname, ast, helpers.deepCopy(ast.body))
+			if symbol ~= nil then
+				symbol:addDeclaration(ast)
 			end
-
-			createSymbol(name, ast, helpers.deepCopy(ast.body))
 			symbolize(ast.body)
 		elseif ast.type == "funcbody" then
 			local block = ast.block
@@ -124,7 +124,10 @@ function file:symbolize()
 			block.symbols = symbols
 
 			for _, arg in ipairs(ast.args) do
-				createSymbol(arg.name, block)
+				local symbol = createSymbol(arg.name, block)
+				if symbol ~= nil then
+					symbol:addDeclaration(ast)
+				end
 			end
 
 			symbolize(block)
@@ -132,41 +135,28 @@ function file:symbolize()
 			for i, var in ipairs(ast.var_list) do
 				local value = (ast.expr_list ~= nil and ast.expr_list[i]) or nil
 
-				local name
-				if type(var) == "string" then
-					name = var
-				elseif var.index == nil and var.name ~= nil then
-					name = var.name
-				else
-					table.insert(self.symbolizeDiagnostics, {
-						msg="UNIMPLEMENTED: file:symbolize().symbolize() type 'assign': assignment into table"
-					})
-					return
-				end
-
 				local symbolValue = nil
 				if value ~= nil then
 					symbolize(value)
 					symbolValue = helpers.deepCopy(value)
 				end
-				createSymbol(name, ast, symbolValue)
+				local symbol = createSymbol(var, ast, symbolValue)
+				if symbol ~= nil then
+					symbol:addDeclaration(ast)
+				end
 			end
 		elseif ast.type == "index" then
 			if ast.index == nil then
-				if ast.name ~= nil then
-					local symbol = getSymbol(ast.name, ast)
-					if symbol == nil then
-						table.insert(self.symbolizeDiagnostics, {
-							msg="TODO: file:symbolize().symbolize() type 'index': handle when index is undefined"
-						})
-						return
-					end
-					symbol:addReference(ast)
-				else
+				local symbol = getSymbol(ast.expr, ast)
+				if symbol == nil then
 					table.insert(self.symbolizeDiagnostics, {
-						msg="UNIMPLEMENTED: file:symbolize().symbolize() type 'index': expr index"
+						msg="Undefined variable " .. ((ast.toString and ast:toString()) or ("<type: " .. tostring(ast.type) .. " is missing toString()>"))
 					})
-					return
+					-- even though it was undefined, we want to still be able to link this up with any potential future declations or references
+					symbol = createSymbol(ast.expr, ast)
+				end
+				if symbol ~= nil then
+					symbol:addReference(ast)
 				end
 			else
 				table.insert(self.symbolizeDiagnostics, {
