@@ -248,13 +248,13 @@ function defs.assign(start, scope, varlist, typelist, exprlist, finish)
 		expr_list=exprlist
 	}
 end
-function defs.attrib_assign(start, scope, startName, name, finishName, attrib, startTypedef, typedef, finishTypedef, startExpr, expr, finish)
+function defs.attrib_assign(start, scope, name, attrib, startTypedef, typedef, finishTypedef, startExpr, expr, finish)
 	return {
 		type="assign",
 		start=start,
 		finish=finish,
 		scope=scope,
-		var_list=defs.name_list(startName, name, finishName),
+		var_list=name,
 		attrib=attrib,
 		type_list=defs.type_list(startTypedef, typedef, finishTypedef),
 		expr_list=defs.expr_list(startExpr, expr, finish)

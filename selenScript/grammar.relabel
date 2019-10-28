@@ -51,7 +51,7 @@ assign_part			<- (typedef_list Sc)?? '=' Sc expr_list
 					 / typedef_list NILCP
 assign_stmt			<- ({} Ec var_list Sc assign_part {}) -> assign
 scoped_assign_stmt	<- ({} ScopeDef Sc name_list Sc (assign_part / NILCP NILCP) {}) -> assign
-attrib_assign_stmt	<- ({} {LOCAL} Sc {} EXP_CP_NAME {} Sc '<' Sc {NAME/{}->MISS_NAME} Sc ('>'/({} {}->'>')->MISSING) Sc ({} typedef {} Sc)?? Sc '=' Sc {} expect_expr {}) -> attrib_assign
+attrib_assign_stmt	<- ({} {LOCAL}  Sc (NameAsString/{}->MISS_NAME) Sc '<' Sc {NAME/{}->MISS_NAME} Sc ('>'/({} {}->'>')->MISSING) Sc {} typedef?? {} Sc Sc '=' Sc {} expect_expr {}) -> attrib_assign
 
 interface_stmt	<- ({} OptScopeDef INTERFACE Sc EXP_CP_NAME interface_block (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT) {}) -> interface
 interface_block	<- Sc ((
