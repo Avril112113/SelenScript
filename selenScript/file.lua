@@ -129,7 +129,12 @@ function file:symbolizeAST(ast)
 		block.symbols = symbols
 
 		for _, arg in ipairs(ast.args) do
-			local symbol = self:createSymbol(arg.name, block)
+			local symbol
+			if arg.type == "var_args" then
+				symbol = self:createSymbol(arg, block)
+			else
+				symbol = self:createSymbol(arg.name, block)
+			end
 			if symbol ~= nil then
 				symbol:addDeclaration(ast)
 			end

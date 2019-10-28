@@ -75,7 +75,7 @@ value	<- ({} NIL {}) -> nil
 		 / ({} ({TRUE} / {FALSE}) {}) -> bool
 		 / Number
 		 / String
-		 / ({} VAR_ARGS {}) -> var_args
+		 / var_args
 		 / ({} FUNCTION Sc funcbody {}) -> anon_function
 		 / var
 		 / group
@@ -99,7 +99,7 @@ expr_list		<- ({} expr (Sc ',' Sc expect_expr)* {}) -> expr_list
 opt_expr_list	<- ({} (expr (Sc ',' Sc expect_expr)*)? {}) -> expr_list
 name_list		<- ({} NameAsString (Sc ',' Sc (NameAsString/{}->MISS_NAME))* {}) -> name_list
 
-param			<- ({} {NAME/VAR_ARGS} {} typedef?? {}) -> param
+param			<- ({} {NAME} {} typedef?? {}) -> param / var_args
 par_list		<- ({} param (Sc ',' Sc param)* {}) -> par_list
 opt_par_list	<- ({} (param (Sc ',' Sc param)*)? {}) -> par_list
 funcbody		<- ({} ('('/({} {}->'(')->MISSING) Sc opt_par_list Sc (')'/({} {}->')')->MISSING) (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT) {}) -> funcbody
@@ -169,6 +169,7 @@ LongStringClose	<-  ']' =eq ']'
 Comment		 <- LongComment / ({} '--' {(!%nl .)*} {}) -> Comment
 LongComment	 <- ({} '--' LongString {}) -> LongComment
 
+var_args <- ({} VAR_ARGS {}) -> var_args
 String	<- LongString
 		 / ({} {'"'} {~(Esc / !%nl !'"' .)*~} ('"' / ({} {}->'"') -> MISSING) {}) -> String
 		 / ({} {"'"} {~(Esc / !%nl !"'" .)*~} ("'" / ({} {}->"'") -> MISSING) {}) -> String

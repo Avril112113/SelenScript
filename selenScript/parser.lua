@@ -591,7 +591,10 @@ function defs.var_args(start, finish)
 	return {
 		type="var_args",
 		start=start,
-		finish=finish
+		finish=finish,
+		isEqual=function(self, other)
+			return self.type == other.type
+		end
 	}
 end
 
