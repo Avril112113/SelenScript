@@ -629,6 +629,9 @@ function defs.index(start, op, exprStart, expr, exprFinish, index, finish)
 				end
 			end
 			return str
+		end,
+		isEqual=function(self, other)
+			return self.type == other.type and self.expr:isEqual(other.expr) and ((self.index == nil and other.index == nil) or (self.index ~= nil and other.index ~= nil and self.index:isEqual(other.index)))
 		end
 	}
 end
