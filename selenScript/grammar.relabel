@@ -45,7 +45,7 @@ for_range_stmt	<- ({} FOR Sc {} EXP_CP_NAME {} Sc '=' Sc expect_expr Sc ',' Sc e
 for_each_stmt	<- ({} FOR Sc name_list IN Sc expr_list DO block (END / ({} {(!END .)* EXPECT_END} {}->'for each') -> UNPARSED_INPUT) {}) -> for_each
 
 function_stmt	<- ({} Ec FUNCTION Sc {} (funcname/{}->MISS_FUNCNAME) {} Sc funcbody {}) -> function
-				 / ({} OptScopeDef FUNCTION Sc EXP_CP_NAME Sc funcbody {}) -> function
+				 / ({} OptScopeDef FUNCTION Sc {} EXP_CP_NAME {} Sc funcbody {}) -> function
 
 assign_part			<- (typedef_list Sc)?? '=' Sc expr_list
 					 / typedef_list NILCP
