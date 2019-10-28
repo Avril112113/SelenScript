@@ -14,7 +14,7 @@ function helpers.deepCopy(tbl)
 end
 
 
---- Converts a value to a more readable string repersentation based on its type
+--- Converts a value to a more readable string representation based on its type
 ---@param v any
 function helpers.strValue(v)
 	if type(v) == "string" then

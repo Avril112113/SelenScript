@@ -14,7 +14,7 @@ grammarFile:close()
 local errors
 
 --- Used to add an error to the errors list
---- this is a function for syntatic sugar
+--- this is a function for syntactic sugar
 --- pusherror {pos=number, msg=string}
 ---@param err table
 local function pusherror(err)
@@ -135,7 +135,7 @@ local defs = {
 			type="miss_expr",
 			start=pos,
 			finish=pos,
-			msg="Expecting an expresion."
+			msg="Expecting an expression."
 		}
 	end,
 	-- MISS DECorator or function
@@ -152,7 +152,7 @@ local defs = {
 			type="miss_dec_arg",
 			start=pos,
 			finish=pos,
-			msg="Call to decorator must have aguments or no arguments at all."
+			msg="Call to decorator must have arguments or no arguments at all."
 		}
 	end,
 	-- MISS CALL After Colon
@@ -213,7 +213,7 @@ local defs = {
 			type="stmt_expr",
 			start=pos,
 			finish=pos,
-			msg="Unexpected expresion.",
+			msg="Unexpected expression.",
 			expr=expr
 		}
 	end,
@@ -804,7 +804,7 @@ function defs.LongComment(start, comment, finish)
 	}
 end
 
--- Typeing
+-- Typing
 function defs.type_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
@@ -823,23 +823,23 @@ function defs.type(start, name, finish)
 		name=name
 	}
 end
-function defs.type_array(start, name, valuetype, finish)
+function defs.type_array(start, name, valueType, finish)
 	return {
 		type="type_array",
 		start=start,
 		finish=finish,
 		name=name,
-		valuetype=valuetype
+		valueType=valueType
 	}
 end
-function defs.type_table(start, name, keytype, valuetype, finish)
+function defs.type_table(start, name, keyType, valueType, finish)
 	return {
 		type="type_table",
 		start=start,
 		finish=finish,
 		name=name,
-		keytype=keytype,
-		valuetype=valuetype
+		keyType=keyType,
+		valueType=valueType
 	}
 end
 function defs.type_function(start, type_args, type_return, finish)

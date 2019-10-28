@@ -160,7 +160,7 @@ function file:symbolizeAST(ast)
 					finish=ast.finish,
 					msg="Undefined variable " .. ((ast.toString and ast:toString()) or ("<type: " .. tostring(ast.type) .. " is missing toString()>"))
 				})
-				-- even though it was undefined, we want to still be able to link this up with any potential future declations or references
+				-- even though it was undefined, we want to still be able to link this up with any potential future declarations or references
 				symbol = self:createSymbol(ast.expr, ast)
 			end
 			if symbol ~= nil then

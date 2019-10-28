@@ -15,9 +15,11 @@ function symbol.new(tbl)
 
 	return self
 end
+
 function symbol:addDeclaration(ast)
 	table.insert(self.declarations, ast)
 end
+
 function symbol:addReference(ast)
 	table.insert(self.references, ast)
 end
