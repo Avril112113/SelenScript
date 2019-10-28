@@ -211,7 +211,12 @@ function file:transpile()
 	local transpiler = Transpiler.new(self.program.settings)
 	local luaCode = transpiler:transpile(self.ast)
 
-	local ok = self:writeFile(luaCode)
+	local ok
+	if self.writeOnTranspile == false then
+		ok = true
+	else
+		ok = self:writeFile(luaCode)
+	end
 	return ok, transformer, transpiler
 end
 function file:getWriteFilePath()
