@@ -444,7 +444,7 @@ function defs.String(start, quote, value, finish)  -- NOTE: used by Comment as w
 		end
 	}
 end
-function defs.LongString(start, eqStart, eqFinish, value, finish)  -- NOTE: used by LongComment as well
+function defs.LongString(start, eqStart, eqFinish, startNewline, value, finish)  -- NOTE: used by LongComment as well
 	local quoteEqLen = eqFinish-eqStart
 	local quote = "[" .. string.rep("=", quoteEqLen) .. "["
 	local endQuote = "]" .. string.rep("=", quoteEqLen) .. "]"
@@ -455,6 +455,7 @@ function defs.LongString(start, eqStart, eqFinish, value, finish)  -- NOTE: used
 		quote=quote,
 		endQuote=endQuote,
 		quoteEqLen=quoteEqLen,
+		startNewline=startNewline ~= nil,
 		value=value,
 		toString=function(self, parent)
 			return self.quote .. self.value .. self.endQuote

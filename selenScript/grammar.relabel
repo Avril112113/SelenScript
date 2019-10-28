@@ -163,7 +163,7 @@ EChar	<- 'a'
 
 STRFormat	<- ('{'!'{' expr ('}' !'}' / ({} {}->'}')->MISSING)) -> STRFormat
 
-LongString	<- ({} '[' {} {:eq: '='* :} {} '[' %nl? {(!LongStringClose .)*} (LongStringClose / {} -> MISS_LONG_BRACKET) {}) -> LongString
+LongString	<- ({} '[' {} {:eq: '='* :} {} '[' ({%nl}??) {(!LongStringClose .)*} (LongStringClose / {} -> MISS_LONG_BRACKET) {}) -> LongString
 LongStringClose	<-  ']' =eq ']'
 
 Comment		 <- LongComment / ({} '--' {(!%nl .)*} {}) -> Comment
