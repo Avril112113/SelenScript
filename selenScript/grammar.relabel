@@ -97,7 +97,7 @@ var		<- ({} Ec {} {NAME} {} Sc index?? {}) -> index
 var_list		<- ({} var (Sc ',' Sc var)* {}) -> var_list
 expr_list		<- ({} expr (Sc ',' Sc expect_expr)* {}) -> expr_list
 opt_expr_list	<- ({} (expr (Sc ',' Sc expect_expr)*)? {}) -> expr_list
-name_list		<- ({} NameAsString (Sc ',' Sc {} EXP_CP_NAME {})* {}) -> name_list
+name_list		<- ({} NameAsString (Sc ',' Sc (NameAsString/{}->MISS_NAME))* {}) -> name_list
 
 param			<- ({} {NAME/VAR_ARGS} {} typedef?? {}) -> param
 par_list		<- ({} param (Sc ',' Sc param)* {}) -> par_list
