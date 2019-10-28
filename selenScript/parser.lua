@@ -439,7 +439,7 @@ function defs.String(start, quote, value, finish)  -- NOTE: used by Comment as w
 		toString=function(self, parent)
 			return self.quote .. self.value .. self.quote
 		end,
-		isEqualValue=function(self, other)
+		isEqual=function(self, other)
 			return stringTypes[other.type] == true and self.value == other.value
 		end
 	}
@@ -459,7 +459,7 @@ function defs.LongString(start, eqStart, eqFinish, value, finish)  -- NOTE: used
 		toString=function(self, parent)
 			return self.quote .. self.value .. self.endQuote
 		end,
-		isEqualValue=function(self, other)
+		isEqual=function(self, other)
 			return stringTypes[other.type] == true and self.value == other.value
 		end
 	}
@@ -495,7 +495,7 @@ function defs.Int(start, value, finish)
 		toString=function(self, parent)
 			return tostring(self.value)
 		end,
-		isEqualValue=function(self, other)
+		isEqual=function(self, other)
 			-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
 			return self.type == other.type and self.value:lower() == other.value:lower()
 		end
@@ -510,7 +510,7 @@ function defs.Float(start, value, finish)
 		toString=function(self, parent)
 			return tostring(self.value)
 		end,
-		isEqualValue=function(self, other)
+		isEqual=function(self, other)
 			-- TODO: check where `e+` or `e-` is used and could still mean the same value (currently does not)
 			return self.type == other.type and self.value:lower() == other.value:lower()
 		end
@@ -525,7 +525,7 @@ function defs.Hex(start, value, finish)
 		toString=function(self, parent)
 			return tostring(self.value)
 		end,
-		isEqualValue=function(self, other)
+		isEqual=function(self, other)
 			return self.type == other.type and self.value:lower() == other.value:lower()
 		end
 	}
@@ -538,7 +538,7 @@ defs["nil"] = function(start, finish)
 		toString=function(self, parent)
 			return "nil"
 		end,
-		isEqualValue=function(self, other)
+		isEqual=function(self, other)
 			return self.type == other.type
 		end
 	}
@@ -558,7 +558,7 @@ function defs.bool(start, valueStr, finish)
 		toString=function(self, parent)
 			return tostring(self.value)
 		end,
-		isEqualValue=function(self, other)
+		isEqual=function(self, other)
 			return self.type == other.type and self.value:lower() == other.value:lower()
 		end
 	}

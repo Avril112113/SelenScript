@@ -41,8 +41,8 @@ end
 function file:getSymbol(key, ast)
 	if ast.type == "block" and ast.symbols ~= nil then
 		for symbolKey, symbol in pairs(ast.symbols) do
-			if symbolKey.isEqualValue ~= nil then
-				if symbolKey:isEqualValue(key) then
+			if symbolKey.isEqual ~= nil then
+				if symbolKey:isEqual(key) then
 					return symbol
 				end
 			else
@@ -50,7 +50,7 @@ function file:getSymbol(key, ast)
 					type="internal",
 					start=ast.start,
 					finish=ast.finish,
-					msg="INTERNAL: file:symbolize().getSymbol(): type " .. tostring(symbolKey.type) .. " is missing isEqualValue()"
+					msg="INTERNAL: file:symbolize().getSymbol(): type " .. tostring(symbolKey.type) .. " is missing isEqual()"
 				})
 			end
 		end
