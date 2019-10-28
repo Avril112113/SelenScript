@@ -375,12 +375,15 @@ function defs.decorate(start, decoratorlist, expr, finish)
 	}
 end
 defs["function"] = function(start, scope, startFuncname, funcname, finishFuncname, body, finish)
+	if type(funcname) == "string" then
+		funcname = defs.String(startFuncname, "", funcname, finishFuncname)
+	end
 	return {
 		type="function",
 		start=start,
 		finish=finish,
 		scope=scope,
-		funcname=defs.String(startFuncname, "", funcname, finishFuncname),
+		funcname=funcname,
 		body=body
 	}
 end
