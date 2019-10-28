@@ -178,7 +178,7 @@ function file:symbolizeAST(ast)
 	elseif ast.type == "table" then
 		local symbols = {}
 		ast.symbols = symbols
-	elseif ast.type == "Int" or ast.type == "Float" or ast.type == "Hex" or ast.type == "String" or ast.type == "LongString" or ast.type == "nil" then
+	elseif ast.type == "Int" or ast.type == "Float" or ast.type == "Hex" or ast.type == "String" or ast.type == "LongString" or ast.type == "bool" or ast.type == "nil" then
 		-- Nothing to do
 	elseif ast.type == "LongComment" or ast.type == "Comment" then
 		-- Comments will have special stuff later on, like emmy lua support
