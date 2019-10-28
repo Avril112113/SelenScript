@@ -13,6 +13,8 @@ program.__index = program
 function program.new(settings)
 	local self = setmetatable({}, program)
 	self.settings = settings or {}
+	if self.settings.defaultLocals == nil then self.settings.defaultLocals = true end
+	if self.settings.indent == nil then self.settings.indent = "\t" end
 	self.files = {}
 	self.globals = {}
 
