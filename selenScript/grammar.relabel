@@ -97,7 +97,7 @@ var		<- ({} Ec {} {NAME} {} Sc index?? {}) -> index
 var_list		<- ({} var (Sc ',' Sc var)* {}) -> var_list
 expr_list		<- ({} expr (Sc ',' Sc expect_expr)* {}) -> expr_list
 opt_expr_list	<- ({} (expr (Sc ',' Sc expect_expr)*)? {}) -> expr_list
-name_list		<- ({} {} {NAME} {} (Sc ',' Sc {} EXP_CP_NAME {})* {}) -> name_list
+name_list		<- ({} NameAsString (Sc ',' Sc {} EXP_CP_NAME {})* {}) -> name_list
 
 param			<- ({} {NAME/VAR_ARGS} {} typedef?? {}) -> param
 par_list		<- ({} param (Sc ',' Sc param)* {}) -> par_list
@@ -118,7 +118,7 @@ var_lcall	<- ({} Ec {} {NAME} {} Sc index_lcall?? {}) -> index
 args		<- '(' Sc opt_expr_list Sc (')'/({} {}->')')->MISSING) / table / String
 call		<- ({} Ec {} (group / var_lcall) {} ({} args NILCP {}) -> call {}) -> index
 
-field			<- ({} ('[' Sc expr Sc (']'/({} {}->']')->MISSING) Sc '=' Sc expr / {NAME} Sc '=' Sc expr / expr) {}) -> field
+field			<- ({} ('[' Sc expr Sc (']'/({} {}->']')->MISSING) Sc '=' Sc expr / NameAsString Sc '=' Sc expr / expr) {}) -> field
 field_list		<- ({} field (Sc FIELD_SEP Sc field)* {}) -> field_list (Sc FIELD_SEP)?
 opt_field_list	<- ({} (field (Sc FIELD_SEP Sc field)*)? {}) -> field_list (Sc FIELD_SEP)?
 table			<- ({} '{' Sc opt_field_list Sc ('}'/({} {}->'}')->MISSING) {}) -> table
@@ -180,6 +180,7 @@ Int		<- ({} {[0-9]+NUM_E?} {}) -> Int
 Float	<- ({} ({[0-9]* DOT [0-9]+ NUM_E?} / {[0-9]+ DOT [0-9]* NUM_E?}) {}) -> Float
 Hex		<- ({} '0' [xX] {X16+ NUM_E?} {}) -> Hex
 
+NameAsString	<- ({} Ec {NAME} {}) -> String
 ScopeDef	<- {GLOBAL/LOCAL}
 OptScopeDef	<- ScopeDef/Ec
 Ec			<- {}->''  /* Empty Capture */

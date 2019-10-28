@@ -735,16 +735,12 @@ end
 function defs.name_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	local namelist = {
+	return {
 		type="name_list",
 		start=start,
-		finish=finish
+		finish=finish,
+		unpack(t)
 	}
-	while #t > 0 do
-		local nameStart, name, nameFinish = table.remove(t, 1), table.remove(t, 1), table.remove(t, 1)
-		table.insert(namelist, defs.String(nameStart, "", name, nameFinish))
-	end
-	return namelist
 end
 function defs.field_list(...)
 	local t = {...}
