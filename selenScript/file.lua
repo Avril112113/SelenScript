@@ -1,6 +1,8 @@
 local Symbol = require "selenScript.symbol"
 local helpers = require "selenScript.helpers"
 local parser = require "selenScript.parser"
+local Transformer = require "selenScript.transformer"
+local Transpiler = require "selenScript.transpiler"
 
 ---@class SS_File
 local file = {
@@ -202,9 +204,28 @@ function file:diagnose()
 	self.diagnostics = {}
 end
 
--- TODO
 function file:transpile()
-	self.transpileDiagnostics = {}
+	local transformer = Transformer.new(self.program.settings)
+	transformer:transform(self.ast)
+
+	local transpiler = Transpiler.new(self.program.settings)
+	local luaCode = transpiler:transpile(self.ast)
+
+	local ok = self:writeFile(luaCode)
+	return ok, transformer, transpiler
+end
+function file:getWriteFilePath()
+	return self.filepath:gsub("%.sl$", "") .. ".lua"
+end
+function file:writeFile(luaCode)
+	local f = io.open(self:getWriteFilePath(), "w")
+	if f == nil then
+		return false
+	else
+		f:write(luaCode)
+		f:close()
+		return true
+	end
 end
 
 
