@@ -15,6 +15,7 @@ function program.new(settings)
 	self.settings = settings or {}
 	if self.settings.defaultLocals == nil then self.settings.defaultLocals = true end
 	if self.settings.indent == nil then self.settings.indent = "\t" end
+	if self.settings.targetVersion == nil then self.settings.targetVersion = "5.4" end
 	self.files = {}
 	self.globals = {}
 
