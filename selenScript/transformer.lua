@@ -15,6 +15,21 @@ end
 
 
 function transformer:transform(ast)
+	local toRemove = {}
+	for i, v in pairs(ast) do
+		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
+			local newValue = self:transform(v)
+			if newValue == nil and type(i) == "number" and #v <= i then
+				table.insert(toRemove, i)
+			else
+				ast[i] = newValue
+			end
+		end
+	end
+	for i=#toRemove,1,-1 do
+		local key = toRemove[i]
+		table.remove(ast, key)
+	end
 	for _, transformerObj in ipairs(self.transformers) do
 		if transformerObj[ast.type] ~= nil then
 			ast = transformerObj[ast.type](transformerObj, ast)
