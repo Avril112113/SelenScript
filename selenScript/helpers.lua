@@ -2,13 +2,17 @@
 local helpers = {}
 
 
-function helpers.deepCopy(tbl)
+function helpers.deepCopy(tbl, parent)
 	local new = {}
 	for i, v in pairs(tbl) do
 		if type(v) == "table" and i ~= "parent" then
-			v = helpers.deepCopy(v)
+			v = helpers.deepCopy(v, new)
 		end
 		new[i] = v
+	end
+	-- restore parent reference
+	if tbl.parent ~= nil then
+		new.parent = parent
 	end
 	return new
 end
