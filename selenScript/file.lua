@@ -211,10 +211,11 @@ end
 
 function file:transpile()
 	local transformer = Transformer.new(self.program.settings)
-	transformer:transform(self.ast)
+	local transformedAst = helpers.deepCopy(self.ast)
+	transformer:transform(transformedAst)
 
 	local transpiler = Transpiler.new(self.program.settings)
-	local luaCode = transpiler:transpile(self.ast)
+	local luaCode = transpiler:transpile(transformedAst)
 
 	local ok
 	if self.writeOnTranspile == false then
@@ -222,7 +223,7 @@ function file:transpile()
 	else
 		ok = self:writeFile(luaCode)
 	end
-	return ok, transformer, transpiler
+	return ok, transformer, transpiler, transformedAst
 end
 function file:getWriteFilePath()
 	return self.filepath:gsub("%.sl$", "") .. ".lua"
