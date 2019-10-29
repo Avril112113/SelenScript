@@ -1,3 +1,7 @@
-local locVar = 1
-global gloVar = 2
-defVar = 3
+local a = 1
+while true do
+	if a > 5 then
+		continue
+	end
+	a = a + 1
+end
