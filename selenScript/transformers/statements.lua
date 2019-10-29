@@ -11,9 +11,6 @@ function statements.new(transformer)
 end
 
 
-function statements:assign(ast)
-	return ast
-end
 
 
 return statements

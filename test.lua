@@ -46,7 +46,7 @@ end
 
 print()
 
-local ok, transformer, transpiler = file:transpile()
+local ok, transformer, transpiler, transformedAst = file:transpile()
 if not ok then
 	print("Failed to open file '" .. file:getWriteFilePath() .. "' to write")
 end

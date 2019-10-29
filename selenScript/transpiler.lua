@@ -7,8 +7,9 @@ function transpiler.new(settings)
 	self.settings = settings or {}
 	self.diagnostics = {}
 	self.transpilers = {
+		require "selenScript.transpiler.operators".new(self),
+		require "selenScript.transpiler.values".new(self),
 		require "selenScript.transpiler.statements".new(self),
-		require "selenScript.transpiler.values".new(self)
 	}
 	return self
 end

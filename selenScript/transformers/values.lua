@@ -11,9 +11,4 @@ function values.new(transformer)
 end
 
 
-values["nil"] = function(self, ast)
-	return ast
-end
-
-
 return values

@@ -148,7 +148,8 @@ function file:symbolizeAST(ast)
 			local symbolValue = nil
 			if value ~= nil then
 				self:symbolizeAST(value)
-				symbolValue = helpers.deepCopy(value)
+				-- TODO: fixme?
+				-- symbolValue = helpers.deepCopy(value)
 			end
 			local symbol = self:createSymbol(var, ast, symbolValue)
 			if symbol ~= nil then
