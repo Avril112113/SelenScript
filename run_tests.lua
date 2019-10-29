@@ -65,8 +65,38 @@ for _, path in ipairs(files) do
 	end
 
 	local transpileStart = os.clock()
-	file:transpile()
+	local ok, transformer, transpiler = file:transpile()
 	totalTranspileTime = totalTranspileTime + (os.clock() - transpileStart)
+	if #transformer.diagnostics > 0 then
+		print("- Transformer Diagnostics -")
+		for _, err in ipairs(transformer.diagnostics) do
+			local str = err.msg
+			if err.start ~= nil then
+				local posStr = tostring(err.start)
+				if err.finish ~= nil then
+					posStr = posStr .. ":" .. tostring(err.finish)
+				end
+				str = posStr .. " " .. str
+			end
+			print(str)
+		end
+		if breakOnSymbolizeDiagnostic then break end
+	end
+	if #transpiler.diagnostics > 0 then
+		print("- Transpiler Diagnostics -")
+		for _, err in ipairs(transpiler.diagnostics) do
+			local str = err.msg
+			if err.start ~= nil then
+				local posStr = tostring(err.start)
+				if err.finish ~= nil then
+					posStr = posStr .. ":" .. tostring(err.finish)
+				end
+				str = posStr .. " " .. str
+			end
+			print(str)
+		end
+		if breakOnSymbolizeDiagnostic then break end
+	end
 end
 
 local testProcessTime = os.clock() - testStartTime
