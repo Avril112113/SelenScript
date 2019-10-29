@@ -17,7 +17,7 @@ end
 function transformer:transform(ast)
 	for _, transformerObj in ipairs(self.transformers) do
 		if transformerObj[ast.type] ~= nil then
-			ast = transformerObj[ast.type](transformerObj, ast) or ast
+			ast = transformerObj[ast.type](transformerObj, ast)
 			break
 		end
 	end
