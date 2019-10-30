@@ -8,7 +8,9 @@ local base={
 		["for_range"]=true,
 		["repeat"]=true
 	},
-	hasGoto=false
+	hasGoto=false,
+	-- used if the variable name is defined local but the assignment is global
+	globalDefinedLocal="getfenv()"
 }
 
 targets["5.1"] = {
@@ -20,7 +22,8 @@ targets["jit"] = {
 }
 targets["5.2"] = {
 	inherit=targets["5.1"],
-	hasGoto=true
+	hasGoto=true,
+	globalDefinedLocal="_ENV"
 }
 targets["5.3"] = {
 	inherit=targets["5.2"]

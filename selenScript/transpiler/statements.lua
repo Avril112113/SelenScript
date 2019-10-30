@@ -1,3 +1,6 @@
+local targets = require "selenScript.targets"
+
+
 local statements = {}
 statements.__index = statements
 
@@ -15,12 +18,29 @@ end
 function statements:isLocal(scope)
 	return scope == "local" or (scope == "" and self.transpiler.settings.defaultLocals)
 end
+function statements:getDefinedLocalBlock(ast, key)
+	while ast ~= nil do
+		if ast.definedLocals ~= nil and ast.definedLocals[key] ~= nil then
+			return ast
+		end
+		ast = ast.parent
+	end
+end
+function statements:getImmediateBlock(ast)
+	while ast ~= nil do
+		if ast.type == "block" then
+			return ast
+		end
+		ast = ast.parent
+	end
+end
 
 
 local noSemicolonEndingTypes = {
 	Comment=true, LongComment=true
 }
 function statements:block(ast)
+	ast.definedLocals = {}
 	local str = {}
 	self.block_depth = self.block_depth + 1
 	for _, stmt in ipairs(ast) do
@@ -32,6 +52,7 @@ function statements:block(ast)
 		str[#str+1] = "\n"
 	end
 	self.block_depth = self.block_depth - 1
+	ast.definedLocals = nil
 	return table.concat(str)
 end
 
@@ -156,8 +177,41 @@ end
 
 function statements:assign(ast)
 	local str = {}
-	if self:isLocal(ast.scope) then
+	-- TODO: attempt to simplify the check if it was already defined with defaultLocals
+	local hasIndex = false
+	local isDefinedLocal = false
+	for _, var in ipairs(ast.var_list) do
+		if var.type == "index" and var.index ~= nil then
+			hasIndex = true
+			break
+		else
+			local value = var.value or var.expr.value
+			if self:getDefinedLocalBlock(ast, value) ~= nil then
+				isDefinedLocal = true
+				break
+			end
+		end
+	end
+	if hasIndex and ast.scope ~= "" then
+		table.insert(self.transpiler.diagnostics, {
+			type="local-indexed-variable",
+			start=ast.start,
+			finish=ast.finish,
+			msg="Attempt to define local when its indexing (only names are valid)"
+		})
+	elseif not hasIndex and ((ast.scope == "" and not isDefinedLocal) or ast.scope ~= "") and self:isLocal(ast.scope) then
+		local block = self:getImmediateBlock(ast)
+		for _, var in ipairs(ast.var_list) do
+			local value = var.value or var.expr.value
+			if value ~= nil then
+				block.definedLocals[value] = true
+			end
+		end
 		str[#str+1] = "local "
+	elseif ast.scope == "global" and isDefinedLocal then
+		local target = targets[self.transpiler.settings.targetVersion]
+		str[#str+1] = target.globalDefinedLocal
+		str[#str+1] = "."
 	end
 	str[#str+1] = self.transpiler:transpile(ast.var_list)
 	if ast.attrib ~= nil then
