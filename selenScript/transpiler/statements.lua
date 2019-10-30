@@ -79,6 +79,7 @@ statements["if"] = function(self, ast)
 end
 statements["elseif"] = function(self, ast)
 	local str = {}
+	str[#str+1] = string.rep(self.transpiler.settings.indent, self.block_depth)
 	str[#str+1] = "elseif "
 	str[#str+1] = self.transpiler:transpile(ast.condition)
 	str[#str+1] = " then\n"
