@@ -162,6 +162,7 @@ statements["function"] = function(self, ast)
 	local str = {}
 	str[#str+1] = "function "
 	str[#str+1] = self.transpiler:transpile(ast.funcname)
+	str[#str+1] = "\n"
 	str[#str+1] = self.transpiler:transpile(ast.body)
 	return table.concat(str)
 end
