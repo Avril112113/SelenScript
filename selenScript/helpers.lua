@@ -5,7 +5,7 @@ local helpers = {}
 function helpers.deepCopy(tbl, parent)
 	local new = {}
 	for i, v in pairs(tbl) do
-		if type(v) == "table" and i ~= "parent" then
+		if type(v) == "table" and i ~= "parent" and i ~= "symbols" then
 			v = helpers.deepCopy(v, new)
 		end
 		new[i] = v
