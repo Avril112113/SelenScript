@@ -13,6 +13,9 @@ function values:index(ast)
 	local str = {}
 	str[#str+1] = ast.op
 	str[#str+1] = self.transpiler:transpile(ast.expr)
+	if ast.op == "[" then
+		str[#str+1] = "]"
+	end
 	if ast.index ~= nil then
 		str[#str+1] = self.transpiler:transpile(ast.index)
 	end
