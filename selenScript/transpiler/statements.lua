@@ -162,7 +162,6 @@ statements["function"] = function(self, ast)
 	local str = {}
 	str[#str+1] = "function "
 	str[#str+1] = self.transpiler:transpile(ast.funcname)
-	str[#str+1] = "\n"
 	str[#str+1] = self.transpiler:transpile(ast.body)
 	return table.concat(str)
 end
@@ -171,6 +170,7 @@ function statements:funcbody(ast)
 	str[#str+1] = "("
 	str[#str+1] = self.transpiler:transpile(ast.args)
 	str[#str+1] = ")"
+	str[#str+1] = "\n"
 	str[#str+1] = self.transpiler:transpile(ast.block)
 	str[#str+1] = string.rep(self.transpiler.settings.indent, self.block_depth)
 	str[#str+1] = "end"
