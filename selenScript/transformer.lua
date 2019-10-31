@@ -14,14 +14,16 @@ function transformer.new(settings)
 end
 
 
-function transformer:transform(ast)
+function transformer:transform(ast, transformOnlyChildren)
 	local foundTransformer = false
+	if transformOnlyChildren ~= true then
 	for _, transformerObj in ipairs(self.transformers) do
 		if transformerObj[ast.type] ~= nil then
 			foundTransformer = true
 			ast = transformerObj[ast.type](transformerObj, ast)
 			break
 		end
+	end
 	end
 	if not foundTransformer then
 		local toRemove = {}

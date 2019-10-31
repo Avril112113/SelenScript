@@ -17,21 +17,8 @@ end
 
 
 function statements:block(ast)
-	-- yes all of this is needed just for `block_depth` as stuff may want to remove then selves, based on self.transformer:transform()
 	self.block_depth = self.block_depth + 1
-	local toRemove = {}
-	for i, v in ipairs(ast) do
-		local newValue = self.transformer:transform(v)
-		if newValue == nil then
-			table.insert(toRemove, i)
-		else
-			v[i] = newValue
-		end
-	end
-	for i=#toRemove,1,-1 do
-		local key = toRemove[i]
-		table.remove(ast, key)
-	end
+	self.transformer:transform(ast, true)
 	self.block_depth = self.block_depth - 1
 	return ast
 end
