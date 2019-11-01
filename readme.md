@@ -57,8 +57,8 @@ end
 Inline `if`  
 ```Lua
 foo = 100
-bar = foo if foo >= 100 else foo+100  -- Bar: 100
-bar = foo-100 if foo < 500 else foo  -- Bar: 0
+bar = if foo >= 100 then foo else foo+100  -- Bar: 100
+bar = if foo < 500 then foo-100 else foo  -- Bar: 0
 -- Lua (Formatted)
 foo = 100
 local __sls0
@@ -80,7 +80,9 @@ bar = __sls1
 Statement conditionals  
 ```Lua
 break if baz == "baz"
-continue if baz == "baz"
+continue if bar == "bar"
+goto label if foo == "foo"
+return 1, 2, "stringy" if der == "der"
 ```
 
 expression statements  
