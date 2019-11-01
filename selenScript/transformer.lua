@@ -15,31 +15,40 @@ end
 
 
 function transformer:transform(ast, transformOnlyChildren)
-	local foundTransformer = false
 	if transformOnlyChildren ~= true then
-	for _, transformerObj in ipairs(self.transformers) do
-		if transformerObj[ast.type] ~= nil then
-			foundTransformer = true
-			ast = transformerObj[ast.type](transformerObj, ast)
-			break
-		end
-	end
-	end
-	if not foundTransformer then
-		local toRemove = {}
-		for i, v in pairs(ast) do
-			if type(v) == "table" and v.type ~= nil and i ~= "parent" then
-				local newValue = self:transform(v)
-				if newValue == nil and type(i) == "number" and #v <= i then
-					table.insert(toRemove, i)
-				else
-					ast[i] = newValue
-				end
+		for _, transformerObj in ipairs(self.transformers) do
+			if transformerObj[ast.type] ~= nil then
+				return transformerObj[ast.type](transformerObj, ast)
 			end
 		end
-		for i=#toRemove,1,-1 do
-			local key = toRemove[i]
-			table.remove(ast, key)
+	end
+
+	local i = 1
+	while i <= #ast do
+		local v = ast[i]
+		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
+			local newValues = {self:transform(v)}
+			local newValue = newValues[1]
+			if newValue == nil and type(i) == "number" and #v <= i then
+				table.remove(ast, i)
+			else
+				ast[i] = newValue
+				i = i + 1
+			end
+			if #newValues > 1 then
+				for valueIndex=2,#newValues do
+					local value = newValues[valueIndex]
+					table.insert(ast, i, value)
+					i = i + 1
+				end
+			end
+		else
+			i = i + 1
+		end
+	end
+	for i, v in pairs(ast) do
+		if type(v) == "table" and v.type ~= nil and i ~= "parent" and not (type(i) == "number" and i <= #ast) then
+			ast[i] = self:transform(v)
 		end
 	end
 	return ast
