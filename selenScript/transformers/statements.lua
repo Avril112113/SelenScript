@@ -104,7 +104,7 @@ function statements:decorate(ast)
 		dec.index.index = call
 		lastIndex = dec.index
 	end
-	local assign = parser.defs.assign(-1, "", funcName, nil, lastIndex, -1)
+	local assign = parser.defs.assign(-1, "", parser.defs.expr_list(-1, funcName, -1), nil, lastIndex, -1)
 	return ast.expr, assign, parser.defs.Comment(-1, "Test A", -1), parser.defs.Comment(-1, "Test B", -1), parser.defs.Comment(-1, "Test C", -1)
 end
 
