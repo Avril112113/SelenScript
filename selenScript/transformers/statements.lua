@@ -94,7 +94,16 @@ end
 
 function statements:decorate(ast)
 	assert(ast.expr.funcname ~= nil)
-	local funcName = ast.expr.funcname
+	local funcName = helpers.deepCopy(ast.expr.funcname)
+	local prevFuncNameIndex
+	local funcNameIndex = funcName
+	while funcNameIndex ~= nil do
+		if funcNameIndex.op == ":" then
+			prevFuncNameIndex.index.op = "."
+		end
+		prevFuncNameIndex = funcNameIndex
+		funcNameIndex = funcNameIndex.index
+	end
 	local dec = ast.decorators[1]
 	local lastIndex = dec.index
 	lastIndex.index = parser.defs.call(-1, parser.defs.expr_list(-1, funcName, unpack(dec.call), -1), nil, -1)
