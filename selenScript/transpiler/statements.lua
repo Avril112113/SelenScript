@@ -196,10 +196,10 @@ function statements:assign(ast)
 	end
 	if hasIndex and ast.scope ~= "" then
 		table.insert(self.transpiler.diagnostics, {
-			type="local-indexed-variable",
+			type="scoped-indexed-variable",
 			start=ast.start,
 			finish=ast.finish,
-			msg="Attempt to define local when its indexing (only names are valid)"
+			msg="Attempt to define scoped when indexing (only names are valid)"
 		})
 	elseif not hasIndex and ((ast.scope == "" and not isDefinedLocal) or ast.scope ~= "") and self:isLocal(ast.scope) then
 		local block = self:getImmediateBlock(ast)
