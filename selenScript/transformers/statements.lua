@@ -75,15 +75,36 @@ function statements:continue(ast)
 		return nil
 	end
 	if target.hasGoto then
-		table.insert(ast.parent, parser.defs["goto"](-1, "continue_" .. tostring(breakableBlockDepth), -1))
 		table.insert(breakableBlock, parser.defs.label(-1, "continue_" .. tostring(breakableBlockDepth), -1))
+		local gotoStmt = parser.defs["goto"](-1, "continue_" .. tostring(breakableBlockDepth), -1)
+		if ast.stmt_if ~= nil then
+			gotoStmt = parser.defs["if"](-1, ast.stmt_if, parser.defs.block(-1, gotoStmt, -1), -1)
+		end
+		return gotoStmt
 	else
-		table.insert(ast.parent, parser.defs["break"](-1, nil, nil, -1))
 		local block = parser.defs.block(-1, -1)
+		local addedBreak = false
 		for i, v in ipairs(breakableBlock) do
 			breakableBlock[i] = nil
 			v.parent = block
+			if v == ast then
+				v = parser.defs["break"](-1, ast.exprlist, nil, -1)
+				if ast.stmt_if ~= nil then
+					v = parser.defs["if"](-1, ast.stmt_if, parser.defs.block(-1, v, -1), -1)
+				end
+				addedBreak = true
+			end
 			table.insert(block, v)
+		end
+		-- Just in case it happens we should still output valid mostly working code
+		if addedBreak == false then
+			table.insert(breakableBlock, parser.defs["break"](-1, ast.exprlist, nil, -1))
+			table.insert(self.transformer.diagnostics, {
+				type="internal",
+				start=ast.start,
+				finish=ast.finish,
+				msg="Failed to find continue statement while copying breakable block to new block"
+			})
 		end
 		local repeatStmt = parser.defs["repeat"](-1, block, parser.defs.bool(-1, "true", -1), -1)
 		repeatStmt.parent = breakableBlock
