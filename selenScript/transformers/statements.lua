@@ -2,6 +2,10 @@ local helpers = require "selenScript.helpers"
 local targets = require "selenScript.targets"
 local parser = require "selenScript.parser"
 
+
+local unpack = table.unpack or unpack
+
+
 local statements = {}
 statements.__index = statements
 
@@ -86,6 +90,22 @@ function statements:continue(ast)
 		table.insert(breakableBlock, repeatStmt)
 	end
 	return nil
+end
+
+function statements:decorate(ast)
+	assert(ast.expr.funcname ~= nil)
+	local funcName = ast.expr.funcname
+	local dec = ast.decorators[1]
+	local lastIndex = dec.index
+	lastIndex.index = parser.defs.call(-1, parser.defs.expr_list(-1, funcName, unpack(dec.call), -1), nil, -1)
+	for i=2,#ast.decorators do
+		local dec = ast.decorators[i]
+		local call = parser.defs.call(-1, parser.defs.expr_list(-1, lastIndex, unpack(dec.call), -1), nil, -1)
+		dec.index.index = call
+		lastIndex = dec.index
+	end
+	local assign = parser.defs.assign(-1, "", funcName, nil, lastIndex, -1)
+	return ast.expr, assign, parser.defs.Comment(-1, "Test A", -1), parser.defs.Comment(-1, "Test B", -1), parser.defs.Comment(-1, "Test C", -1)
 end
 
 
