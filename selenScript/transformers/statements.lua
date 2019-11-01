@@ -92,6 +92,27 @@ function statements:continue(ast)
 	return nil
 end
 
+statements["return"] = function(self, ast)
+	if ast.stmt_if ~= nil then
+		ast = parser.defs["if"](-1, ast.stmt_if, parser.defs.block(-1, ast, -1), -1)
+	end
+	return ast
+end
+
+statements["break"] = function(self, ast)
+	if ast.stmt_if ~= nil then
+		ast = parser.defs["if"](-1, ast.stmt_if, parser.defs.block(-1, ast, -1), -1)
+	end
+	return ast
+end
+
+statements["goto"] = function(self, ast)
+	if ast.stmt_if ~= nil then
+		ast = parser.defs["if"](-1, ast.stmt_if, parser.defs.block(-1, ast, -1), -1)
+	end
+	return ast
+end
+
 function statements:decorate(ast)
 	assert(ast.expr.funcname ~= nil)
 	local funcName = helpers.deepCopy(ast.expr.funcname)
