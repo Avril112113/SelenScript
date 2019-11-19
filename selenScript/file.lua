@@ -223,7 +223,8 @@ function file:transpile()
 	else
 		ok = self:writeFile(luaCode)
 	end
-	return ok, transformer, transpiler, transformedAst
+	-- first 3 are the only important ones, last 2 not so much
+	return ok, transformer, transpiler, transformedAst, luaCode
 end
 function file:getWriteFilePath()
 	return self.filepath:gsub("%.sl$", "") .. ".lua"
