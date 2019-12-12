@@ -1,11 +1,10 @@
 local addressCache = setmetatable({}, {__mode="k"})
 local function getTblAddr(tbl)
 	local mt = getmetatable(tbl)
+	setmetatable(tbl, nil)
 	if addressCache[tbl] ~= nil then return addressCache[tbl] end
-	local __tostring = rawget(mt, "__tostring")
-	rawset(mt, "__tostring", nil)
 	local address = tostring(tbl):gsub("^%w+: ", "")
-	rawset(mt, "__tostring", __tostring)
+	setmetatable(tbl, mt)
 	addressCache[tbl] = address
 	return address
 end

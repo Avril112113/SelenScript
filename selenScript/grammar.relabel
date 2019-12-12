@@ -63,10 +63,10 @@ interface_var	<- ({} {NAME} typedef {}) -> param
 expect_expr	<- expr / {}->MISS_EXPR NILCP
 expr	<- ((value/unary) (Sc ({} {BINARY_OP} {})->math_op Sc (value/unary))+) -> math
 		 / unary -> math
-		 / do_stmt
-		 / while_stmt
-		 / for_range_stmt
-		 / for_each_stmt
+		 / do_stmt -> do_expr
+		 / while_stmt -> while_expr
+		 / for_range_stmt -> for_range_expr
+		 / for_each_stmt -> for_each_expr
 		 / ({} IF Sc expr THEN Sc expr ELSE Sc expr {}) -> if_expr
 		 / value
 unary	<- ({} {UNARY_OP} {})->math_op Sc (unary/value)

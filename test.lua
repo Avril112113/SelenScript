@@ -4,7 +4,7 @@ local ss = require "selenScript"
 local settings = {
 	defaultLocals=true,
 	indent="\t",
-	targetVersion="5.1"
+	targetVersion="5.2"
 }
 
 
@@ -35,7 +35,7 @@ for _, err in ipairs(file.symbolizeDiagnostics) do
 	print(str)
 end
 print("--- AST (After Symbolize) ---")
-ss.helpers.printAST(file.ast)
+-- ss.helpers.printAST(file.ast)
 print("--- Global Symbols ---")
 ss.helpers.printSymbols(program.globals)
 

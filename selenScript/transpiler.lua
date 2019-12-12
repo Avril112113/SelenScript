@@ -1,3 +1,4 @@
+---@class SS_Transpiler
 local transpiler = {}
 transpiler.__index = transpiler
 

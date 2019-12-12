@@ -1,3 +1,7 @@
+local parser = require "selenScript.parser"
+
+
+---@class SS_Transformer
 local transformer = {}
 transformer.__index = transformer
 
@@ -10,9 +14,16 @@ function transformer.new(settings)
 		require "selenScript.transformers.statements".new(self),
 		require "selenScript.transformers.values".new(self)
 	}
+	self.last_var_num = 0
 	return self
 end
 
+
+function transformer:getVarName()
+	local var = "__sls" .. self.last_var_num
+	self.last_var_num = self.last_var_num + 1
+	return var
+end
 
 function transformer:transform(ast, transformOnlyChildren)
 	if transformOnlyChildren ~= true then
@@ -33,6 +44,7 @@ function transformer:transform(ast, transformOnlyChildren)
 				table.remove(ast, i)
 			else
 				ast[i] = newValue
+				newValue.parent = ast
 				i = i + 1
 			end
 			if #newValues > 1 then
@@ -48,7 +60,9 @@ function transformer:transform(ast, transformOnlyChildren)
 	end
 	for i, v in pairs(ast) do
 		if type(v) == "table" and v.type ~= nil and i ~= "parent" and not (type(i) == "number" and i <= #ast) then
-			ast[i] = self:transform(v)
+			local _ast = self:transform(v)
+			ast[i] = _ast
+			_ast.parent = ast
 		end
 	end
 	return ast

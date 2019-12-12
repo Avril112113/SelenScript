@@ -14,7 +14,7 @@ local base={
 }
 
 targets["5.1"] = {
-
+	globalUnpack=true
 }
 targets["jit"] = {
 	inherit=targets["5.1"],
@@ -23,7 +23,8 @@ targets["jit"] = {
 targets["5.2"] = {
 	inherit=targets["5.1"],
 	hasGoto=true,
-	globalDefinedLocal="_ENV"
+	globalDefinedLocal="_ENV",
+	globalUnpack=false
 }
 targets["5.3"] = {
 	inherit=targets["5.2"]

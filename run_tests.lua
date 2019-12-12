@@ -1,5 +1,7 @@
 local breakOnParseError = false
 local breakOnSymbolizeDiagnostic = false
+local breakOnTransformerDiagnostic = false
+local breakOnTranspilerDiagnostic = false
 
 local settings = {
 	defaultLocals=false
@@ -65,7 +67,7 @@ for _, path in ipairs(files) do
 	end
 
 	local transpileStart = os.clock()
-	local ok, transformer, transpiler = file:transpile()
+	local ok, transformer, transpiler, _, luaCode = file:transpile()
 	totalTranspileTime = totalTranspileTime + (os.clock() - transpileStart)
 	if #transformer.diagnostics > 0 then
 		print("- Transformer Diagnostics -")
@@ -80,7 +82,7 @@ for _, path in ipairs(files) do
 			end
 			print(str)
 		end
-		if breakOnSymbolizeDiagnostic then break end
+		if breakOnTransformerDiagnostic then break end
 	end
 	if #transpiler.diagnostics > 0 then
 		print("- Transpiler Diagnostics -")
@@ -95,7 +97,14 @@ for _, path in ipairs(files) do
 			end
 			print(str)
 		end
-		if breakOnSymbolizeDiagnostic then break end
+		if breakOnTranspilerDiagnostic then break end
+	end
+	if ok and #transpiler.diagnostics <= 0 then
+		local pcallOk, err = pcall(load, luaCode)
+		if pcallOk == false and err ~= nil then
+			print("Syntax check of file failed")
+			print(err)
+		end
 	end
 end
 

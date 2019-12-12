@@ -213,6 +213,10 @@ function file:transpile()
 	local transformer = Transformer.new(self.program.settings)
 	local transformedAst = helpers.deepCopy(self.ast)
 	transformer:transform(transformedAst)
+	parser.setExtraData(transformedAst)  -- fix up the AST before transpile
+
+	-- print("Transformed AST")
+	-- helpers.printAST(transformedAst)
 
 	local transpiler = Transpiler.new(self.program.settings)
 	local luaCode = transpiler:transpile(transformedAst)
@@ -227,7 +231,7 @@ function file:transpile()
 	return ok, transformer, transpiler, transformedAst, luaCode
 end
 function file:getWriteFilePath()
-	return self.filepath:gsub("%.sl$", "") .. ".lua"
+	return self.outputPath or self.filepath:gsub("%.sl$", "") .. ".lua"
 end
 function file:writeFile(luaCode)
 	local f = io.open(self:getWriteFilePath(), "w")

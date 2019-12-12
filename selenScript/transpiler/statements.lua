@@ -5,12 +5,13 @@ local statements = {}
 statements.__index = statements
 
 
+---@param transpiler SS_Transpiler
 function statements.new(transpiler)
 	local self = setmetatable({}, statements)
 	self.transpiler = transpiler
 
 	self.block_depth = -1
-	
+
 	return self
 end
 
@@ -20,6 +21,7 @@ function statements:isLocal(scope)
 end
 function statements:getDefinedLocalBlock(ast, key)
 	while ast ~= nil do
+		assert(ast ~= ast.parent, "How did this happen? (ast == ast.parent)")
 		if ast.definedLocals ~= nil and ast.definedLocals[key] ~= nil then
 			return ast
 		end

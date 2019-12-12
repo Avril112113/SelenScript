@@ -2,6 +2,7 @@ local values = {}
 values.__index = values
 
 
+---@param transpiler SS_Transpiler
 function values.new(transpiler)
 	local self = setmetatable({}, values)
 	self.transpiler = transpiler

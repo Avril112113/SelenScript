@@ -6,12 +6,37 @@ local precedence = require "selenScript.precedence"
 local unpack = table.unpack or unpack
 
 
-local grammarPath = "selenScript/grammar.relabel"
+local __file_path__ = debug.getinfo(1).source:match("@(.*)$"):gsub("\\", "/"):gsub("/parser.lua$", "")
+local grammarPath = __file_path__.."/grammar.relabel"
 local grammarFile = io.open(grammarPath, "r")
 local grammarStr = grammarFile:read("*a"):gsub("/%*[^\n]*%*/", "")
 grammarFile:close()
 
 local errors
+
+--- Convenience function
+local function setParent(parent, child)
+	if type(child) == "table" and child.type ~= nil then
+		child.parent = parent
+	end
+end
+--- Convenience function
+local function setParentForReturn(tbl)
+	for _, v in pairs(tbl) do
+		setParent(tbl, v)
+	end
+	return tbl
+end
+--- Convenience function
+local function setParentForReturnRecursive(tbl)
+	for i, v in pairs(tbl) do
+		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
+			setParentForReturnRecursive(v)
+		end
+		setParent(tbl, v)
+	end
+	return tbl
+end
 
 --- Used to add an error to the errors list
 --- this is a function for syntactic sugar
@@ -229,7 +254,7 @@ local defs = {
 function defs.block(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="block",
 		start=start,
 		finish=finish,
@@ -238,7 +263,7 @@ function defs.block(...)
 end
 
 function defs.assign(start, scope, varlist, typelist, exprlist, finish)
-	return {
+	return setParentForReturn {
 		type="assign",
 		start=start,
 		finish=finish,
@@ -249,7 +274,7 @@ function defs.assign(start, scope, varlist, typelist, exprlist, finish)
 	}
 end
 function defs.attrib_assign(start, scope, name, attrib, startTypedef, typedef, finishTypedef, startExpr, expr, finish)
-	return {
+	return setParentForReturn {
 		type="assign",
 		start=start,
 		finish=finish,
@@ -261,7 +286,7 @@ function defs.attrib_assign(start, scope, name, attrib, startTypedef, typedef, f
 	}
 end
 function defs.label(start, label, finish)
-	return {
+	return setParentForReturn {
 		type="label",
 		start=start,
 		finish=finish,
@@ -269,7 +294,7 @@ function defs.label(start, label, finish)
 	}
 end
 defs["break"] = function(start, exprlist, stmt_if, finish)
-	return {
+	return setParentForReturn {
 		type="break",
 		start=start,
 		finish=finish,
@@ -278,7 +303,7 @@ defs["break"] = function(start, exprlist, stmt_if, finish)
 	}
 end
 function defs.continue(start, stmt_if, finish)
-	return {
+	return setParentForReturn {
 		type="continue",
 		start=start,
 		finish=finish,
@@ -286,7 +311,7 @@ function defs.continue(start, stmt_if, finish)
 	}
 end
 defs["goto"] = function(start, label, stmt_if, finish)
-	return {
+	return setParentForReturn {
 		type="goto",
 		start=start,
 		finish=finish,
@@ -295,15 +320,19 @@ defs["goto"] = function(start, label, stmt_if, finish)
 	}
 end
 defs["do"] = function(start, block, finish)
-	return {
+	return setParentForReturn {
 		type="do",
-			start=start,
-			finish=finish,
+		start=start,
+		finish=finish,
 		block=block
 	}
 end
+defs["do_expr"] = function(ast)
+	ast.is_expr = true
+	return ast
+end
 defs["while"] = function(start, condition, block, finish)
-	return {
+	return setParentForReturn {
 		type="while",
 		start=start,
 		finish=finish,
@@ -311,8 +340,12 @@ defs["while"] = function(start, condition, block, finish)
 		block=block
 	}
 end
+defs["while_expr"] = function(ast)
+	ast.is_expr = true
+	return ast
+end
 defs["repeat"] = function(start, block, condition, finish)
-	return {
+	return setParentForReturn {
 		type="repeat",
 		start=start,
 		finish=finish,
@@ -321,7 +354,7 @@ defs["repeat"] = function(start, block, condition, finish)
 	}
 end
 defs["elseif"] = function(start, condition, block, finish)
-	return {
+	return setParentForReturn {
 		type="elseif",
 		start=start,
 		finish=finish,
@@ -330,7 +363,7 @@ defs["elseif"] = function(start, condition, block, finish)
 	}
 end
 defs["else"] = function(start, block, finish)
-	return {
+	return setParentForReturn {
 		type="else",
 		start=start,
 		finish=finish,
@@ -347,7 +380,7 @@ defs["if"] = function(start, condition, block, ...)
 		last.next = ast
 		last = ast
 	end
-	return {
+	return setParentForReturn {
 		type="if",
 		start=start,
 		finish=finish,
@@ -357,7 +390,7 @@ defs["if"] = function(start, condition, block, ...)
 	}
 end
 function defs.decorator(start, index, call, finish)
-	return {
+	return setParentForReturn {
 		type="decorator",
 		start=start,
 		finish=finish,
@@ -366,7 +399,7 @@ function defs.decorator(start, index, call, finish)
 	}
 end
 function defs.decorate(start, decoratorlist, expr, finish)
-	return {
+	return setParentForReturn {
 		type="decorate",
 		start=start,
 		finish=finish,
@@ -378,7 +411,7 @@ defs["function"] = function(start, scope, startFuncname, funcname, finishFuncnam
 	if type(funcname) == "string" then
 		funcname = defs.String(startFuncname, "", funcname, finishFuncname)
 	end
-	return {
+	return setParentForReturn {
 		type="function",
 		start=start,
 		finish=finish,
@@ -388,7 +421,7 @@ defs["function"] = function(start, scope, startFuncname, funcname, finishFuncnam
 	}
 end
 function defs.for_range(start, startVarname, varname, finishVarname, from, to, step, block, finish)
-	return {
+	return setParentForReturn {
 		type="for_range",
 		start=start,
 		finish=finish,
@@ -399,8 +432,12 @@ function defs.for_range(start, startVarname, varname, finishVarname, from, to, s
 		block=block
 	}
 end
+function defs.for_range_expr(ast)
+	ast.is_expr = true
+	return ast
+end
 function defs.for_each(start, namelist, exprlist, block, finish)
-	return {
+	return setParentForReturn {
 		type="for_each",
 		start=start,
 		finish=finish,
@@ -409,10 +446,14 @@ function defs.for_each(start, namelist, exprlist, block, finish)
 		block=block
 	}
 end
+function defs.for_each_expr(ast)
+	ast.is_expr = true
+	return ast
+end
 function defs.interface(start, scope, name, ...)
 	local t = {...}
 	local finish = table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="interface",
 		start=start,
 		finish=finish,
@@ -423,7 +464,7 @@ function defs.interface(start, scope, name, ...)
 end
 
 function defs.if_expr(start, condition, trueExpr, falseExpr, finish)
-	return {
+	return setParentForReturn {
 		type="if_expr",
 		start=start,
 		finish=finish,
@@ -433,7 +474,7 @@ function defs.if_expr(start, condition, trueExpr, falseExpr, finish)
 	}
 end
 function defs.String(start, quote, value, finish)  -- NOTE: used by Comment as well
-	return {
+	return setParentForReturn {
 		type="String",
 		start=start,
 		finish=finish,
@@ -451,7 +492,7 @@ function defs.LongString(start, eqStart, eqFinish, startNewline, value, finish) 
 	local quoteEqLen = eqFinish-eqStart
 	local quote = "[" .. string.rep("=", quoteEqLen) .. "["
 	local endQuote = "]" .. string.rep("=", quoteEqLen) .. "]"
-	return {
+	return setParentForReturn {
 		type="LongString",
 		start=start,
 		finish=finish,
@@ -476,7 +517,7 @@ function defs.FormatString(start, quote, ...)
 			parts[i] = v:gsub("{{", "{"):gsub("}}", "}")
 		end
 	end
-	return {
+	return setParentForReturn {
 		type="FormatString",
 		start=start,
 		finish=finish,
@@ -485,13 +526,13 @@ function defs.FormatString(start, quote, ...)
 	}
 end
 function defs.STRFormat(expr)
-	return {
+	return setParentForReturn {
 		type="STRFormat",
 		expr=expr
 	}
 end
 function defs.Int(start, value, finish)
-	return {
+	return setParentForReturn {
 		type="Int",
 		start=start,
 		finish=finish,
@@ -506,7 +547,7 @@ function defs.Int(start, value, finish)
 	}
 end
 function defs.Float(start, value, finish)
-	return {
+	return setParentForReturn {
 		type="Float",
 		start=start,
 		finish=finish,
@@ -521,7 +562,7 @@ function defs.Float(start, value, finish)
 	}
 end
 function defs.Hex(start, value, finish)
-	return {
+	return setParentForReturn {
 		type="Hex",
 		start=start,
 		finish=finish,
@@ -535,7 +576,7 @@ function defs.Hex(start, value, finish)
 	}
 end
 defs["nil"] = function(start, finish)
-	return {
+	return setParentForReturn {
 		type="nil",
 		start=start,
 		finish=finish,
@@ -554,7 +595,7 @@ function defs.bool(start, valueStr, finish)
 	else
 		value = false
 	end
-	return {
+	return setParentForReturn {
 		type="bool",
 		start=start,
 		finish=finish,
@@ -575,7 +616,7 @@ function defs.table(start, fieldlist, finish)
 			field.key = defs.Int(field.start, tostring(index), field.finish)
 		end
 	end
-	return {
+	return setParentForReturn {
 		type="table",
 		start=start,
 		finish=finish,
@@ -583,7 +624,7 @@ function defs.table(start, fieldlist, finish)
 	}
 end
 function defs.anon_function(start, body, finish)
-	return {
+	return setParentForReturn {
 		type="anon_function",
 		start=start,
 		finish=finish,
@@ -591,7 +632,7 @@ function defs.anon_function(start, body, finish)
 	}
 end
 function defs.var_args(start, finish)
-	return {
+	return setParentForReturn {
 		type="var_args",
 		start=start,
 		finish=finish,
@@ -607,7 +648,7 @@ function defs.index(start, op, exprStart, expr, exprFinish, index, finish)
 	else
 		expr = expr
 	end
-	return {
+	return setParentForReturn {
 		type="index",
 		start=start,
 		finish=finish,
@@ -644,7 +685,7 @@ function defs.index(start, op, exprStart, expr, exprFinish, index, finish)
 end
 function defs.call(start, args, index, finish)
 	if index == "" then index = nil end
-	return {
+	return setParentForReturn {
 		type="call",
 		start=start,
 		finish=finish,
@@ -681,7 +722,7 @@ function defs.field(...)
 	else
 		key, value = t[1], t[2]
 	end
-	return {
+	return setParentForReturn {
 		type="field",
 		start=start,
 		finish=finish,
@@ -691,7 +732,7 @@ function defs.field(...)
 end
 
 function defs.funcbody(start, args, return_type, block, finish)
-	return {
+	return setParentForReturn {
 		type="funcbody",
 		start=start,
 		finish=finish,
@@ -701,7 +742,7 @@ function defs.funcbody(start, args, return_type, block, finish)
 	}
 end
 defs["return"] = function(start, exprlist, stmt_if, finish)
-	return {
+	return setParentForReturn {
 		type="return",
 		start=start,
 		finish=finish,
@@ -711,10 +752,10 @@ defs["return"] = function(start, exprlist, stmt_if, finish)
 end
 
 function defs.math(...)
-	return climbPrecedence({...})
+	return setParentForReturnRecursive(climbPrecedence({...}))
 end
 function defs.math_op(start, op, finish)
-	return {
+	return setParentForReturn {
 		type="math_op",
 		op=op,
 		start=start,
@@ -725,7 +766,7 @@ end
 function defs.var_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="var_list",
 		start=start,
 		finish=finish,
@@ -735,7 +776,7 @@ end
 function defs.expr_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="expr_list",
 		start=start,
 		finish=finish,
@@ -745,7 +786,7 @@ end
 function defs.name_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="name_list",
 		start=start,
 		finish=finish,
@@ -755,7 +796,7 @@ end
 function defs.field_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="field_list",
 		start=start,
 		finish=finish,
@@ -765,7 +806,7 @@ end
 function defs.decorator_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="decorator_list",
 		start=start,
 		finish=finish,
@@ -774,7 +815,7 @@ function defs.decorator_list(...)
 end
 
 function defs.param(start, name, nameFinish, param_type, finish)
-	return {
+	return setParentForReturn {
 		type="param",
 		start=start,
 		finish=finish,
@@ -785,7 +826,7 @@ end
 function defs.par_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="par_list",
 		start=start,
 		finish=finish,
@@ -794,7 +835,7 @@ function defs.par_list(...)
 end
 
 function defs.Comment(start, comment, finish)
-	return {
+	return setParentForReturn {
 		type="Comment",
 		start=start,
 		finish=finish,
@@ -802,7 +843,7 @@ function defs.Comment(start, comment, finish)
 	}
 end
 function defs.LongComment(start, comment, finish)
-	return {
+	return setParentForReturn {
 		type="LongComment",
 		start=start,
 		finish=finish,
@@ -814,7 +855,7 @@ end
 function defs.type_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return {
+	return setParentForReturn {
 		type="type_list",
 		start=start,
 		finish=finish,
@@ -822,7 +863,7 @@ function defs.type_list(...)
 	}
 end
 function defs.type(start, name, finish)
-	return {
+	return setParentForReturn {
 		type="type",
 		start=start,
 		finish=finish,
@@ -830,7 +871,7 @@ function defs.type(start, name, finish)
 	}
 end
 function defs.type_array(start, name, valueType, finish)
-	return {
+	return setParentForReturn {
 		type="type_array",
 		start=start,
 		finish=finish,
@@ -839,7 +880,7 @@ function defs.type_array(start, name, valueType, finish)
 	}
 end
 function defs.type_table(start, name, keyType, valueType, finish)
-	return {
+	return setParentForReturn {
 		type="type_table",
 		start=start,
 		finish=finish,
@@ -849,7 +890,7 @@ function defs.type_table(start, name, keyType, valueType, finish)
 	}
 end
 function defs.type_function(start, type_args, type_return, finish)
-	return {
+	return setParentForReturn {
 		type="type_function",
 		start=start,
 		finish=finish,
@@ -858,7 +899,7 @@ function defs.type_function(start, type_args, type_return, finish)
 	}
 end
 function defs.type_or(start, a, b, finish)
-	return {
+	return setParentForReturn {
 		type="type_or",
 		start=start,
 		finish=finish,
@@ -869,6 +910,18 @@ end
 local grammar = re.compile(grammarStr, defs)
 
 
+-- add parent to all nodes
+local function setExtraData(ast, filepath)
+	for i, v in pairs(ast) do
+		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
+			if v.parent == nil then
+				v.parent = ast
+			end
+			v.filepath = filepath
+			setExtraData(v)
+		end
+	end
+end
 ---@param file SS_File
 local function parse(file)
 	errors = {}
@@ -877,19 +930,7 @@ local function parse(file)
 	local ast, errMsg, errPos = grammar:match(file.code)
 	local endTime = os.clock()
 
-	-- add parent to all nodes
-	local function setExtraData(_ast)
-		for i, v in pairs(_ast) do
-			if type(v) == "table" and v.type ~= nil and i ~= "parent" then
-				if v.parent == nil then
-					v.parent = _ast
-				end
-				v.filepath = file.code
-				setExtraData(v)
-			end
-		end
-	end
-	setExtraData(ast)
+	setExtraData(ast, file.filepath)
 	ast.parent = nil  -- strange bug... this is set to the first item in the ast :/
 
 	local errors_ = errors
@@ -905,5 +946,6 @@ end
 
 return {
 	defs=defs,
-	parse=parse
+	parse=parse,
+	setExtraData=setExtraData
 }
