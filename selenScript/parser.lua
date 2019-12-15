@@ -390,6 +390,8 @@ defs["if"] = function(start, condition, block, ...)
 	}
 end
 function defs.decorator(start, index, call, finish)
+	-- Unknown cause of bug
+	if type(call) == "number" then finish = call; call = nil end
 	return setParentForReturn {
 		type="decorator",
 		start=start,
