@@ -22,8 +22,8 @@ local function addTests(glob)
 	end
 end
 
-addTests("tests/selenScript/**/*.sl")
-addTests("tests/pure lua/**/*.lua")
+addTests("basic_tests/selenScript/**/*.sl")
+addTests("basic_tests/pure lua/**/*.lua")
 
 
 print(tostring(#files) .. " files to test...")
