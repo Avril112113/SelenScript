@@ -27,7 +27,7 @@ stmt	<- Sc (
 		)
 
 decorator_call	<- '(' Sc (expr_list/{}->MISS_DEC_ARGS) Sc (')'/({} {}->')')->MISSING)
-decorator		<- ({} '@' Sc (var_lcall/{}->MISS_EXPR) (decorator_call)?? {}) -> decorator
+decorator		<- ({} '@' Sc (var_lcall/{}->MISS_EXPR) decorator_call?? {}) -> decorator
 decorator_list	<- ({} (Sc decorator)+ {}) -> decorator_list
 decorator_stmt	<- ({} decorator_list Sc (function_stmt/{}->MISS_DEC) {}) -> decorate
 
