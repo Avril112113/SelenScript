@@ -17,7 +17,9 @@ function statements.new(transformer)
 
 	self.block_depth = -1
 	self.prefix_stmts = {}
+	transformer.prefix_stmts = self.prefix_stmts
 	self.suffix_stmts = {}
+	transformer.suffix_stmts = self.suffix_stmts
 
 	return self
 end
