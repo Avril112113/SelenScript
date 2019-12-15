@@ -162,7 +162,30 @@ end
 
 statements["function"] = function(self, ast)
 	local str = {}
+	local hasIndex = false
+	local isDefinedLocal = false
+	if ast.funcname.type == "index" and ast.funcname.index ~= nil then
+		hasIndex = true
+	else
+		if self:getDefinedLocalBlock(ast, ast.funcname.value or ast.funcname.expr.value) ~= nil then
+			isDefinedLocal = true
+		end
+	end
+	local prefixWithGlobal = false
+	if not hasIndex and ((ast.scope == "" and not isDefinedLocal) or ast.scope ~= "") and self:isLocal(ast.scope) and not isDefinedLocal then
+		str[#str+1] = "local "
+		local block = self:getImmediateBlock(ast)
+		block.definedLocals[ast.funcname.value or ast.funcname.expr.value] = true
+	elseif ast.scope == "global" and isDefinedLocal then
+		prefixWithGlobal = true
+	end
+
 	str[#str+1] = "function "
+	if prefixWithGlobal then
+		local target = targets[self.transpiler.settings.targetVersion]
+		str[#str+1] = target.globalDefinedLocal
+		str[#str+1] = "."
+	end
 	str[#str+1] = self.transpiler:transpile(ast.funcname)
 	str[#str+1] = self.transpiler:transpile(ast.body)
 	return table.concat(str)
