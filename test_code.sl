@@ -1,10 +1,19 @@
+-- [[
 global global_result = "I should be global"
 local local_result = "I should be local"
 default_scope_result = "I should be in the default scope"
 
 interface TestInterface
-	-- TODO: put shit in here
+	foo: string
+	bar: number
+	f: function->TestInterface
 end
+
+local testInterfaceTbl: TestInterface = {
+	foo="foo?",
+	bar=404,
+	f=function() return {} end
+}
 
 
 local if_expr_result = if true then 1 else 2
@@ -44,3 +53,4 @@ end
 @dec()
 local function use_decorater(arg) print("use_decorater", arg or ">>> BROKEN") end
 use_decorater()
+--]]
