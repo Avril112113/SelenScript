@@ -909,6 +909,15 @@ function defs.type_or(start, a, b, finish)
 		b=b
 	}
 end
+function defs.type_and(start, a, b, finish)
+	return setParentForReturn {
+		type="type_and",
+		start=start,
+		finish=finish,
+		a=a,
+		b=b
+	}
+end
 local grammar = re.compile(grammarStr, defs)
 
 
