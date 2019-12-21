@@ -329,5 +329,9 @@ end
 statements["for_each"] = statements["while"]
 statements["for_range"] = statements["while"]
 
+function statements:interface(ast)
+	return nil
+end
+
 
 return statements
