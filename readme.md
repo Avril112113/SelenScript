@@ -44,14 +44,6 @@ for i, v in pairs(t) do
 	end
 	print("not string", v)
 end
--- Lua
-for i, v in pairs(t) do
-	if type(v) ~= "string" then
-		goto continue
-	end
-	print("not string", v)
-	::continue::
-end
 ```
 
 Inline `if`  
@@ -59,21 +51,6 @@ Inline `if`
 foo = 100
 bar = if foo >= 100 then foo else foo+100  -- Bar: 100
 bar = if foo < 500 then foo-100 else foo  -- Bar: 0
--- Lua (Formatted)
-foo = 100
-local __sls0
-if foo >= 100 then
-	__sls0 = foo
-else
-	__sls0 = foo+100
-end
-bar = __sls0
-local __sls1
-if foo < 500 then
-	__sls1 = foo-100
-else
-	__sls1 = foo
-end
 bar = __sls1
 ```
 
@@ -118,8 +95,7 @@ end
 interface Jsonable
 	jsonify: function->any
 end
-@implements(Jsonable, FooBar)  -- TODO: there is planned to have some fancy syntax stuff later but for now its decorator
-Person = {
+Person: Jsonable and FooBar = {
 	foo="Im foo",
 	bar="and im foo's big brother",
 	function jsonify()
