@@ -1,7 +1,7 @@
 {
     "Lua.runtime.version": "Lua 5.4",
     "Lua.workspace.ignoreDir": [
-        "tests/pure lua/*"
+        "basic_tests/pure lua/*"
     ],
     "Lua.diagnostics.globals": [
         "love",
