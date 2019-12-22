@@ -17,8 +17,8 @@ print("--- Parse Errors ---")
 for _, err in ipairs(file.parseResult.errors) do
 	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " ..  err.msg)
 end
--- print("--- AST ---")
--- ss.helpers.printAST(file.ast)
+print("--- AST ---")
+ss.helpers.printAST(file.ast)
 
 print()
 
