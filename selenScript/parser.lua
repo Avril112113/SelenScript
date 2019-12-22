@@ -205,6 +205,22 @@ local defs = {
 			msg="Expected a name."
 		}
 	end,
+	MISS_TYPE=function(pos)
+		pusherror {
+			type="miss_type",
+			start=pos,
+			finish=pos,
+			msg="Expected a type."
+		}
+	end,
+	MISS_TYPE_ATTRIBUTES=function(pos)
+		pusherror {
+			type="miss_type",
+			start=pos,
+			finish=pos,
+			msg="Expected type attributes."
+		}
+	end,
 	EXPECT_DO=function(start, got, finish)
 		pusherror {
 			type="expect_do",
@@ -452,7 +468,7 @@ function defs.for_each_expr(ast)
 	ast.is_expr = true
 	return ast
 end
-function defs.interface(start, scope, name, ...)
+function defs.interface(start, scope, name, typeAttributes, ...)
 	local t = {...}
 	local finish = table.remove(t, #t)
 	return setParentForReturn {
@@ -461,6 +477,7 @@ function defs.interface(start, scope, name, ...)
 		finish=finish,
 		scope=scope,
 		name=name,
+		typeAttributes=typeAttributes,
 		unpack(t)
 	}
 end
@@ -613,7 +630,7 @@ end
 function defs.table(start, fieldlist, finish)
 	local index = 0
 	for i, field in ipairs(fieldlist) do
-		if field.key == nil and field.value.type ~= "var_args" then
+		if field.key == nil and field.value and field.value.type ~= "var_args" then
 			index = index + 1
 			field.key = defs.Int(field.start, tostring(index), field.finish)
 		end
@@ -733,12 +750,13 @@ function defs.field(...)
 	}
 end
 
-function defs.funcbody(start, args, return_type, block, finish)
+function defs.funcbody(start, args, whereTypes, return_type, block, finish)
 	return setParentForReturn {
 		type="funcbody",
 		start=start,
 		finish=finish,
 		args=args,
+		whereTypes=whereTypes,
 		return_type=return_type,
 		block=block
 	}
@@ -854,6 +872,15 @@ function defs.LongComment(start, comment, finish)
 end
 
 -- Typing
+function defs.type(start, name, attributes, finish)
+	return setParentForReturn {
+		type="type",
+		start=start,
+		finish=finish,
+		name=name,
+		attributes=attributes
+	}
+end
 function defs.type_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
@@ -864,58 +891,53 @@ function defs.type_list(...)
 		unpack(t)
 	}
 end
-function defs.type(start, name, finish)
+function defs.type_function(start, name, args_par_list, return_type_list, finish)
+	local args_field_list = defs.field_list(args_par_list.start, args_par_list.finish)
+	for i, v in ipairs(args_par_list) do
+		table.insert(args_field_list, defs.field(v.start, v.name, v.param_type, v.finish))
+	end
+	local args_table = defs.table(args_par_list.start, defs.field_list(args_par_list.start, args_field_list, args_par_list.finish), args_par_list.finish)
+	local attributes = defs.type_list(args_par_list.start, args_table, return_type_list, args_par_list.finish)
 	return setParentForReturn {
 		type="type",
+		start=start,
+		finish=finish,
+		name=name,
+		attributes=attributes
+	}
+end
+function defs.type_where_list(...)
+	local t = {...}
+	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	return setParentForReturn {
+		type="type_where_list",
+		start=start,
+		finish=finish,
+		unpack(t)
+	}
+end
+function defs.type_where(start, name, finish)
+	return setParentForReturn {
+		type="type_where",
 		start=start,
 		finish=finish,
 		name=name
 	}
 end
-function defs.type_array(start, name, valueType, finish)
+function defs.type_implements(start, name, finish)
 	return setParentForReturn {
-		type="type_array",
+		type="type_implements",
 		start=start,
 		finish=finish,
-		name=name,
-		valueType=valueType
+		name=name
 	}
 end
-function defs.type_table(start, name, keyType, valueType, finish)
+function defs.type_metaimplements(start, name, finish)
 	return setParentForReturn {
-		type="type_table",
+		type="type_metaimplements",
 		start=start,
 		finish=finish,
-		name=name,
-		keyType=keyType,
-		valueType=valueType
-	}
-end
-function defs.type_function(start, type_args, type_return, finish)
-	return setParentForReturn {
-		type="type_function",
-		start=start,
-		finish=finish,
-		type_args=type_args,
-		type_return=type_return
-	}
-end
-function defs.type_or(start, a, b, finish)
-	return setParentForReturn {
-		type="type_or",
-		start=start,
-		finish=finish,
-		a=a,
-		b=b
-	}
-end
-function defs.type_and(start, a, b, finish)
-	return setParentForReturn {
-		type="type_and",
-		start=start,
-		finish=finish,
-		a=a,
-		b=b
+		name=name
 	}
 end
 local grammar = re.compile(grammarStr, defs)

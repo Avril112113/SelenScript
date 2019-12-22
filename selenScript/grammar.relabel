@@ -53,12 +53,12 @@ assign_stmt			<- ({} Ec var_list Sc assign_part {}) -> assign
 scoped_assign_stmt	<- ({} ScopeDef Sc name_list Sc (assign_part / NILCP NILCP) {}) -> assign
 attrib_assign_stmt	<- ({} {LOCAL}  Sc (NameAsString/{}->MISS_NAME) Sc '<' Sc {NAME/{}->MISS_NAME} Sc ('>'/({} {}->'>')->MISSING) Sc {} typedef?? {} Sc Sc '=' Sc {} expect_expr {}) -> attrib_assign
 
-interface_stmt	<- ({} OptScopeDef INTERFACE Sc EXP_CP_NAME interface_block (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT) {}) -> interface
+interface_stmt	<- ({} OptScopeDef INTERFACE Sc EXP_CP_NAME Sc type_attributes?? Sc interface_block (END / ({} {(!END .)* EXPECT_END} {}->'interface') -> UNPARSED_INPUT) {}) -> interface
 interface_block	<- Sc ((
 						interface_var
 					  / function_stmt
 					) Sc)*
-interface_var	<- ({} {NAME} typedef {}) -> param
+interface_var	<- ({} {NAME} {} (typedef/{}->MISS_TYPE) {}) -> param
 
 expect_expr	<- expr / {}->MISS_EXPR NILCP
 expr	<- ((value/unary) (Sc ({} {BINARY_OP} {})->math_op Sc (value/unary))+) -> math
@@ -102,7 +102,7 @@ name_list		<- ({} NameAsString (Sc ',' Sc (NameAsString/{}->MISS_NAME))* {}) -> 
 param			<- ({} {NAME} {} typedef?? {}) -> param / var_args
 par_list		<- ({} param (Sc ',' Sc param)* {}) -> par_list
 opt_par_list	<- ({} (param (Sc ',' Sc param)*)? {}) -> par_list
-funcbody		<- ({} ('('/({} {}->'(')->MISSING) Sc opt_par_list Sc (')'/({} {}->')')->MISSING) (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT) {}) -> funcbody
+funcbody		<- ({} ('('/({} {}->'(')->MISSING) Sc opt_par_list Sc (')'/({} {}->')')->MISSING) (Sc type_where_list)?? (Sc type_return)?? block Sc (END / ({} {(!END .)* EXPECT_END} {}->'funcbody') -> UNPARSED_INPUT) {}) -> funcbody
 
 return		<- ({} RETURN (Sc expr_list)?? (IF Sc expect_expr)?? {}) -> return Sc ';'?
 
@@ -123,21 +123,23 @@ field_list		<- ({} field (Sc FIELD_SEP Sc field)* {}) -> field_list (Sc FIELD_SE
 opt_field_list	<- ({} (field (Sc FIELD_SEP Sc field)*)? {}) -> field_list (Sc FIELD_SEP)?
 table			<- ({} '{' Sc opt_field_list Sc ('}'/({} {}->'}')->MISSING) {}) -> table
 
-type		<- ({} {ARRAY} Sc '[' type_expr Sc (']'/({} {}->']')->MISSING) {}) -> type_array
-			 / ({} {TABLE} Sc '[' type_expr Sc '=' type_expr Sc (']'/({} {}->']')->MISSING) {}) -> type_table
-			 / ({} FUNCTION (Sc type_args)?? (Sc type_return)?? {}) -> type_function
-			 / Sc ({} {NAME/NIL} {}) -> type !(Sc args)
-type_expr	<- ({} (type/type_expr_bracketed) Sc (OR/'|' Sc) type_expr {}) -> type_or
-			 / ({} (type/type_expr_bracketed) Sc (AND/'&' Sc) type_expr {}) -> type_and
-			 / type_expr_bracketed
-			 / type
-type_expr_bracketed	<- '(' type_expr Sc (')'/({} {}->')')->MISSING)
-type_list	<- ({} type_expr (Sc ',' Sc type_expr)* {}) -> type_list
+type_attributes	<- '<' Sc type_list Sc ('>'/({} {}->'>')->MISSING)
+type_expr	<- '(' Sc (type_expr/{}->MISS_TYPE) Sc (')'/({} {}->')')->MISSING)
+			 / type_implements
+			 / type_metaimplements
+			 / type_attributes
+			 / table
+			 / ({} {FUNCTION} Sc ('(' Sc opt_par_list Sc (')'/({} {}->')')->MISSING)?? ('->' type_list)??) {}) -> type_function
+			 / ({} {VAR_ARGS} Sc type_attributes?? {}) -> type
+			 / ({} {NAME/FUNCTION} Sc type_attributes?? {}) -> type
+type_list	<- ({} type_expr (Sc ',' Sc (type_expr/{}->MISS_TYPE))* {}) -> type_list
 
-type_args		<- '(' Sc opt_par_list Sc (')'/({} {}->')')->MISSING)
-type_return		<- '->' Sc type_expr
-typedef			<- ':' Sc type_expr
+typedef			<- ':' Sc (type_expr/{}->MISS_TYPE)
 typedef_list	<- ':' Sc type_list
+type_return		<- '->' Sc (type_expr/String/{}->MISS_TYPE)
+type_where_list	<- WHERE Sc {NAME} Sc type_attributes (Sc ',' Sc {NAME} Sc (type_attributes/{}->MISS_TYPE_ATTRIBUTES))* -> type_where_list
+type_implements	<- IMPLEMENTS Sc type_list -> type_implements
+type_metaimplements	<- METAIMPLEMENTS Sc type_list -> type_metaimplements
 
 /* The rest of the needed stuff */
 NILCP <- {}->{nil}
@@ -221,7 +223,7 @@ RESERVED	<- RESERVED_STMT / NIL / TRUE / FALSE
 /* NOTE: this might be out of date, please make sure it is */
 RESERVED_STMT	<- AND / OR / DO / BREAK / ELSE / ELSEIF / END / IF / FOR / GOTO
 				 / FUNCTION / IN / LOCAL / THEN / REPEAT / RETURN / NOT / WHILE / UNTIL
-				 / CONTINUE / AS / EXTENDS / IMPLEMENTS / INTERFACE / GLOBAL
+				 / CONTINUE / AS / WHERE / IMPLEMENTS / METAIMPLEMENTS / INTERFACE / GLOBAL
 
 AND         <- Sc 'and' Cut
 NOT         <- Sc 'not' Cut
@@ -244,8 +246,6 @@ AS          <- Sc 'as'  Cut
 END         <- Sc 'end'  Cut
 EXPECT_END	<- END / ({} {}->'end')->MISSING
 
-EXTENDS     <- Sc 'extends' Cut
-IMPLEMENTS  <- Sc 'implements' Cut
 ELSE        <- Sc 'else' Cut
 ELSEIF      <- Sc 'elseif' Cut
 IF          <- Sc 'if' Cut
@@ -258,6 +258,6 @@ INTERFACE   <- Sc 'interface' Cut
 RETURN      <- Sc 'return' Cut
 LOCAL       <- Sc 'local' Cut
 GLOBAL      <- Sc 'global' Cut
-
-TABLE		<- Sc 'table' Cut
-ARRAY		<- Sc 'array' Cut
+WHERE		<- Sc 'where' Cut
+IMPLEMENTS	<- Sc 'implements' Cut
+METAIMPLEMENTS	<- Sc 'metaimplements' Cut
