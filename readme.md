@@ -20,10 +20,9 @@ This dose not mean you can't use it for other Lua versions (proper support maybe
 Typing info 
 ```Lua
 local a: number
-local b: int|float  -- same as number
-local c: string or nil  -- you can use the pipe or `or`
-d: function  -- also works on globals
+global d: function  -- also works on globals
 e: function(arg: string) -> string  -- also can do function type definitions
+e: function<{arg=string}, <string>>  -- this is pretty much equivalent to the above
 -- this function will be typed by the typing info just above
 function e(arg)
 	return "Nah..."
@@ -31,8 +30,11 @@ end
 function f(foo: number) -> number
 	return -foo
 end
-g: table[string=number]
-h: array[string]
+-- use a string for more explicit typing, any valid SelenScript is valid within the string
+GetLevel: function(tbl: table) -> "tbl.GetLevel()"
+g: table<string, number>
+h: array<string>
+local i1, i2, i3: string, string, number = "i1", "i2", 3
 ```
 
 `continue` works like any other language  
