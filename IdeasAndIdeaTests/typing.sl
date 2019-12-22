@@ -14,5 +14,5 @@ local function add(a: T, b: T) where T metaimplements Addable<T> -> getmetatable
 	return a + b
 end
 
-
-
+local f: function<{a=T, b=T}, <T>>
+local f: function(a: T, b: T)->T
