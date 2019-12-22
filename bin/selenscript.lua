@@ -13,7 +13,7 @@ local commands = {}
 commands.help = {
 	name="help",
 	desc="Get information on a command.",
-	usage="help <command name>",
+	usage="help [command name]",
 	args={
 		{type="string", str="help"},
 		{
