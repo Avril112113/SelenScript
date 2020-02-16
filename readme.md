@@ -20,10 +20,9 @@ This dose not mean you can't use it for other Lua versions (proper support maybe
 Typing info 
 ```Lua
 local a: number
-local b: int|float  -- same as number
-local c: string or nil  -- you can use the pipe or `or`
-d: function  -- also works on globals
+global d: function  -- also works on globals
 e: function(arg: string) -> string  -- also can do function type definitions
+e: function<{arg=string}, <string>>  -- this is pretty much equivalent to the above
 -- this function will be typed by the typing info just above
 function e(arg)
 	return "Nah..."
@@ -31,8 +30,11 @@ end
 function f(foo: number) -> number
 	return -foo
 end
-g: table[string=number]
-h: array[string]
+-- use a string for more explicit typing, any valid SelenScript is valid within the string
+GetLevel: function(tbl: table) -> "tbl.GetLevel()"
+g: table<string, number>
+h: array<string>
+local i1, i2, i3: string, string, number = "i1", "i2", 3
 ```
 
 `continue` works like any other language  
@@ -44,43 +46,22 @@ for i, v in pairs(t) do
 	end
 	print("not string", v)
 end
--- Lua
-for i, v in pairs(t) do
-	if type(v) ~= "string" then
-		goto continue
-	end
-	print("not string", v)
-	::continue::
-end
 ```
 
 Inline `if`  
 ```Lua
 foo = 100
-bar = foo if foo >= 100 else foo+100  -- Bar: 100
-bar = foo-100 if foo < 500 else foo  -- Bar: 0
--- Lua (Formatted)
-foo = 100
-local __sls0
-if foo >= 100 then
-	__sls0 = foo
-else
-	__sls0 = foo+100
-end
-bar = __sls0
-local __sls1
-if foo < 500 then
-	__sls1 = foo-100
-else
-	__sls1 = foo
-end
+bar = if foo >= 100 then foo else foo+100  -- Bar: 100
+bar = if foo < 500 then foo-100 else foo  -- Bar: 0
 bar = __sls1
 ```
 
 Statement conditionals  
 ```Lua
 break if baz == "baz"
-continue if baz == "baz"
+continue if bar == "bar"
+goto label if foo == "foo"
+return 1, 2, "stringy" if der == "der"
 ```
 
 expression statements  
@@ -116,8 +97,7 @@ end
 interface Jsonable
 	jsonify: function->any
 end
-@implements(Jsonable, FooBar)  -- TODO: there is planned to have some fancy syntax stuff later but for now its decorator
-Person = {
+Person: Jsonable and FooBar = {
 	foo="Im foo",
 	bar="and im foo's big brother",
 	function jsonify()

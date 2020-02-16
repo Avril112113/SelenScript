@@ -1,9 +1,10 @@
 {
-    "Lua.runtime.version": "LuaJIT",
+    "Lua.runtime.version": "Lua 5.4",
     "Lua.workspace.ignoreDir": [
         "tests/pure lua/*"
     ],
     "Lua.diagnostics.globals": [
-        "love"
+        "love",
+        "unpack"
     ]
 }
