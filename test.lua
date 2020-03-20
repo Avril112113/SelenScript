@@ -10,56 +10,44 @@ local settings = {
 
 local program = ss.program.new(settings)
 
-local file = ss.file.new("./test_code.sl")
-program:addFile(file)
+local source_file = program:addSourceFileByPath("test_code.sl")
 
 print("--- Parse Errors ---")
-for _, err in ipairs(file.parseResult.errors) do
+for _, err in ipairs(source_file.parseErrors) do
 	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " ..  err.msg)
 end
 print("--- AST ---")
-ss.helpers.printAST(file.ast)
+ss.helpers.printAST(source_file.block)
 
 print()
 
-file:symbolize()
-print("--- Symbolize Diagnostics ---")
-for _, err in ipairs(file.symbolizeDiagnostics) do
+print("--- Binder Diagnostics ---")
+for _, err in ipairs(source_file.binderDiagnostics) do
 	local str = err.msg
-	if err.start ~= nil then
+	if err.start ~= nil and err.finish ~= nil then
+		str = tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. str
+	elseif err.start ~= nil then
 		str = tostring(err.start) .. " " .. str
-		if err.finish ~= nil then
-			str = ":" .. tostring(err.finish) .. " " .. str
-		end
 	end
 	print(str)
 end
-print("--- AST (After Symbolize) ---")
--- ss.helpers.printAST(file.ast)
-print("--- Global Symbols ---")
-ss.helpers.printSymbols(program.globals)
 
 print()
 
-file:diagnose()
-print("--- Diagnostics ---")
-for _, err in ipairs(file.diagnostics) do
-	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
-end
+-- program:checkSourceFile(source_file)
+-- print("--- Diagnostics ---")
+-- for _, err in ipairs(source_file.chekerDiagnostics) do
+-- 	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
+-- end
 
 print()
 
-local ok, transformer, transpiler, transformedAst = file:transpile()
-if not ok then
-	print("Failed to open file '" .. file:getWriteFilePath() .. "' to write")
-end
--- print("--- AST (After Transform) ---")
--- ss.helpers.printAST(transformedAst)
+local luaSrc = program:transpileSourceFile(source_file)
 print("--- Transformer Diagnostics ---")
-for _, err in ipairs(transformer.diagnostics) do
+for _, err in ipairs(source_file.transformerDiagnostics) do
 	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
 end
 print("--- Transpiler Diagnostics ---")
-for _, err in ipairs(transpiler.diagnostics) do
+for _, err in ipairs(source_file.transpilerDiagnostics) do
 	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
 end

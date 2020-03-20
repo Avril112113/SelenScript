@@ -267,6 +267,7 @@ local defs = {
 	end
 }
 --- AST Building
+-- `source_file` see parse()
 function defs.block(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
@@ -909,19 +910,28 @@ end
 function defs.type_where_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
+	local wheres = {}
+	while #t > 0 do
+		local wstart = table.remove(t, 1)
+		local name = table.remove(t, 1)
+		local type_expr = table.remove(t, 1)
+		local wfinish = table.remove(t, 1)
+		table.insert(wheres, defs.type_where(wstart, name, type_expr, wfinish))
+	end
 	return setParentForReturn {
 		type="type_where_list",
 		start=start,
 		finish=finish,
-		unpack(t)
+		unpack(wheres)
 	}
 end
-function defs.type_where(start, name, finish)
+function defs.type_where(start, name, type_expr, finish)
 	return setParentForReturn {
 		type="type_where",
 		start=start,
 		finish=finish,
-		name=name
+		name=name,
+		type_expr=type_expr
 	}
 end
 function defs.type_implements(start, name, finish)
@@ -943,42 +953,50 @@ end
 local grammar = re.compile(grammarStr, defs)
 
 
--- add parent to all nodes
-local function setExtraData(ast, filepath)
-	for i, v in pairs(ast) do
-		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
-			if v.parent == nil then
-				v.parent = ast
-			end
-			v.filepath = filepath
-			setExtraData(v)
+local function SetParentNodes(ast)
+	for key, child in pairs(ast) do
+		if key ~= "parent" and type(child) == "table" and child.type ~= nil then
+			child.parent = ast
+			SetParentNodes(child)
 		end
 	end
 end
----@param file SS_File
-local function parse(file)
-	errors = {}
+---@param filePath string
+---@param src string
+---@param setParentNodes boolean
+local function parse(filePath, src, setParentNodes)
+	---@class SS_SourceFile
+	local source_file = {
+		type="source_file",
+		filePath=filePath,
+		start=1,
+		finish=#src,
+		-- typing
+		---@type table
+		parseErrors=nil,
+		---@type table
+		binderDiagnostics=nil,
+		---@type table
+		transformerDiagnostics=nil,
+		---@type table
+		transpilerDiagnostics=nil
+	}
 
+	errors = {}
 	local startTime = os.clock()
-	local ast, errMsg, errPos = grammar:match(file.code)
+	local ast, errMsg, errPos = grammar:match(src)
 	local endTime = os.clock()
 
-	setExtraData(ast, file.filepath)
-	ast.parent = nil  -- strange bug... this is set to the first item in the ast :/
+	source_file.block = ast
+	source_file.parseTime = endTime-startTime
+	source_file.parseErrors = errors
 
-	local errors_ = errors
 	errors = nil
-	return {
-		errors=errors_,
-		ast=ast,
-		parseTime=endTime-startTime,
-		errMsg=errMsg,  -- this should always be nil
-		errPos=errPos  -- this should always be nil
-	}
+
+	return source_file
 end
 
 return {
 	defs=defs,
-	parse=parse,
-	setExtraData=setExtraData
+	parse=parse
 }

@@ -137,7 +137,7 @@ type_list	<- ({} type_expr (Sc ',' Sc (type_expr/{}->MISS_TYPE))* {}) -> type_li
 typedef			<- ':' Sc (type_expr/{}->MISS_TYPE)
 typedef_list	<- ':' Sc type_list
 type_return		<- '->' Sc (type_expr/String/{}->MISS_TYPE)
-type_where_list	<- WHERE Sc {NAME} Sc type_attributes (Sc ',' Sc {NAME} Sc (type_attributes/{}->MISS_TYPE_ATTRIBUTES))* -> type_where_list
+type_where_list	<- ({} WHERE Sc {} EXP_CP_NAME Sc (type_expr/{}->MISS_TYPE NILCP) {} (Sc ',' Sc {} EXP_CP_NAME Sc (type_expr/{}->MISS_TYPE NILCP) {})* {}) -> type_where_list
 type_implements	<- IMPLEMENTS Sc type_list -> type_implements
 type_metaimplements	<- METAIMPLEMENTS Sc type_list -> type_metaimplements
 

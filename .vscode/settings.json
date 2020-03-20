@@ -1,5 +1,5 @@
 {
-    "Lua.runtime.version": "Lua 5.4",
+    "Lua.runtime.version": "LuaJIT",
     "Lua.workspace.ignoreDir": [
         "basic_tests/pure lua/*"
     ],

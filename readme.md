@@ -3,14 +3,11 @@ This is a transpiler that outputs Lua code
 Any normal Lua code should in theory transpile without issues (if not please report it)  
 The goal of SelenScript is to make Lua neater and easier to code  
 and make complex things simple  
+This projects structure is based of typescript  
 TODO: improve readme
 
 ## Name
-Selen is based from  
-```
-Selina /səˈliːnə/ is a feminine given name, of Greek origin, derived from the Greek "Selēnē" meaning "moon". It reached peak popularity in the 1980s.
-``` 
-it was recommended by DreadberryJam from a discord server i talk in.
+Selen is based from the Greek word `Selēnē` meaing moon.  
 
 ## Syntax
 Please note that the syntax may change as this is work in progress!  

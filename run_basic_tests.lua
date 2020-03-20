@@ -1,14 +1,14 @@
-local breakOnParseError = false
-local breakOnSymbolizeDiagnostic = false
-local breakOnTransformerDiagnostic = false
-local breakOnTranspilerDiagnostic = false
+local breakOnParseError = true
+local breakOnBindDiagnostic = false
+local breakOnTransformerDiagnostic = true
+local breakOnTranspilerDiagnostic = true
 
 local settings = {
 	defaultLocals=false
 }
 
 
-local selenScript = require "selenScript"
+local ss = require "selenScript"
 
 
 local files = {}
@@ -28,31 +28,27 @@ addTests("basic_tests/pure lua/**/*.lua")
 
 print(tostring(#files) .. " files to test...")
 local totalParseTime = 0
-local totalSymbolizeTime = 0
+local totalBindTime = 0
 local totalTranspileTime = 0
 local testStartTime = os.clock()
 for _, path in ipairs(files) do
 	print("--- Parsing " .. tostring(path) .. " ---")
-	local program = selenScript.program.new(settings)
-	local file = selenScript.file.new(path)
-	file.writeOnTranspile = false
-	totalParseTime = totalParseTime + file.parseResult.parseTime
+	local program = ss.program.new(settings)
+	local source_file = program:addSourceFileByPath(path)
+	totalParseTime = totalParseTime + source_file.parseTime
 
-	if #file.parseResult.errors > 0 then
+	if #source_file.parseErrors > 0 then
 		print("- Parse Errors -")
-		for _, err in ipairs(file.parseResult.errors) do
+		for _, err in ipairs(source_file.parseErrors) do
 			print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " ..  err.msg)
 		end
 		if breakOnParseError then break end
 	end
 
-	program:addFile(file)
-
-	local symbolizeTime = file:symbolize()
-	totalSymbolizeTime = totalSymbolizeTime + symbolizeTime
-	if #file.symbolizeDiagnostics > 0 then
-		print("- Symbolize Diagnostics -")
-		for _, err in ipairs(file.symbolizeDiagnostics) do
+	totalBindTime = totalBindTime + source_file.bindTime
+	if #source_file.binderDiagnostics > 0 then
+		print("- Bind Diagnostics -")
+		for _, err in ipairs(source_file.binderDiagnostics) do
 			local str = err.msg
 			if err.start ~= nil then
 				local posStr = tostring(err.start)
@@ -63,44 +59,40 @@ for _, path in ipairs(files) do
 			end
 			print(str)
 		end
-		if breakOnSymbolizeDiagnostic then break end
+		if breakOnBindDiagnostic then break end
 	end
 
 	local transpileStart = os.clock()
-	local ok, transformer, transpiler, _, luaCode = file:transpile()
+	local luaSrc = program:transpileSourceFile(source_file)
 	totalTranspileTime = totalTranspileTime + (os.clock() - transpileStart)
-	if #transformer.diagnostics > 0 then
+	if #source_file.transformerDiagnostics > 0 then
 		print("- Transformer Diagnostics -")
-		for _, err in ipairs(transformer.diagnostics) do
+		for _, err in ipairs(source_file.transformerDiagnostics) do
 			local str = err.msg
-			if err.start ~= nil then
-				local posStr = tostring(err.start)
-				if err.finish ~= nil then
-					posStr = posStr .. ":" .. tostring(err.finish)
-				end
-				str = posStr .. " " .. str
+			if err.start ~= nil and err.finish ~= nil then
+				str = tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. str
+			elseif err.start ~= nil then
+				str = tostring(err.start) .. " " .. str
 			end
 			print(str)
 		end
 		if breakOnTransformerDiagnostic then break end
 	end
-	if #transpiler.diagnostics > 0 then
+	if #source_file.transpilerDiagnostics > 0 then
 		print("- Transpiler Diagnostics -")
-		for _, err in ipairs(transpiler.diagnostics) do
+		for _, err in ipairs(source_file.transpilerDiagnostics) do
 			local str = err.msg
-			if err.start ~= nil then
-				local posStr = tostring(err.start)
-				if err.finish ~= nil then
-					posStr = posStr .. ":" .. tostring(err.finish)
-				end
-				str = posStr .. " " .. str
+			if err.start ~= nil and err.finish ~= nil then
+				str = tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. str
+			elseif err.start ~= nil then
+				str = tostring(err.start) .. " " .. str
 			end
 			print(str)
 		end
 		if breakOnTranspilerDiagnostic then break end
 	end
-	if ok and #transpiler.diagnostics <= 0 then
-		local pcallOk, err = pcall(load, luaCode)
+	if #source_file.transformerDiagnostics <= 0 and #source_file.transpilerDiagnostics <= 0 then
+		local pcallOk, err = pcall(load, luaSrc)
 		if pcallOk == false and err ~= nil then
 			print("Syntax check of file failed")
 			print(err)
@@ -111,5 +103,5 @@ end
 local testProcessTime = os.clock() - testStartTime
 print("\nTotal time taken processing test files " .. tostring(testProcessTime) .. "s")
 print("Parsing test files took " .. tostring(totalParseTime) .. "s")
-print("Symbolizing test files took " .. tostring(totalSymbolizeTime) .. "s")
+print("Symbolizing test files took " .. tostring(totalBindTime) .. "s")
 print("Transpiling test files took " .. tostring(totalTranspileTime) .. "s")
