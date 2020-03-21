@@ -42,7 +42,7 @@ print()
 
 print()
 
-local luaSrc = program:transpileSourceFile(source_file)
+local luaSrc = program:transpileAndWriteSourceFile(source_file)
 print("--- Transformer Diagnostics ---")
 for _, err in ipairs(source_file.transformerDiagnostics) do
 	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
