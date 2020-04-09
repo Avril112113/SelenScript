@@ -46,9 +46,9 @@ for _, path in ipairs(files) do
 	end
 
 	totalBindTime = totalBindTime + source_file.bindTime
-	if #source_file.binderDiagnostics > 0 then
+	if #source_file.binder.diagnostics > 0 then
 		print("- Bind Diagnostics -")
-		for _, err in ipairs(source_file.binderDiagnostics) do
+		for _, err in ipairs(source_file.binder.diagnostics) do
 			local str = err.msg
 			if err.start ~= nil then
 				local posStr = tostring(err.start)
@@ -65,9 +65,9 @@ for _, path in ipairs(files) do
 	local transpileStart = os.clock()
 	local luaSrc = program:transpileSourceFile(source_file)
 	totalTranspileTime = totalTranspileTime + (os.clock() - transpileStart)
-	if #source_file.transformerDiagnostics > 0 then
+	if #source_file.transformer.diagnostics > 0 then
 		print("- Transformer Diagnostics -")
-		for _, err in ipairs(source_file.transformerDiagnostics) do
+		for _, err in ipairs(source_file.transformer.diagnostics) do
 			local str = err.msg
 			if err.start ~= nil and err.finish ~= nil then
 				str = tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. str
@@ -78,9 +78,9 @@ for _, path in ipairs(files) do
 		end
 		if breakOnTransformerDiagnostic then break end
 	end
-	if #source_file.transpilerDiagnostics > 0 then
+	if #source_file.transpiler.diagnostics > 0 then
 		print("- Transpiler Diagnostics -")
-		for _, err in ipairs(source_file.transpilerDiagnostics) do
+		for _, err in ipairs(source_file.transpiler.diagnostics) do
 			local str = err.msg
 			if err.start ~= nil and err.finish ~= nil then
 				str = tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. str
@@ -91,7 +91,7 @@ for _, path in ipairs(files) do
 		end
 		if breakOnTranspilerDiagnostic then break end
 	end
-	if #source_file.transformerDiagnostics <= 0 and #source_file.transpilerDiagnostics <= 0 then
+	if #source_file.transformer.diagnostics <= 0 and #source_file.transpiler.diagnostics <= 0 then
 		local pcallOk, err = pcall(load, luaSrc)
 		if pcallOk == false and err ~= nil then
 			print("Syntax check of file failed")
@@ -101,7 +101,7 @@ for _, path in ipairs(files) do
 end
 
 local testProcessTime = os.clock() - testStartTime
-print("\nTotal time taken processing test files " .. tostring(testProcessTime) .. "s")
+print("\nTotal time test time " .. tostring(testProcessTime) .. "s (console output takes time)")
 print("Parsing test files took " .. tostring(totalParseTime) .. "s")
-print("Symbolizing test files took " .. tostring(totalBindTime) .. "s")
+print("Binding test files took " .. tostring(totalBindTime) .. "s")
 print("Transpiling test files took " .. tostring(totalTranspileTime) .. "s")
