@@ -31,17 +31,6 @@ for _, err in ipairs(source_file.binderDiagnostics) do
 	end
 	print(str)
 end
-
-print()
-
--- program:checkSourceFile(source_file)
--- print("--- Diagnostics ---")
--- for _, err in ipairs(source_file.chekerDiagnostics) do
--- 	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
--- end
-
-print()
-
 local luaSrc = program:transpileAndWriteSourceFile(source_file)
 print("--- Transformer Diagnostics ---")
 for _, err in ipairs(source_file.transformerDiagnostics) do
