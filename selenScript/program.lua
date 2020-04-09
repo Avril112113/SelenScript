@@ -63,6 +63,7 @@ function program:transpileAndWriteSourceFile(source_file)
 	end
 	f:write(luaSrc)
 	f:close()
+	return luaSrc
 end
 
 ---@param source_file SS_SourceFile
