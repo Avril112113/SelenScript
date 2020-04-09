@@ -1,3 +1,4 @@
+-- Added `_` later in this file due to `where` being a reserved work in selenscript
 local fs = require("filesystem")
 local text = require("text")
 local unicode = require("unicode")
@@ -59,15 +60,15 @@ local function findFile(name, ext)
     return false
   end
   if unicode.sub(name, 1, 1) == "/" then
-    local found, where = findIn("/")
-    if found then return where end
+    local found, _where = findIn("/")
+    if found then return _where end
   elseif unicode.sub(name, 1, 2) == "./" then
-    local found, where = findIn(shell.getWorkingDirectory())
-    if found then return where end
+    local found, _where = findIn(shell.getWorkingDirectory())
+    if found then return _where end
   else
     for path in string.gmatch(shell.getPath(), "[^:]+") do
-      local found, where = findIn(path)
-      if found then return where end
+      local found, _where = findIn(path)
+      if found then return _where end
     end
   end
   return false
@@ -136,9 +137,9 @@ function shell.resolve(path, ext)
   if path == "-" then return path end
   if ext then
     checkArg(2, ext, "string")
-    local where = findFile(path, ext)
-    if where then
-      return where
+    local _where = findFile(path, ext)
+    if _where then
+      return _where
     else
       return nil, "file not found"
     end
