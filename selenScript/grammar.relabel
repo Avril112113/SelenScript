@@ -122,6 +122,7 @@ table			<- ({} '{' Sc opt_field_list Sc ('}'/({} {}->'}')->MISSING) {}) -> table
 
 type_attributes	<- '<' Sc type_list Sc ('>'/({} {}->'>')->MISSING)
 type_expr	<- '(' Sc (type_expr/{}->MISS_TYPE) Sc (')'/({} {}->')')->MISSING)
+			 / call
 			 / type_implements
 			 / type_metaimplements
 			 / type_attributes
