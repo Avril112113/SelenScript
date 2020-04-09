@@ -32,7 +32,7 @@ end
 ---@param source_file SS_SourceFile
 function program:bindSourceFile(source_file)
 	local binderInstance = binder.new(source_file)
-	binderInstance:bind(source_file)
+	source_file.binder = binderInstance
 end
 
 ---@param source_file SS_SourceFile
@@ -45,11 +45,11 @@ end
 ---@return string
 function program:transpileSourceFile(source_file)
 	local transformerInstance = transformer.new(self.settings)
+	source_file.transformer = transformerInstance
 	local transformedAST = transformerInstance:transform(source_file.block)
-	source_file.transformerDiagnostics = transformerInstance.diagnostics
 	local transpilerInstance = transpiler.new(self.settings)
+	source_file.transpiler = transpilerInstance
 	local luaSrc = transpilerInstance:transpile(transformedAST)
-	source_file.transpilerDiagnostics = transpilerInstance.diagnostics
 	return luaSrc
 end
 

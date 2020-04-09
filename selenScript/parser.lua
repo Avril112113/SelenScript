@@ -974,12 +974,12 @@ local function parse(filePath, src, setParentNodes)
 		-- typing
 		---@type table
 		parseErrors=nil,
-		---@type table
-		binderDiagnostics=nil,
-		---@type table
-		transformerDiagnostics=nil,
-		---@type table
-		transpilerDiagnostics=nil
+		---@type SS_Binder
+		binder=nil,
+		---@type SS_Transformer
+		transformer=nil,
+		---@type SS_Transpiler
+		transpiler=nil
 	}
 
 	errors = {}
