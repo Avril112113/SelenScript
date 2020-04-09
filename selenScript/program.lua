@@ -33,6 +33,7 @@ end
 function program:bindSourceFile(source_file)
 	local binderInstance = binder.new(source_file)
 	source_file.binder = binderInstance
+	binderInstance:bind(source_file.block)
 end
 
 ---@param source_file SS_SourceFile

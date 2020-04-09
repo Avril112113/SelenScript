@@ -893,12 +893,15 @@ function defs.type_list(...)
 	}
 end
 function defs.type_function(start, name, args_par_list, return_type_list, finish)
+	local attributes
+	if args_par_list ~= nil then
 	local args_field_list = defs.field_list(args_par_list.start, args_par_list.finish)
 	for i, v in ipairs(args_par_list) do
 		table.insert(args_field_list, defs.field(v.start, v.name, v.param_type, v.finish))
 	end
 	local args_table = defs.table(args_par_list.start, defs.field_list(args_par_list.start, args_field_list, args_par_list.finish), args_par_list.finish)
-	local attributes = defs.type_list(args_par_list.start, args_table, return_type_list, args_par_list.finish)
+		attributes = defs.type_list(args_par_list.start, args_table, return_type_list, args_par_list.finish)
+	end
 	return setParentForReturn {
 		type="type",
 		start=start,
