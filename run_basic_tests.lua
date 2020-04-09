@@ -22,7 +22,7 @@ local function addTests(glob)
 	end
 end
 
-addTests("basic_tests/selenScript/**/*.sl")
+addTests("basic_tests/selenScript/**/*.sel")
 addTests("basic_tests/pure lua/**/*.lua")
 
 

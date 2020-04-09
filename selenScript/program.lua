@@ -57,7 +57,11 @@ end
 ---@param source_file SS_SourceFile
 function program:transpileAndWriteSourceFile(source_file)
 	local luaSrc = self:transpileSourceFile(source_file)
-	local f = io.open(self.settings.out .. source_file.filePath:gsub(".sl$", ".lua"), "w")
+	local localFilePath = source_file.filePath:gsub("%.sel$", ".lua")
+	if localFilePath == source_file.filePath then
+		localFilePath = localFilePath .. ".lua"
+	end
+	local f = io.open(self.settings.out .. localFilePath, "w")
 	if f == nil then
 		error("Failed to write file at " .. self.settings.out .. source_file.filePath)
 	end

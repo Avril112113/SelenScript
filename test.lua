@@ -10,7 +10,7 @@ local settings = {
 
 local program = ss.program.new(settings)
 
-local source_file = program:addSourceFileByPath("test_code.sl")
+local source_file = program:addSourceFileByPath("test_code.sel")
 
 print("--- Parse Errors ---")
 for _, err in ipairs(source_file.parseErrors) do
