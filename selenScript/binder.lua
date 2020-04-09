@@ -24,7 +24,6 @@ end
 
 function Binder.new(source_file)
 	local diagnostics = {}
-	source_file.binderDiagnostics = diagnostics
 	return setmetatable({source_file=source_file, diagnostics=diagnostics}, Binder)
 end
 
@@ -43,9 +42,12 @@ function Binder:bind(ast, parent)
 	binderFunc(self, ast)
 end
 
+function Binder:bind_Comment(ast)
+end
+
 function Binder:bind_block(ast)
  	for i, stmt in ipairs(ast) do
-		Binder:bind(stmt, ast)
+		self:bind(stmt, ast)
 	end
 end
 
