@@ -31,8 +31,8 @@ end
 
 function Binder:bind(ast, parent)
 	ast.parent = parent
-	local symbolizeFunc = self["bind_" .. ast.type]
-	if symbolizeFunc == nil then
+	local binderFunc = self["bind_" .. ast.type]
+	if binderFunc == nil then
 		table.insert(self.diagnostics, {
 			msg="Missing binder function for node type '" .. ast.type .. "'",
 			start=ast.start,
@@ -40,7 +40,7 @@ function Binder:bind(ast, parent)
 		})
 		return
 	end
-	symbolizeFunc(ast)
+	binderFunc(self, ast)
 end
 
 function Binder:bind_block(ast)
