@@ -1,6 +1,3 @@
-local parser = require "selenScript.parser"
-
-
 ---@class SS_Binder
 local Binder = {}
 Binder.__index = Binder
