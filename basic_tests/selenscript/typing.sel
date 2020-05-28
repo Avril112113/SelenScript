@@ -1,13 +1,18 @@
--- Typing is being redone
---[[
-local a: number
-local b: int|float  -- same as number
-local c: string or nil  -- you can use the pipe or `or`
-d: function  -- also works on globals
-e: function(arg: string) -> string  -- also can do function type definitions
-function e(arg: string) -> string
-	return "Nah..."
+-- Special typing, where `T` is passed in
+interface Addable<T>
+	-- gets `a` and `b` which are the same type as `T`
+	-- returns same type as `T`
+	__add: function(a: T, b: T)->T
 end
-f: table[string=number]
-g: array[string]
-]]
+-- Selenscript, typing with fancy thing
+-- type `T` is not to this scope, but only in the scope of the function
+-- `where T` basically says that T should have the following
+-- `metaimplements Addable<T>` means that T's metatable should implement the interface `Addable`
+-- `<T>` tells the `Addable` interface that `T` in the interface it's self is the same as our `T`
+local function add(a: T, b: T) where T metaimplements Addable<T> -> "getmetatable(T).__add(a, b)"
+	-- No diagnostic as T's metatable implements __add
+	return a + b
+end
+
+local f: function<{a=T, b=T}, <T>>
+local f: function(a: T, b: T)->T

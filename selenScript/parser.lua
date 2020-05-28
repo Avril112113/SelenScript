@@ -21,17 +21,17 @@ local function setParent(parent, child)
 	end
 end
 --- Convenience function
-local function setParentForReturn(tbl)
+local function setParentForNode(tbl)
 	for _, v in pairs(tbl) do
 		setParent(tbl, v)
 	end
 	return tbl
 end
 --- Convenience function
-local function setParentForReturnRecursive(tbl)
+local function setParentForNodeRecursive(tbl)
 	for i, v in pairs(tbl) do
 		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
-			setParentForReturnRecursive(v)
+			setParentForNodeRecursive(v)
 		end
 		setParent(tbl, v)
 	end
@@ -271,7 +271,7 @@ local defs = {
 function defs.block(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="block",
 		start=start,
 		finish=finish,
@@ -280,7 +280,7 @@ function defs.block(...)
 end
 
 function defs.assign(start, scope, varlist, typelist, exprlist, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="assign",
 		start=start,
 		finish=finish,
@@ -291,7 +291,7 @@ function defs.assign(start, scope, varlist, typelist, exprlist, finish)
 	}
 end
 function defs.attrib_assign(start, scope, name, attrib, startTypedef, typedef, finishTypedef, startExpr, expr, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="assign",
 		start=start,
 		finish=finish,
@@ -303,7 +303,7 @@ function defs.attrib_assign(start, scope, name, attrib, startTypedef, typedef, f
 	}
 end
 function defs.label(start, label, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="label",
 		start=start,
 		finish=finish,
@@ -311,7 +311,7 @@ function defs.label(start, label, finish)
 	}
 end
 defs["break"] = function(start, exprlist, stmt_if, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="break",
 		start=start,
 		finish=finish,
@@ -320,7 +320,7 @@ defs["break"] = function(start, exprlist, stmt_if, finish)
 	}
 end
 function defs.continue(start, stmt_if, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="continue",
 		start=start,
 		finish=finish,
@@ -328,7 +328,7 @@ function defs.continue(start, stmt_if, finish)
 	}
 end
 defs["goto"] = function(start, label, stmt_if, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="goto",
 		start=start,
 		finish=finish,
@@ -337,19 +337,27 @@ defs["goto"] = function(start, label, stmt_if, finish)
 	}
 end
 defs["do"] = function(start, block, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="do",
 		start=start,
 		finish=finish,
 		block=block
 	}
 end
-defs["do_expr"] = function(ast)
+defs["once"] = function(start, block, finish)
+	return setParentForNode {
+		type="once",
+		start=start,
+		finish=finish,
+		block=block
+	}
+end
+defs["once_expr"] = function(ast)
 	ast.is_expr = true
 	return ast
 end
 defs["while"] = function(start, condition, block, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="while",
 		start=start,
 		finish=finish,
@@ -362,7 +370,7 @@ defs["while_expr"] = function(ast)
 	return ast
 end
 defs["repeat"] = function(start, block, condition, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="repeat",
 		start=start,
 		finish=finish,
@@ -371,7 +379,7 @@ defs["repeat"] = function(start, block, condition, finish)
 	}
 end
 defs["elseif"] = function(start, condition, block, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="elseif",
 		start=start,
 		finish=finish,
@@ -380,7 +388,7 @@ defs["elseif"] = function(start, condition, block, finish)
 	}
 end
 defs["else"] = function(start, block, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="else",
 		start=start,
 		finish=finish,
@@ -397,7 +405,7 @@ defs["if"] = function(start, condition, block, ...)
 		last.next = ast
 		last = ast
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="if",
 		start=start,
 		finish=finish,
@@ -409,7 +417,7 @@ end
 function defs.decorator(start, index, call, finish)
 	-- Unknown cause of bug
 	if type(call) == "number" then finish = call; call = nil end
-	return setParentForReturn {
+	return setParentForNode {
 		type="decorator",
 		start=start,
 		finish=finish,
@@ -418,7 +426,7 @@ function defs.decorator(start, index, call, finish)
 	}
 end
 function defs.decorate(start, decoratorlist, expr, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="decorate",
 		start=start,
 		finish=finish,
@@ -430,7 +438,7 @@ defs["function"] = function(start, scope, startFuncname, funcname, finishFuncnam
 	if type(funcname) == "string" then
 		funcname = defs.String(startFuncname, "", funcname, finishFuncname)
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="function",
 		start=start,
 		finish=finish,
@@ -440,7 +448,7 @@ defs["function"] = function(start, scope, startFuncname, funcname, finishFuncnam
 	}
 end
 function defs.for_range(start, startVarname, varname, finishVarname, from, to, step, block, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="for_range",
 		start=start,
 		finish=finish,
@@ -456,7 +464,7 @@ function defs.for_range_expr(ast)
 	return ast
 end
 function defs.for_each(start, namelist, exprlist, block, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="for_each",
 		start=start,
 		finish=finish,
@@ -472,7 +480,7 @@ end
 function defs.interface(start, scope, name, typeAttributes, ...)
 	local t = {...}
 	local finish = table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="interface",
 		start=start,
 		finish=finish,
@@ -484,7 +492,7 @@ function defs.interface(start, scope, name, typeAttributes, ...)
 end
 
 function defs.if_expr(start, condition, trueExpr, falseExpr, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="if_expr",
 		start=start,
 		finish=finish,
@@ -494,7 +502,7 @@ function defs.if_expr(start, condition, trueExpr, falseExpr, finish)
 	}
 end
 function defs.String(start, quote, value, finish)  -- NOTE: used by Comment as well
-	return setParentForReturn {
+	return setParentForNode {
 		type="String",
 		start=start,
 		finish=finish,
@@ -512,7 +520,7 @@ function defs.LongString(start, eqStart, eqFinish, startNewline, value, finish) 
 	local quoteEqLen = eqFinish-eqStart
 	local quote = "[" .. string.rep("=", quoteEqLen) .. "["
 	local endQuote = "]" .. string.rep("=", quoteEqLen) .. "]"
-	return setParentForReturn {
+	return setParentForNode {
 		type="LongString",
 		start=start,
 		finish=finish,
@@ -537,7 +545,7 @@ function defs.FormatString(start, quote, ...)
 			parts[i] = v:gsub("{{", "{"):gsub("}}", "}")
 		end
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="FormatString",
 		start=start,
 		finish=finish,
@@ -546,13 +554,13 @@ function defs.FormatString(start, quote, ...)
 	}
 end
 function defs.STRFormat(expr)
-	return setParentForReturn {
+	return setParentForNode {
 		type="STRFormat",
 		expr=expr
 	}
 end
 function defs.Int(start, value, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="Int",
 		start=start,
 		finish=finish,
@@ -567,7 +575,7 @@ function defs.Int(start, value, finish)
 	}
 end
 function defs.Float(start, value, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="Float",
 		start=start,
 		finish=finish,
@@ -582,7 +590,7 @@ function defs.Float(start, value, finish)
 	}
 end
 function defs.Hex(start, value, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="Hex",
 		start=start,
 		finish=finish,
@@ -596,7 +604,7 @@ function defs.Hex(start, value, finish)
 	}
 end
 defs["nil"] = function(start, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="nil",
 		start=start,
 		finish=finish,
@@ -615,7 +623,7 @@ function defs.bool(start, valueStr, finish)
 	else
 		value = false
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="bool",
 		start=start,
 		finish=finish,
@@ -636,7 +644,7 @@ function defs.table(start, fieldlist, finish)
 			field.key = defs.Int(field.start, tostring(index), field.finish)
 		end
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="table",
 		start=start,
 		finish=finish,
@@ -644,7 +652,7 @@ function defs.table(start, fieldlist, finish)
 	}
 end
 function defs.anon_function(start, body, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="anon_function",
 		start=start,
 		finish=finish,
@@ -652,7 +660,7 @@ function defs.anon_function(start, body, finish)
 	}
 end
 function defs.var_args(start, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="var_args",
 		start=start,
 		finish=finish,
@@ -668,7 +676,7 @@ function defs.index(start, op, exprStart, expr, exprFinish, index, finish)
 	else
 		expr = expr
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="index",
 		start=start,
 		finish=finish,
@@ -705,7 +713,7 @@ function defs.index(start, op, exprStart, expr, exprFinish, index, finish)
 end
 function defs.call(start, args, index, finish)
 	if index == "" then index = nil end
-	return setParentForReturn {
+	return setParentForNode {
 		type="call",
 		start=start,
 		finish=finish,
@@ -742,7 +750,7 @@ function defs.field(...)
 	else
 		key, value = t[1], t[2]
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="field",
 		start=start,
 		finish=finish,
@@ -752,7 +760,7 @@ function defs.field(...)
 end
 
 function defs.funcbody(start, args, whereTypes, return_type, block, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="funcbody",
 		start=start,
 		finish=finish,
@@ -763,7 +771,7 @@ function defs.funcbody(start, args, whereTypes, return_type, block, finish)
 	}
 end
 defs["return"] = function(start, exprlist, stmt_if, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="return",
 		start=start,
 		finish=finish,
@@ -773,10 +781,10 @@ defs["return"] = function(start, exprlist, stmt_if, finish)
 end
 
 function defs.math(...)
-	return setParentForReturnRecursive(climbPrecedence({...}))
+	return setParentForNodeRecursive(climbPrecedence({...}))
 end
 function defs.math_op(start, op, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="math_op",
 		op=op,
 		start=start,
@@ -787,7 +795,7 @@ end
 function defs.var_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="var_list",
 		start=start,
 		finish=finish,
@@ -797,7 +805,7 @@ end
 function defs.expr_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="expr_list",
 		start=start,
 		finish=finish,
@@ -807,7 +815,7 @@ end
 function defs.name_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="name_list",
 		start=start,
 		finish=finish,
@@ -817,7 +825,7 @@ end
 function defs.field_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="field_list",
 		start=start,
 		finish=finish,
@@ -827,7 +835,7 @@ end
 function defs.decorator_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="decorator_list",
 		start=start,
 		finish=finish,
@@ -836,7 +844,7 @@ function defs.decorator_list(...)
 end
 
 function defs.param(start, name, nameFinish, param_type, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="param",
 		start=start,
 		finish=finish,
@@ -847,7 +855,7 @@ end
 function defs.par_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="par_list",
 		start=start,
 		finish=finish,
@@ -856,7 +864,7 @@ function defs.par_list(...)
 end
 
 function defs.Comment(start, comment, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="Comment",
 		start=start,
 		finish=finish,
@@ -864,7 +872,7 @@ function defs.Comment(start, comment, finish)
 	}
 end
 function defs.LongComment(start, comment, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="LongComment",
 		start=start,
 		finish=finish,
@@ -874,7 +882,7 @@ end
 
 -- Typing
 function defs.type(start, name, attributes, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="type",
 		start=start,
 		finish=finish,
@@ -885,7 +893,7 @@ end
 function defs.type_list(...)
 	local t = {...}
 	local start, finish = table.remove(t, 1), table.remove(t, #t)
-	return setParentForReturn {
+	return setParentForNode {
 		type="type_list",
 		start=start,
 		finish=finish,
@@ -902,7 +910,7 @@ function defs.type_function(start, name, args_par_list, return_type_list, finish
 		local args_table = defs.table(args_par_list.start, defs.field_list(args_par_list.start, args_field_list, args_par_list.finish), args_par_list.finish)
 		attributes = defs.type_list(args_par_list.start, args_table, return_type_list, args_par_list.finish)
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="type",
 		start=start,
 		finish=finish,
@@ -921,7 +929,7 @@ function defs.type_where_list(...)
 		local wfinish = table.remove(t, 1)
 		table.insert(wheres, defs.type_where(wstart, name, type_expr, wfinish))
 	end
-	return setParentForReturn {
+	return setParentForNode {
 		type="type_where_list",
 		start=start,
 		finish=finish,
@@ -929,7 +937,7 @@ function defs.type_where_list(...)
 	}
 end
 function defs.type_where(start, name, type_expr, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="type_where",
 		start=start,
 		finish=finish,
@@ -938,7 +946,7 @@ function defs.type_where(start, name, type_expr, finish)
 	}
 end
 function defs.type_implements(start, name, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="type_implements",
 		start=start,
 		finish=finish,
@@ -946,7 +954,7 @@ function defs.type_implements(start, name, finish)
 	}
 end
 function defs.type_metaimplements(start, name, finish)
-	return setParentForReturn {
+	return setParentForNode {
 		type="type_metaimplements",
 		start=start,
 		finish=finish,
@@ -1001,5 +1009,8 @@ end
 
 return {
 	defs=defs,
-	parse=parse
+	parse=parse,
+
+	setParentForNode=setParentForNode,
+	setParentForNodeRecursive=setParentForNodeRecursive
 }

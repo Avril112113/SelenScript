@@ -33,6 +33,7 @@ function statements:getImmediateBlock(ast)
 		if ast.type == "block" then
 			return ast
 		end
+		assert(ast.parent ~= nil, "Failed to find block, last node was " .. tostring(ast.type))
 		ast = ast.parent
 	end
 end
@@ -64,6 +65,14 @@ statements["do"] = function(self, ast)
 	str[#str+1] = self.transpiler:transpile(ast.block)
 	str[#str+1] = string.rep(self.transpiler.settings.indent, self.block_depth)
 	str[#str+1] = "end"
+	return table.concat(str)
+end
+function statements.once(self, ast)
+	local str = {}
+	str[#str+1] = "repeat\n"
+	str[#str+1] = self.transpiler:transpile(ast.block)
+	str[#str+1] = string.rep(self.transpiler.settings.indent, self.block_depth)
+	str[#str+1] = "until false"
 	return table.concat(str)
 end
 statements["if"] = function(self, ast)
@@ -228,6 +237,9 @@ function statements:assign(ast)
 		})
 	elseif not hasIndex and ((ast.scope == "" and not isDefinedLocal) or ast.scope ~= "") and self:isLocal(ast.scope) then
 		local block = self:getImmediateBlock(ast)
+		if block == nil then
+			print("Failed to find immediate block...", ast.type)
+		end
 		for _, var in ipairs(ast.var_list) do
 			local value = var.value or var.expr.value
 			if value ~= nil then

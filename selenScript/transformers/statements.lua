@@ -224,37 +224,7 @@ function statements:decorate(ast)
 	return ast.expr, assign
 end
 
-local exprStmtBlockWhitelist = {["block"]=true, ["if"]=true,["elseif"]=true, ["else"]=true, ["do"]=function(doAst) return doAst.is_expr ~= true end}
-local function replaceReturnWithBreakAssign(self, ast, varExpr, _processedBreaks)
-	_processedBreaks = _processedBreaks or {}
-	for i, v in pairs(ast) do
-		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
-			if v.type == "return" then
-				local field_list = parser.defs.field_list(-1, -1)
-				for exprI, expr in ipairs(v.expr_list) do
-					table.insert(field_list, parser.defs.field(-1, parser.defs.Int(-1, tostring(exprI), -1), expr, -1))
-				end
-				ast[i] = parser.defs.assign(-1, "", parser.defs.expr_list(-1, varExpr, -1), nil, parser.defs.expr_list(-1, parser.defs.table(-1, field_list, -1), -1), -1)
-				-- FIXME: its unhealthy to assume that `i` is a number
-				table.insert(ast, i+1, parser.defs["break"](-1, true, v.stmt_if, -1))
-			elseif v.type == "break" and v.expr_list == nil and _processedBreaks[v] == nil then
-				-- unfortunately we have to adjust the normal break statements
-				-- FIXME: there might be multiple break vars with multiple break statements
-				local breakVarName = self.transformer:getVarName()
-				local breakVarExpr = parser.defs.index(-1, "", nil, breakVarName, nil, nil, -1)
-				local assignStmt = parser.defs.assign(-1, "local", parser.defs.var_list(-1, breakVarExpr, -1), nil, nil, -1)
-				table.insert(self.prefix_stmts[#self.prefix_stmts], assignStmt)
-				local ifBreakThenBreak = parser.defs["if"](-1, breakVarExpr, parser.defs.block(-1, parser.defs["break"](-1, nil, nil, -1), -1), -1)
-				table.insert(self.suffix_stmts[#self.suffix_stmts], ifBreakThenBreak)
-				ast[i] = parser.defs.assign(-1, "", parser.defs.var_list(-1, breakVarExpr, -1), nil, parser.defs.expr_list(-1, parser.defs.bool(-1, "true", -1), -1), -1)
-				table.insert(ast, i+1, v)
-				_processedBreaks[v] = true
-			elseif exprStmtBlockWhitelist[v.type] == true or (type(exprStmtBlockWhitelist[v.type]) == "function" and exprStmtBlockWhitelist[v.type](v)) then
-				replaceReturnWithBreakAssign(self, v, varExpr, _processedBreaks)
-			end
-		end
-	end
-end
+local exprStmtBlockWhitelist = {["block"]=true, ["if"]=true,["elseif"]=true, ["else"]=true, ["do"]=true, ["once"]=function(doAst) return doAst.is_expr ~= true end}
 local function replaceBreakWithBreakAssign(self, ast, varExpr)
 	for i, v in pairs(ast) do
 		if type(v) == "table" and v.type ~= nil and i ~= "parent" then
@@ -274,33 +244,7 @@ local function replaceBreakWithBreakAssign(self, ast, varExpr)
 		end
 	end
 end
-statements["do"] = function(self, ast)
-	self.transformer:transform(ast, true)
-
-	if ast.is_expr == true then
-		local target = targets[self.transformer.settings.targetVersion]
-		local varName = self.transformer:getVarName()
-		local varExpr = parser.defs.index(-1, "", nil, varName, nil, nil, -1)
-		replaceReturnWithBreakAssign(self, ast.block, varExpr)
-		local callExpr = parser.defs.call(-1, parser.defs.expr_list(-1, varExpr, -1), nil, -1)
-		local expr
-		if target.globalUnpack then
-			expr = parser.defs.index(-1, "", nil, "unpack", nil, callExpr, -1)
-		else
-			local unpackExpr = parser.defs.index(-1, ".", nil, "unpack", nil, callExpr, -1)
-			expr = parser.defs.index(-1, "", nil, "table", nil, unpackExpr, -1)
-		end
-
-		local assignStmt = parser.defs.assign(-1, "", parser.defs.expr_list(-1, varExpr, -1), nil, parser.defs.expr_list(-1, parser.defs.table(-1, parser.defs.field_list(-1, -1), -1), -1), -1)
-		table.insert(self.prefix_stmts[#self.prefix_stmts], assignStmt)
-		local repeatStmt = parser.defs["repeat"](-1, parser.defs.block(-1, ast, -1), parser.defs.bool(-1, "true", -1), -1)
-		table.insert(self.prefix_stmts[#self.prefix_stmts], repeatStmt)
-		return expr
-	end
-
-	return ast
-end
-statements["while"] = function(self, ast)
+statements["once"] = function(self, ast)
 	self.transformer:transform(ast, true)
 
 	if ast.is_expr == true then
@@ -326,8 +270,9 @@ statements["while"] = function(self, ast)
 
 	return ast
 end
-statements["for_each"] = statements["while"]
-statements["for_range"] = statements["while"]
+statements["while"] = statements["once"]
+statements["for_each"] = statements["once"]
+statements["for_range"] = statements["once"]
 
 function statements:interface(ast)
 	return nil

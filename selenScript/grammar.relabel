@@ -14,6 +14,7 @@ stmt	<- Sc (
 		 / ({} CONTINUE (IF Sc expect_expr)?? {}) -> continue
 		 / ({} GOTO Sc EXP_CP_NAME (IF Sc expect_expr)?? {}) -> goto
 		 / do_stmt
+		 / once_stmt
 		 / while_stmt
 		 / ({} REPEAT block UNTIL Sc expect_expr {}) -> repeat
 		 / if_stmt
@@ -32,6 +33,8 @@ decorator_list	<- ({} (Sc decorator)+ {}) -> decorator_list
 decorator_stmt	<- ({} decorator_list Sc (function_stmt/{}->MISS_DEC) {}) -> decorate
 
 do_stmt	<- ({} DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'do') -> UNPARSED_INPUT) {}) -> do
+
+once_stmt	<- ({} ONCE block Sc (END / ({} {(!END .)* EXPECT_END} {}->'do') -> UNPARSED_INPUT) {}) -> once
 
 while_stmt	<- ({} WHILE Sc expect_expr DO block Sc (END / ({} {(!END .)* EXPECT_END} {}->'while') -> UNPARSED_INPUT) {}) -> while
 
@@ -60,7 +63,7 @@ interface_var	<- ({} {NAME} {} typedef {}) -> param
 expect_expr	<- expr / {}->MISS_EXPR NILCP
 expr	<- ((value/unary) (Sc ({} {BINARY_OP} {})->math_op Sc (value/unary))+) -> math
 		 / unary -> math
-		 / do_stmt -> do_expr
+		 / once_stmt -> once_expr
 		 / while_stmt -> while_expr
 		 / for_range_stmt -> for_range_expr
 		 / for_each_stmt -> for_each_expr
@@ -239,10 +242,11 @@ THEN        <- Sc 'then' Cut
 			/  Sc ({} {'do'} Cut {}) -> EXPECT_THEN
 DO          <- Sc 'do' Cut
 			/  Sc ({} {'then'} Cut {}) -> EXPECT_DO
+ONCE		<- Sc 'once' Cut
 IN          <- Sc 'in' Cut
 AS          <- Sc 'as'  Cut
 END         <- Sc 'end'  Cut
-EXPECT_END	<- END / ({} {}->'end')->MISSING
+EXPECT_END	<- END / ({} {}->'end') -> MISSING
 
 ELSE        <- Sc 'else' Cut
 ELSEIF      <- Sc 'elseif' Cut

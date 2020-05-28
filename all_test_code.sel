@@ -16,21 +16,24 @@ local testInterfaceTbl: TestInterface = {
 }
 
 
+local once_result
+once
+	if panic then
+		break
+	end
+	once_result = false
+end
+if once_result == nil then once_result = true end
+print("once_result", once_result and "Working" or ">>> BROKEN")
+
+
 local if_expr_result = if true then 1 else 2
 print("if_expr_result", if_expr_result and "Working" or ">>> BROKEN")
 
-local do_expr_result = do
-	return "Working"
+local once_expr_result = once
+	break "Working"
 end
-print("do_expr_result", do_expr_result or ">>> BROKEN")
-
-
-local do_expr_result = do
-	return do
-		return "Working"
-	end
-end
-print("do_expr_result", do_expr_result or ">>> BROKEN")
+print("once_expr_result", once_expr_result or ">>> BROKEN")
 
 
 local while_expr_result = while true do
