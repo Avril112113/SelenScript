@@ -104,25 +104,6 @@ function Transformer:get_var(name)
 	return var_name..n
 end
 
---- Parses raw code and produces an AST node
---- TODO: check the performace impact, it may be too great for the ease of use it provides
----@param source string @ Source code to parse
----@param node_type string @ The grammar terminal to use
----@return ASTNode
-function Transformer:parse(source, node_type)
-	local ok, built_grammar, grammar_build_errors = Grammar.build(nil, node_type)
-	if not ok then return nil end
-	if next(grammar_build_errors) ~= nil then return nil, grammar_build_errors end
-	local ok, grammar, ast_defs = Grammar.compile(built_grammar)
-	if not ok then return nil end
-	ast_defs:init(source)
-	local ast, err, pos = grammar:match(source)
-	if type(ast) == "table" then
-		Parser.cleanup_nodes(ast)
-	end
-	return ast
-end
-
 --- Runs a transformer thought an AST in-place
 --- NOTE: make sure that the base node being transformed does not get replaced (`ast` param)
 ---@param ast ASTNode @ WARNING: Modified

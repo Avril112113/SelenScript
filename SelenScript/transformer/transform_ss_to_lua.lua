@@ -4,7 +4,7 @@ local TransformerDefs = {}
 
 local _loop_types = {["while"]=true,["foriter"]=true,["forrange"]=true,["repeat"]=true}
 ---@param node ASTNode
-TransformerDefs["continue"] = function(self, node)
+	TransformerDefs["continue"] = function(self, node)
 	local parent_loop = self:find_parent_of_type(node, function(parent) return _loop_types[parent.type] end)
 	if parent_loop == nil then
 		self:add_error("CONTINUE_MISSING_LOOP", node)
@@ -21,8 +21,19 @@ TransformerDefs["continue"] = function(self, node)
 		return nil
 	end
 	local label_name = self:get_var("continue")
-	table.insert(loop_block, self:parse("::"..label_name.."::", "stmt_label"))
-	table.insert(parent_block, self:parse("goto "..label_name, "stmt_goto"))
+	-- TODO: make AST easier to generate
+	table.insert(loop_block, {
+		type = "label",
+		start = node.start,
+		name = {type="name", name=label_name},
+		finish = node.finish,
+	})
+	table.insert(parent_block, {
+		type = "goto",
+		start = node.start,
+		name = {type="name", name=label_name},
+		finish = node.finish,
+	})
 	return nil
 end
 
