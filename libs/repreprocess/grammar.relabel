@@ -1,0 +1,48 @@
+Start	<- chunk (!. / ({} {.*} {}->'Start') -> UNPARSED_INPUT)
+chunk	<- (statement+ / {}->empty) -> chunk
+
+statement	<- (
+			   comment
+			 / if
+			 / block
+			 / include
+			 / define
+			 / source
+			 / %nl
+			 ) Cl
+
+comment	<- Sp* "//" {(!%nl .)*} -> comment
+		 / Sp* "/*" {(!"*/" .)*} -> comment "*/"
+
+if		<- (directive_if Cl chunk elseif? (directive_endif/{}->MISSING_ENDIF)) -> if
+elseif	<- (directive_elseif Cl chunk (Cl (elseif/else))?) -> elseif
+else	<- directive_else Cl chunk
+block	<- (directive_block_start Cl chunk (directive_block_end/{}->MISSING_ENDBLOCK)) -> block
+include	<- (directive_include Cl) -> include
+define	<- (directive_define Cl) -> define
+
+source	<- !directive !"//" !"/*" {(!%nl .)+} -> source
+
+directive				<- directive_if
+						 / directive_elseif
+						 / directive_else
+						 / directive_endif
+						 / directive_block_start
+						 / directive_block_end
+						 / directive_include
+						 / directive_define
+						 / directive_unknown
+directive_if			<- "#if" Sp+ {WORD} (Sp* "==" Sp* {WORD} / {}->"true")
+directive_elseif		<- "#elseif" Sp+ {WORD} (Sp* "==" Sp* {WORD} / {}->"true")
+directive_else			<- "#else"
+directive_endif			<- "#endif"
+directive_block_start	<- "#block" Sp+ {WORD}
+directive_block_end		<- "#endblock"
+directive_include		<- "#include" Sp+ {WORD}
+directive_define		<- "#define" Sp+ {WORD} (Sp+ {WORD} / {}->"true")
+directive_unknown		<- "#" ({WORD} {(!%nl .)*}) -> unknown_directive
+
+Cl		<- Sp* %nl?
+Sp		<- ' ' / %esc_t
+WORD	<- [a-zA-Z_][a-zA-Z_0-9]*
+HASH	<- "#"

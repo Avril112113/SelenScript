@@ -1,3 +1,9 @@
+-- Copied from https://github.com/sqmedeiros/lpeglabel/blob/master/relabel.lua
+-- modified for various additions, most changes have comments near them "CUSTOM EDIT"
+-- ability to get a full trace `debug.relabelDbgFilter`
+-- added `??` for optional explicit nil capture, basically `CaptureSomething??` if CaptureSomething fails, returns nil to the function during ast build
+-- added `{nil}` to capture a nil value (`XXX->{nil}`)
+
 -- $Id: re.lua $
 
 -- imported functions and modules
@@ -25,6 +31,38 @@ if version == "Lua 5.2" then _ENV = nil end
 
 local any = m.P(1)
 local dummy = mm.P(false)
+
+-- CUSTOM EDIT START --
+if debug.relabelDbgFilter == nil then
+  ---@type fun(n:string)
+  debug.relabelDbgFilter = nil
+end
+local track_depth = 0
+-- For Debugging
+local track_enter = function(n)
+  return m.Cmt(m.P(true), function(subject, pos, ...)
+    print(string.rep(" ", track_depth) .. "check match at " .. tostring(pos) .. " : " .. tostring(n))
+    track_depth = track_depth + 1
+    return true
+  end)
+end
+-- For Debugging
+local track_match = function(n)
+  return m.Cmt(m.P(true), function(subject, pos, ...)
+    track_depth = track_depth - 1
+    print(string.rep(" ", track_depth) .. "good match at " .. tostring(pos) .. " : " .. tostring(n))
+    return true
+  end)
+end
+-- For Debugging
+local track_leave = function(n)
+  return m.Cmt(m.P(true), function(subject, pos, ...)
+    track_depth = track_depth - 1
+    print(string.rep(" ", track_depth) .. "failed match at " .. tostring(pos) .. " : " .. tostring(n))
+    return true
+  end)
+end
+-- CUSTOM EDIT END --
 
 
 local errinfo = {
@@ -203,10 +241,16 @@ end
 local function firstdef (n, r) return adddef({n}, n, r) end
 
 
-local function NT (n, b)
+local function NT (n, b, _special)
   if not b then
     error("rule '"..n.."' used outside a grammar")
-  else return mm.V(n)
+  else
+    -- For Debugging
+    if _special ~= false and debug.relabelDbgFilter ~= nil and debug.relabelDbgFilter(n) then  -- CUSTOM EDIT
+      return track_enter(n) * mm.V(n) * track_match(n) + track_leave(n) * m.P(false)
+    else
+      return mm.V(n)
+    end
   end
 end
 
@@ -221,6 +265,7 @@ local exp = m.P{ "Exp",
   Suffix = m.Cf(m.V"Primary" *
           ( S * ( m.P"+" * m.Cc(1, mt.__pow)
                 + m.P"*" * m.Cc(0, mt.__pow)
+                + m.P"??" * m.Cc(nil, function(patt) return patt + m.Cc(nil) end)  -- CUSTOM EDIT
                 + m.P"?" * m.Cc(-1, mt.__pow)
                 + "^" * expect( m.Cg(num * m.Cc(mult))
                               + m.Cg(m.C(m.S"+-" * m.R"09"^1) * m.Cc(mt.__pow)
@@ -228,6 +273,7 @@ local exp = m.P{ "Exp",
                               ),
                           "ExpNumName")
                 + "->" * expect(S * ( m.Cg((String + num) * m.Cc(mt.__div))
+                                    + m.P"{nil}" * m.Cc(nil, function(patt) return m.Cc(nil) end)  -- CUSTOM EDIT
                                     + m.P"{}" * m.Cc(nil, m.Ct)
                                     + defwithfunc(mt.__div)
                                     ),

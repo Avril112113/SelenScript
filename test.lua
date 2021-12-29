@@ -1,42 +1,88 @@
-local ss = require "selenScript"
+package.path = "?/init.lua;libs/?.lua;libs/?/init.lua;libs/?/?.lua;" .. package.path
+package.cpath = "libs/" .. _VERSION:sub(5) .. "/?.dll;libs/?.dll;" .. package.cpath
+require "printToFile"
+require "logging".windows_enable_ansi()
 
 
-local settings = {
-	defaultLocals=true,
-	indent="\t",
-	targetVersion="5.2"
-}
+local PRINT_COMMENTS = false
+local PRINT_PARSED_AST = true
+local PRINT_TRANSFORMED_AST = true
 
 
-local program = ss.program.new(settings)
-
-local source_file = program:addSourceFileByPath("test_code.sel")
-
-print("--- Parse Errors ---")
-for _, err in ipairs(source_file.parseErrors) do
-	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " ..  err.msg)
+local function read_file(path)
+	local f = assert(io.open(path, "r"))
+	local data = f:read("*a")
+	f:close()
+	return data
 end
-print("--- AST ---")
-ss.helpers.printAST(source_file.block)
+local function write_file(path, data)
+	local f = assert(io.open(path, "w"))
+	f:write(data)
+	f:close()
+	return data
+end
 
-print()
+local Parser = require "SelenScript.parser.parser"
+local AST = require "SelenScript.parser.ast"
+local Emitter = require "SelenScript.emitter.emitter"
+local Transformer = require "SelenScript.transformer.transformer"
 
-print("--- Binder Diagnostics ---")
-for _, err in ipairs(source_file.binder.diagnostics) do
-	local str = err.msg
-	if err.start ~= nil and err.finish ~= nil then
-		str = tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. str
-	elseif err.start ~= nil then
-		str = tostring(err.start) .. " " .. str
+-- function debug.relabelDbgFilter(name)
+-- 	return name ~= "Sp" and name ~= "Sc" and name ~= "Comment" and name ~= "LineComment" and name ~= "LongComment"
+-- end
+
+local parser, errors = Parser.new()
+if #errors > 0 then
+	print_error("-- Grammar Errors: " .. #errors .. " --")
+	for _, v in ipairs(errors) do
+		print_error((v.id or "NO_ID") .. ": " .. v.msg)
 	end
-	print(str)
 end
-local luaSrc = program:transpileAndWriteSourceFile(source_file)
-print("--- Transformer Diagnostics ---")
-for _, err in ipairs(source_file.transformer.diagnostics) do
-	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
+
+if parser == nil then
+	print_warn("Exit early, parser object is nil")
+	os.exit(-1)
 end
-print("--- Transpiler Diagnostics ---")
-for _, err in ipairs(source_file.transpiler.diagnostics) do
-	print(tostring(err.start) .. ":" .. tostring(err.finish) .. " " .. (err.severity or "unknown") .. ": " ..  err.msg)
+
+local source = read_file("test_input.sel")
+local ast, errors, comments = parser:parse(source)
+
+if #errors > 0 then
+	print_error("-- Parse Errors: " .. #errors .. " --")
+	for _, v in ipairs(errors) do
+		print_error(v.id .. ": " .. v.msg)
+	end
 end
+
+if PRINT_COMMENTS then
+	print_info("-- Comments: " .. #comments .. " --")
+	for _, v in ipairs(comments) do
+		print(AST.tostring_ast(v))
+	end
+end
+
+if PRINT_PARSED_AST then
+	print_info("-- Parsed AST: --")
+	print(AST.tostring_ast(ast))
+end
+
+local transformer = Transformer.new("ss_to_lua")
+local errors = transformer:transform(ast, source)
+
+if #errors > 0 then
+	print_error("-- Transform Errors: " .. #errors .. " --")
+	for _, v in ipairs(errors) do
+		print_error(v.id .. ": " .. v.msg)
+	end
+end
+
+if PRINT_TRANSFORMED_AST then
+	print_info("-- Transformed AST: --")
+	print(AST.tostring_ast(ast))
+end
+
+local emitter = Emitter.new("lua", {
+	math_always_parenthesised = false
+})
+local output_lua_source = emitter:generate(ast)
+write_file("test_input.lua", tostring(output_lua_source))

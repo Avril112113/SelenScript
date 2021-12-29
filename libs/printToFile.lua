@@ -1,5 +1,3 @@
-print ""
-
 local out = io.open("out.txt", "w")
 local _print = print
 function print(...)

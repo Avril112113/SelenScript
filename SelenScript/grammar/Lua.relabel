@@ -1,0 +1,388 @@
+/**** Lua ****/
+
+#block EntryPoint
+entry	<- chunk
+#endblock
+
+chunk	<- {| {:type:''->"chunk":}
+				{:start:{}:}
+				Sc {:block:block:} Sc
+				{:finish:{}:}
+			|}
+			(!. / ({}->"GRAMMAR_UNPARSED" {} {.+} {})->add_error_o)
+block	<- {| {:type:''->"block":}
+				{:start:{}:}
+				(statement Sc)* stmt_return?
+				{:finish:{}:}
+			|}
+
+statement	<- ";"
+#block Statements
+			 / stmt_assign
+			 / stmt_call
+			 / stmt_label
+			 / stmt_break
+			 / stmt_goto
+			 / stmt_do
+			 / stmt_while
+			 / stmt_repeat
+			 / stmt_if
+			 / stmt_forrange
+			 / stmt_foriter
+			 / stmt_function
+#endblock
+#include Statements
+			 / ({}->"SYNTAX_FLOAT_EXPR" {} {expression / index} {})->add_error_o
+
+stmt_assign	<- stmt_local_assign / stmt_general_assign
+stmt_local_assign	<- {| {:type:''->"assign":}
+							{:start:{}:}
+							{:scope:LOCAL:} Sc {:names:attributenamelist:} (Sc "=" Sc {:values:expressionlist:} / {:values:expressionlist_empty:})
+							{:finish:{}:}
+						|}
+stmt_general_assign	<- {| {:type:''->"assign":}
+							{:start:{}:}
+							{:names:varlist:} Sc "=" Sc {:values:expressionlist:}
+							{:finish:{}:}
+						|}
+
+stmt_call	<- prefixexpression_lcall
+
+stmt_label	<- {| {:type:''->"label":}
+					{:start:{}:}
+					DOUBLECOLON Sc {:name:name:} Sc DOUBLECOLON
+					{:finish:{}:}
+				|}
+
+stmt_break	<- {| {:type:''->"break":}
+					{:start:{}:}
+					BREAK
+					{:finish:{}:}
+				|}
+
+stmt_goto	<- {| {:type:''->"goto":}
+					{:start:{}:}
+					GOTO Sc {:name:name:}
+					{:finish:{}:}
+				|}
+
+stmt_do		<- {| {:type:''->"do":}
+					{:start:{}:}
+					RAW_DO Sc {:block:block:} Sc END
+					{:finish:{}:}
+				|}
+
+stmt_while	<- {| {:type:''->"while":}
+					{:start:{}:}
+					WHILE Sc {:expr:expression:} Sc DO Sc {:block:block:} Sc END
+					{:finish:{}:}
+				|}
+
+stmt_repeat	<- {| {:type:''->"repeat":}
+					{:start:{}:}
+					REPEAT Sc {:block:block:} Sc UNTIL Sc {:expr:expression:}
+					{:finish:{}:}
+				|}
+
+stmt_if		<- {| {:type:''->"if":}
+					{:start:{}:}
+					IF Sc {:condition:expression:} Sc THEN Sc {:block:block:}
+					{:finish:{}:}
+					(Sc {:else:stmt_elseif / stmt_else:})? Sc END
+				|}
+stmt_elseif	<- {| {:type:''->"elseif":}
+					{:start:{}:}
+					ELSEIF Sc {:condition:expression:} Sc THEN Sc {:block:block:}
+					{:finish:{}:}
+					(Sc {:else:stmt_elseif / stmt_else:})?
+				|}
+stmt_else	<- {| {:type:''->"else":}
+					{:start:{}:}
+					ELSE Sc {:block:block:}
+					{:finish:{}:}
+				|}
+
+stmt_forrange	<- {| {:type:''->"forrange":}
+						{:start:{}:}
+						FOR Sc {:name:name:} Sc "=" Sc {:value_start:expression:} Sc "," Sc {:value_finish:expression:} (Sc "," Sc {:increment:expression:})? DO Sc {:block:block:} Sc END
+						{:finish:{}:}
+					|}
+
+stmt_foriter	<- {| {:type:''->"foriter":}
+						{:start:{}:}
+						FOR Sc {:namelist:namelist:} Sc IN Sc {:values:expressionlist:} Sc DO Sc {:block:block:} Sc END
+						{:finish:{}:}
+					|}
+
+stmt_function	<- stmt_local_function / stmt_general_function
+stmt_general_function	<- {| {:type:''->"functiondef":}
+								{:start:{}:}
+								FUNCTION Sc {:name:funcname:} Sc {:funcbody:funcbody:}
+								{:finish:{}:}
+							|}
+stmt_local_function	<- {| {:type:''->"functiondef":}
+							{:start:{}:}
+							{:scope:LOCAL:} Sc FUNCTION Sc {:name:name:} Sc {:funcbody:funcbody:}
+							{:finish:{}:}
+						|}
+
+stmt_return	<- {| {:type:''->"return":}
+					{:start:{}:}
+					RETURN (Sc {:values:expressionlist_opt:})
+					{:finish:{}:}
+					(Sc ";")?
+				|}
+
+attributenamelist	<- {| {:type:''->"attributenamelist":}
+							{:start:{}:}
+							attributename (Sc "," Sc attributename)*
+							{:finish:{}:}
+						|}
+attributename	<- {| {:type:''->"attributename":}
+						{:start:{}:}
+						{:name:name:} Sc ("<" Sc {:attribute:name:} Sc ">")?
+						{:finish:{}:}
+					|}
+
+funcname_index	<- {| {:type:''->"index":}
+						{:start:{}:}
+						(
+							{:how:COLON:} Sc {:name:name:}
+							{:finish:{}:}
+							/
+							{:how:DOT:} Sc {:name:name:}
+							{:finish:{}:}
+							(Sc {:index:funcname_index:})?
+						)
+					|}
+funcname	<- {| {:type:''->"index":}
+					{:start:{}:}
+					{:name:name:}
+					{:finish:{}:}
+					(Sc {:index:funcname_index:})?
+				|}
+
+varlist	<- {| {:type:''->"varlist":}
+				{:start:{}:}
+				var (Sc "," Sc var)*
+				{:finish:{}:}
+			|}
+
+var	<- prefixexpression
+
+namelist	<- {| {:type:''->"namelist":}
+					{:start:{}:}
+					name (Sc "," Sc name)*
+					{:finish:{}:}
+				|}
+
+expressionlist	<- {| {:type:''->"expressionlist":}
+						{:start:{}:}
+						expression (Sc "," Sc expression)*
+						{:finish:{}:}
+					|}
+expressionlist_opt	<- expressionlist
+					 / expressionlist_empty
+expressionlist_empty	<- {| {:type:''->"expressionlist":}
+								{:start:{}:}
+								{:finish:{}:}
+							|}
+
+nil	<- {| {:type:''->"nil":}
+			{:start:{}:}
+			{:value: NIL :}
+			{:finish:{}:}
+		|}
+boolean	<- {| {:type:''->"boolean":}
+				{:start:{}:}
+				{:value: TRUE / FALSE :}
+				{:finish:{}:}
+			|}
+var_args	<- {| {:type:''->"var_args":}
+					{:start:{}:}
+					{:value: VAR_ARGS :}
+					{:finish:{}:}
+				|}
+numeral	<- {| {:type:''->"numeral":}
+				{:start:{}:}
+				{:value: Numeral :}
+				{:finish:{}:}
+			|}
+string	<- {| {:type:''->"string":}
+				{:start:{}:}
+				{:value: LiteralString :}
+				{:finish:{}:}
+			|}
+function	<- {| {:type:''->"function":}
+					{:start:{}:}
+					FUNCTION Sc {:funcbody:funcbody:}
+					{:finish:{}:}
+				|}
+tableconstructor	<- {| {:type:''->"table":}
+							{:start:{}:}
+							"{" Sc {:fields:fieldlist:} Sc "}"
+							{:finish:{}:}
+						|}
+name	<- {| {:type:''->"name":}
+				{:start:{}:}
+				{:name:NAME:}
+				{:finish:{}:}
+			|}
+value	<- nil
+		 / boolean
+		 / var_args
+#block Values
+		 / numeral
+		 / string
+		 / function
+		 / "(" Sc expression Sc ")"
+		 / prefixexpression
+		 / tableconstructor
+#endblock
+#include Values
+/* Precedence is done outside grammar */
+expression	<- {| (value/unary) (Sc binary_op Sc (value/unary))+ |} -> climbPrecedence
+			 / {| unary |} -> climbPrecedence
+			 / value
+unary		<- unary_op Sc (value/unary)
+binary_op	<- {| {:type:''->"binary_op":}
+					{:start:{}:}
+					{:op:BINARY_OP:}
+					{:finish:{}:}
+				|}
+unary_op	<- {| {:type:''->"unary_op":}
+					{:start:{}:}
+					{:op:UNARY_OP:}
+					{:finish:{}:}
+				|}
+
+call	<- {| {:type:''->"index":}
+				{:start:{}:}
+				{:how:COLON:} Sc {:name:name:}
+				{:finish:{}:}
+				(Sc {:index:selfcall:})
+			|}
+		 / {| {:type:''->"call":}
+				{:start:{}:}
+				{:args:args:}
+				{:finish:{}:}
+			|}
+selfcall	<- {| {:type:''->"call":}
+					{:start:{}:}
+					{:args:args:}
+					{:finish:{}:}
+					{:self:''->"true":}
+				|}
+
+/* nlcall - NotLastCall */
+/* lcall - LastCall */
+/* Unfortunetly there is a lot of duplication and lcall/nlcall is needed because, parsing... */
+index_continues	<- DOT / "[" / ":" / "("
+index_part	<- {:how:"[":} Sc {:expr:expression:} Sc "]"
+			 / {:how:DOT:} Sc {:name:name:}
+			 / {:name:call:}
+index_part_nlcall	<- {:how:"[":} Sc {:expr:expression:} Sc "]"
+					 / {:how:DOT:} Sc {:name:name:}
+					 / {:name:call &index_nlcall:}
+index	<- {| {:type:''->"index":}
+				{:start:{}:}
+				index_part
+				{:finish:{}:}
+				(Sc {:index:index:})?
+			|}
+index_nlcall	<- {| {:type:''->"index":}
+						{:start:{}:}
+						index_part_nlcall
+						{:finish:{}:}
+						(Sc {:index:index_nlcall:})?
+					|}
+index_lcall	<- {| {:type:''->"index":}
+					{:start:{}:}
+					index_part_nlcall
+					{:finish:{}:}
+					(Sc {:index:index_lcall / call:})
+				|}
+prefixexpression	<- {| {:type:''->"index":}
+							{:start:{}:}
+							(
+								{:name:name:}
+							/ "(" Sc {:expr:expression:} Sc ")"
+							)
+							{:finish:{}:}
+							(Sc {:index:index:})?
+						|}
+prefixexpression_nlcall	<- {| {:type:''->"index":}
+								{:start:{}:}
+								(
+									{:name:name:}
+								/ "(" Sc {:expr:expression:} Sc ")"
+								)
+								{:finish:{}:}
+								(Sc {:index:Sc index_nlcall:})?
+							|}
+prefixexpression_lcall	<- {| {:type:''->"index":}
+								{:start:{}:}
+								(
+									{:name:name:}
+								/ "(" Sc {:expr:expression:} Sc ")"
+								)
+								{:finish:{}:}
+								(Sc {:index:Sc index_lcall / call:})
+							|}
+
+args	<- "(" Sc (expressionlist_opt Sc)? ")" / tableconstructor / string 
+
+funcbody	<- {| {:type:''->"funcbody":}
+					{:start:{}:}
+					"(" Sc {:args:parlist:} Sc ")" Sc {:block:block:} Sc END
+					{:finish:{}:}
+				|}
+
+parlist	<- {| {:type:''->"parlist":}
+				{:start:{}:}
+				(name (Sc "," Sc name)* (Sc "," Sc var_args)? / var_args)?
+				{:finish:{}:}
+			|}
+
+fieldlist	<- {| {:type:''->"fieldlist":}
+					{:start:{}:}
+					(field (Sc FIELD_SEP Sc field)* (Sc FIELD_SEP)?)?
+					{:finish:{}:}
+				|}
+
+field	<- {| {:type:''->"field":}
+				{:start:{}:}
+				(("[" Sc {:key:expression:} Sc "]" / {:key:name:}) Sc "=" Sc)? {:value:expression:}
+				{:finish:{}:}
+			|}
+
+Numeral	<- { "-"? (
+				  "0" [Xx] [0-9A-Fa-f]+ ('.' [0-9]+)? ([Ee] [-+]? [0-9]+)?
+				/ [0-9]+ ('.' [0-9]+)? ([Ee] [-+]? [0-9]+)?
+			)}
+LiteralString	<- ShortString / LongString
+ShortString	<- {:prefix:["']:} (EscapedQuote / !=prefix .)* =prefix
+/* TODO: see if I can get the "=" chars in the `prefix` field */
+LongString	<- {:prefix:''->'[[':} LongStringOpen (!LongStringClose .)* LongStringClose
+LongStringOpen	<- "[" {:_LongStringEQs:"="*:} "["
+LongStringClose	<- "]" =_LongStringEQs "]"
+EscapedQuote	<- '\"' / "\'"
+
+/* Space Comment */
+Sc		<- {:_:(Sp / Comment)*:}
+/* Order matters here! */
+Comment	<- LongComment / LineComment
+LineComment	<- {| {:type:''->"LineComment":}
+					{:start:{}:}
+					{:prefix: "-"^+2 :}
+					{:value: (!%nl .)* :}
+					{:finish:{}:}
+				|} -> add_comment
+LongComment	<- {| {:type:''->"LongComment":}
+					{:start:{}:}
+/* TODO: see if I can get the "--" chars in the `prefix` field from `LongStringOpen` */
+					LongStringOpen
+					{:value:(!LongStringClose .)*:}
+					LongStringClose
+					{:finish:{}:}
+				|} -> add_comment

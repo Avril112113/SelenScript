@@ -1,0 +1,80 @@
+/**** LuaBase ****/
+
+NILCP	<- {}->{nil}
+
+/* SPace */
+Sp		<- ' ' / %nl / %esc_t
+
+/* Empty Capture */
+Ec			<- {}->''
+
+WORD        <-  [a-zA-Z0-9_]
+Cut         <-  !WORD
+Rest        <-  (!%nl .)*
+
+X16         <-  [a-fA-F0-9]
+NAME		<- (!RESERVED [a-zA-Z_][a-zA-Z_0-9]*) / RESERVED [a-zA-Z_0-9]+
+EXPECT_NAME	<- NAME / ({}->"SYNTAX_MISS_NAME"{}{})->add_error
+EXP_CP_NAME	<- {NAME} / ({}->"SYNTAX_MISS_NAME"{}{})->add_error NILCP
+
+DOT			<- '.' !'.'
+CONCAT		<- '..' !'.'
+VAR_ARGS	<- '...'
+COLON		<- ':'
+DOUBLECOLON	<- '::'
+FIELD_SEP	<- ',' / ';'
+BINARY_OP	<- '^'
+			 /* UNARY_OP */
+			 / '*' / '/' / '//' / '%'
+			 / '+' / '-'
+			 / CONCAT
+			 / '<<' / '>>'
+			 / '&'
+			 / '~' (!'=' / &"~=")
+			 / '|'
+			 / '<=' / '>=' / '<' / '>' / "~=" / "=="
+			 / AND
+			 / OR
+UNARY_OP	<- '-' / NOT / '#' / '~'
+
+RESERVED		<- RESERVED_STMT / NIL / TRUE / FALSE
+RESERVED_STMT	<- AND / NOT / OR
+				 / RAW_THEN / RAW_DO / RAW_AS / RAW_IN / RAW_END
+				 / BREAK / GOTO / ELSE / ELSEIF / IF / FOR / FUNCTION / REPEAT / UNTIL / WHILE / RETURN / LOCAL
+
+AND			<- Sc 'and' Cut
+NOT			<- Sc 'not' Cut
+OR			<- Sc 'or' Cut
+
+NIL			<- Sc 'nil' Cut
+FALSE		<- Sc 'false' Cut
+TRUE		<- Sc 'true' Cut
+
+RAW_THEN	<- Sc 'then' Cut
+THEN		<- RAW_THEN
+			 / Sc ({}->"SYNTAX_EXPECT_THEN"{}{(!Cut .)*}{})->add_error_o
+RAW_DO		<- Sc 'do' Cut
+DO			<- RAW_DO
+			 / Sc ({}->"SYNTAX_EXPECT_DO"{}{(!Cut .)*}{})->add_error_o
+RAW_AS		<- Sc 'as' Cut
+AS			<- RAW_AS
+			 / Sc ({}->"SYNTAX_EXPECT_AS"{}{(!Cut .)*}{})->add_error_o
+RAW_IN		<- Sc 'in' Cut
+IN			<- RAW_IN
+			 / Sc ({}->"SYNTAX_EXPECT_IN"{}{(!Cut .)*}{})->add_error_o
+RAW_END		<- Sc 'end' Cut
+END			<- RAW_END
+			 / ({}->"SYNTAX_MISS_END"{}{})->add_error
+
+BREAK		<- Sc 'break' Cut
+GOTO		<- Sc 'goto' Cut
+ELSE		<- Sc 'else' Cut
+ELSEIF		<- Sc 'elseif' Cut
+IF			<- Sc 'if' Cut
+FOR			<- Sc 'for' Cut
+FUNCTION	<- Sc 'function' Cut
+REPEAT		<- Sc 'repeat' Cut
+UNTIL		<- Sc 'until' Cut
+WHILE		<- Sc 'while' Cut
+RETURN		<- Sc 'return' Cut
+LOCAL		<- Sc 'local' Cut

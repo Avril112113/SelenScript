@@ -1,0 +1,26 @@
+/**** SelenScript ****/
+
+stmt_continue	<-	{| {:type:''->"continue":}
+						{:start:{}:}
+						CONTINUE
+						{:finish:{}:}
+					|}
+
+#block Statements
+#include Statements
+			 / stmt_continue
+#endblock
+
+
+/* 
+#block TestBlock
+TheFirstTestBlock	<- "Original"
+#endblock
+
+#block TestBlock
+#include TestBlock
+NowWithExtras	<- "Extra :D"
+#endblock
+
+#include TestBlock
+*/
