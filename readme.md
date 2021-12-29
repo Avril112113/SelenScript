@@ -7,7 +7,7 @@ This projects structure is based of typescript
 TODO: improve readme
 
 ## Name
-Selen is based from the Greek word `Selēnē` meaing moon.  
+Selen is based on `Selḗnē` from Greek mythology, it's the name of the goddess of the Moon.  
 
 ## Syntax
 Please note that the syntax may change as this is work in progress!  
@@ -27,11 +27,11 @@ end
 function f(foo: number) -> number
 	return -foo
 end
--- use a string for more explicit typing, any valid SelenScript is valid within the string
+-- use a string for more dynamic typing, any valid SelenScript is valid within the string
 GetLevel: function(tbl: table) -> "tbl.GetLevel()"
 g: table<string, number>
 h: array<string>
-local i1, i2, i3: string, string, number = "i1", "i2", 3
+local i1: string, i2: string, i3: number = "i1", "i2", 3
 ```
 
 `continue` works like any other language  
@@ -50,15 +50,14 @@ Inline `if`
 foo = 100
 bar = if foo >= 100 then foo else foo+100  -- Bar: 100
 bar = if foo < 500 then foo-100 else foo  -- Bar: 0
-bar = __sls1
 ```
 
 Statement conditionals  
 ```Lua
-break if baz == "baz"
-continue if bar == "bar"
-goto label if foo == "foo"
-return 1, 2, "stringy" if der == "der"
+if baz == "baz" break
+if bar == "bar" continue
+if foo == "foo" goto label
+if der == "der" return 1, 2, "stringy"
 ```
 
 expression statements  
@@ -86,6 +85,7 @@ interface FooBar
 	-- or things a table should implement/define
 	foo: string
 	bar: number
+	<number>: table
 end
 function f() -> FooBar
 	return {foo="Hi", bar=33}
@@ -106,7 +106,7 @@ Person: Jsonable and FooBar = {
 }
 ```
 
-Decorators (similar to Python)  
+Decorators (based on Python)  
 ```Lua
 -- `f` is always supplied
 -- `f` will be only argument if the decorator is not called
@@ -128,14 +128,13 @@ function foo(a)
 end
 foo = default(foo, 3)
 
--- the reason we define the function first then redefine with the decorator it instead of just using
--- it directly as an argument to the decorator is because for example
--- `function t:foo() end`, we want to preserve the special nature of `:`
+-- the reason we define the function first then redefine with the decorator is because
+-- we want to preserve the special nature of `:`; `function t:foo() end`.
 
 print(foo()) -- Result: 3
 ```
 
-String formatting (like in python)  
+String formatting (based on python)  
 ```Lua
 local test = 123
 print(f"{test} {{}}") -- Result: "123 {}"
@@ -150,11 +149,11 @@ there is a setting `globals` for any variables that are global in any file
 
 ## Reserved Words
 All Lua's reserved words and any that SelenScript provides like `interface` ect  
-also variables starting with `__sls` is reserved, using these may cause unexpected results  
+also variables starting with `__ss_` is reserved, using these may cause unexpected results  
 
 ## Notes
 Using an expression statements in a format string may cause unexpected results  
-you can still use a return in a `do` statement without using it as a expression, but it will work as it would in Lua for example  
+You can still use a return in a `do` without using it as a expression, but it will work as it would in Lua, for example;  
 ```Lua
 function gz(b)
 	if b then goto later end
@@ -164,29 +163,32 @@ function gz(b)
 	::later::
 	return "later happened"
 end
+assert(gz(false), "early happened")
 ```
-would return from the function and not the `do` statement as its not used as an expression statement  
+would return from the function and not the `do` statement as it's not used as an expression statement  
+The same would apply for `for`, `while`, `repeat` and any other expressionable statements.
 
 ## Types
 `any` can be anything  
 `table` normal Lua table  
-`table[KeyType=ValueType]`  
+`table<KeyType, ValueType>`  
 `array` a list of values  
-`array[ValueType]`  
+`array<ValueType>`  
 `string`  
 `number` int or float  
 `int` whole number  
 `float` floating point number  
 `function`  
+`fun`  Shorthand for `function` (because EmmyLua)  
 `function(arg: ArgType)`  
 `function(arg: ArgType) -> ReturnType`  
-`unknown` when no type is defined (can be ignored, not useable, use `any` if the type is explisitly unknown)  
+`unknown` when no type is defined (not useable in syntax, use `any` if the type is explicitly unknown)  
 
 
 # Contributors
 Matrixmage - Helped with some code stuff  
 Matrixmage, Pyry, Yolathothep - Language design  
-DreadberryJam - Name Suggestion
+DreadberryJam - Name Suggestion  
 
-Where ever I borrowed code for tests  
-and anyone who finds bugs and reports them  
+Any files taken from other projects to test the parsing capabilities (There should be credits)  
+Anyone who finds bugs and reports them  
