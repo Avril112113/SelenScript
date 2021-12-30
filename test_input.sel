@@ -1,6 +1,0 @@
-while true do
-	if true then
-		local dont_nuke_me_plz
-		continue
-	end
-end

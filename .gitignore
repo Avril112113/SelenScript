@@ -5,3 +5,4 @@ selenscript_trans/**/*
 **/*.dll
 old/
 test_code.lua
+test_input.lua
