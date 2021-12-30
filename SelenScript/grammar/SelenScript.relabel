@@ -1,6 +1,6 @@
 /**** SelenScript ****/
 
-stmt_continue	<-	{| {:type:''->"continue":}
+stmt_continue	<- {| {:type:''->"continue":}
 						{:start:{}:}
 						CONTINUE
 						{:finish:{}:}
@@ -12,15 +12,13 @@ stmt_continue	<-	{| {:type:''->"continue":}
 #endblock
 
 
-/* 
-#block TestBlock
-TheFirstTestBlock	<- "Original"
-#endblock
+expr_if	<- {| {:type:''->"ifexpr":}
+				{:start:{}:}
+				IF Sc {:condition:expression:} Sc THEN Sc {:lhs:expression:} Sc ELSE Sc {:rhs:expression:}
+				{:finish:{}:}
+			|}
 
-#block TestBlock
-#include TestBlock
-NowWithExtras	<- "Extra :D"
+#block Expressions
+			 / expr_if
+#include Expressions
 #endblock
-
-#include TestBlock
-*/

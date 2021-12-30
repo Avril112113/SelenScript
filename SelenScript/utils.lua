@@ -59,5 +59,14 @@ function Utils.deepcopy(tbl)
 	return t
 end
 
+function Utils.find_key(tbl, value)
+	for i, v in pairs(tbl) do
+        if v == value then
+            return i
+        end
+    end
+    return nil
+end
+
 
 return Utils

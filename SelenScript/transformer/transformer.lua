@@ -87,12 +87,12 @@ end
 --- Recursively gets the parent of a node until it reaches a specific type of node and returns
 ---@param node ASTNode
 ---@param node_type string|fun(node:ASTNode):boolean
----@return ASTNode
+---@return ASTNode, ASTNode @ Node matches node_type, child of parent that matched node_type
 function Transformer:find_parent_of_type(node, node_type, depth)
 	depth = depth or 0
 	local parent = self:get_parent(node)
 	if parent == nil or type(node_type) == "function" and node_type(parent) or parent.type == node_type then
-		return parent
+		return parent, node
 	end
 	return self:find_parent_of_type(parent, node_type, depth+1)
 end

@@ -151,19 +151,12 @@ EmitterDefs["return"] = function(self, node)
 end
 
 function EmitterDefs:index(node)
-	if node.name ~= nil then
-		if node.how ~= nil then
-			self:add_part(node.how)
-		end
-		self:visit(node.name)
-	elseif node.expr ~= nil and node.expr.type ~= "call" then
-		self:add_part("[")
-		self:visit(node.expr)
+	if node.how ~= nil then
+		self:add_part(node.how)
+	end
+	self:visit(node.expr)
+	if node.how == "[" then
 		self:add_part("]")
-	elseif node.expr ~= nil and node.expr.type == "call" then
-		self:visit(node.expr)
-	else
-		print_warn("Invalid \"" .. node.type .. "\" node, missing indexing value")
 	end
 	if node.index ~= nil then
 		self:visit(node.index)

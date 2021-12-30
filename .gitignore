@@ -5,4 +5,5 @@ selenscript_trans/**/*
 **/*.dll
 old/
 test_code.lua
+test_ss_built_grammar.relabel
 test_input.lua

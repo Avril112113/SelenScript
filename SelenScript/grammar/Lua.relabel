@@ -147,17 +147,17 @@ attributename	<- {| {:type:''->"attributename":}
 funcname_index	<- {| {:type:''->"index":}
 						{:start:{}:}
 						(
-							{:how:COLON:} Sc {:name:name:}
+							{:how:COLON:} Sc {:expr:name:}
 							{:finish:{}:}
 							/
-							{:how:DOT:} Sc {:name:name:}
+							{:how:DOT:} Sc {:expr:name:}
 							{:finish:{}:}
 							(Sc {:index:funcname_index:})?
 						)
 					|}
 funcname	<- {| {:type:''->"index":}
 					{:start:{}:}
-					{:name:name:}
+					{:expr:name:}
 					{:finish:{}:}
 					(Sc {:index:funcname_index:})?
 				|}
@@ -243,7 +243,10 @@ value	<- nil
 /* Precedence is done outside grammar */
 expression	<- {| (value/unary) (Sc binary_op Sc (value/unary))+ |} -> climbPrecedence
 			 / {| unary |} -> climbPrecedence
+#block Expressions
 			 / value
+#endblock
+#include Expressions
 unary		<- unary_op Sc (value/unary)
 binary_op	<- {| {:type:''->"binary_op":}
 					{:start:{}:}
@@ -258,7 +261,7 @@ unary_op	<- {| {:type:''->"unary_op":}
 
 call	<- {| {:type:''->"index":}
 				{:start:{}:}
-				{:how:COLON:} Sc {:name:name:}
+				{:how:COLON:} Sc {:expr:name:}
 				{:finish:{}:}
 				(Sc {:index:selfcall:})
 			|}
@@ -279,11 +282,11 @@ selfcall	<- {| {:type:''->"call":}
 /* Unfortunetly there is a lot of duplication and lcall/nlcall is needed because, parsing... */
 index_continues	<- DOT / "[" / ":" / "("
 index_part	<- {:how:"[":} Sc {:expr:expression:} Sc "]"
-			 / {:how:DOT:} Sc {:name:name:}
-			 / {:name:call:}
+			 / {:how:DOT:} Sc {:expr:name:}
+			 / {:expr:call:}
 index_part_nlcall	<- {:how:"[":} Sc {:expr:expression:} Sc "]"
-					 / {:how:DOT:} Sc {:name:name:}
-					 / {:name:call &index_nlcall:}
+					 / {:how:DOT:} Sc {:expr:name:}
+					 / {:expr:call &index_nlcall:}
 index	<- {| {:type:''->"index":}
 				{:start:{}:}
 				index_part
@@ -305,7 +308,7 @@ index_lcall	<- {| {:type:''->"index":}
 prefixexpression	<- {| {:type:''->"index":}
 							{:start:{}:}
 							(
-								{:name:name:}
+								{:expr:name:}
 							/ "(" Sc {:expr:expression:} Sc ")"
 							)
 							{:finish:{}:}
@@ -314,7 +317,7 @@ prefixexpression	<- {| {:type:''->"index":}
 prefixexpression_nlcall	<- {| {:type:''->"index":}
 								{:start:{}:}
 								(
-									{:name:name:}
+									{:expr:name:}
 								/ "(" Sc {:expr:expression:} Sc ")"
 								)
 								{:finish:{}:}
@@ -323,7 +326,7 @@ prefixexpression_nlcall	<- {| {:type:''->"index":}
 prefixexpression_lcall	<- {| {:type:''->"index":}
 								{:start:{}:}
 								(
-									{:name:name:}
+									{:expr:name:}
 								/ "(" Sc {:expr:expression:} Sc ")"
 								)
 								{:finish:{}:}
