@@ -1,3 +1,6 @@
+local ASTHelpers = require "SelenScript.transformer.ast_helpers"
+
+
 ---@type Transformer
 local TransformerDefs = {}
 
@@ -21,19 +24,8 @@ local _loop_types = {["while"]=true,["foriter"]=true,["forrange"]=true,["repeat"
 		return nil
 	end
 	local label_name = self:get_var("continue")
-	-- TODO: make AST easier to generate
-	table.insert(loop_block, {
-		type = "label",
-		start = node.start,
-		name = {type="name", name=label_name},
-		finish = node.finish,
-	})
-	table.insert(parent_block, {
-		type = "goto",
-		start = node.start,
-		name = {type="name", name=label_name},
-		finish = node.finish,
-	})
+	table.insert(loop_block, ASTHelpers.Nodes.label(node, label_name))
+	table.insert(parent_block, ASTHelpers.Nodes["goto"](node, label_name))
 	return nil
 end
 
