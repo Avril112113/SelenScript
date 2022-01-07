@@ -142,6 +142,10 @@ EmitterDefs["functiondef"] = function(self, node)
 	end
 end
 
+EmitterDefs["break"] = function(self, node)
+	self:add_part("break")
+end
+
 EmitterDefs["return"] = function(self, node)
 	self:add_part("return")
 	if #node.values > 0 then
