@@ -6,7 +6,20 @@ stmt_continue	<- {| {:type:''->"continue":}
 						{:finish:{}:}
 					|}
 
+stmt_conditional	<- {| {:type:''->"conditional_block":}
+							{:start:{}:}
+							IF Sc {:condition:expression:} Sc THEN Sc
+							(
+								stmt_continue
+							  / stmt_break
+							  / stmt_goto
+							  / stmt_return
+							)
+							{:finish:{}:}
+						|}
+
 #block Statements
+			 / stmt_conditional
 #include Statements
 			 / stmt_continue
 #endblock

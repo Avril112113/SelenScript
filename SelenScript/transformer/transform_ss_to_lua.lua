@@ -16,12 +16,12 @@ TransformerDefs["continue"] = function(self, node)
 		return nil
 	end
 	local parent_block = self:get_parent(node)
-	if parent_block == nil or parent_block.type ~= "block" then
+	if parent_block == nil or parent_block.type:sub(-5) ~= "block" then
 		self:add_error("INTERNAL", node, "`continue` found parent node but that node isn't a block node?")
 		return nil
 	end
 	local loop_block = (parent_loop or {}).block
-	if loop_block == nil or loop_block.type ~= "block" then
+	if loop_block == nil or loop_block.type:sub(-5) ~= "block" then
 		self:add_error("INTERNAL", node, "`continue` found loop node but that node isn't a block node?")
 		return nil
 	end
@@ -34,6 +34,7 @@ end
 ---@param node ASTNode
 TransformerDefs["ifexpr"] = function(self, node)
 	-- TODO: We might sometimes be able to just use lua expressions instead of needing the `if` statement before the assign
+	--       This will probably depend on the type of whats used
 	local block, stmt = self:find_parent_of_type(node, "block")
 	local stmt_idx = Utils.find_key(block, stmt)
 	local var_name = self:get_var("ifexpr")
@@ -58,6 +59,12 @@ TransformerDefs["ifexpr"] = function(self, node)
 	table.insert(block, stmt_idx, local_assign_node)
 	table.insert(block, stmt_idx+1, if_node)
 	return ASTNodes.index(node, nil, ASTNodes.name(node, var_name))
+end
+
+---@param node ASTNode
+TransformerDefs["conditional_block"] = function(self, node)
+	local block = ASTNodes.block(node, unpack(node))
+	return ASTNodes["if"](node, node.condition, block)
 end
 
 
