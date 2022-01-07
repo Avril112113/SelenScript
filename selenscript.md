@@ -22,7 +22,8 @@ h: array<string>
 local i1: string, i2: string, i3: number = "i1", "i2", 3
 ```
 
-`continue` works like any other language, it will skip to the next for the next iteration  
+### **`continue`**
+works like any other language, it will skip to the next iteration  
 NOTE: versions prior to (LuaJIT/Lua5.2+) may not support this as it uses goto  
 ```Lua
 for i, v in pairs(t) do
