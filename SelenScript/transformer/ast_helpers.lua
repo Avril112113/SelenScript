@@ -31,6 +31,18 @@ function ASTNodes.name(node, name)
 end
 
 ---@param node ASTNode @ Used for source position info
+---@param ... ASTNode
+---@return ASTNode
+ASTNodes["namelist"] = function(node, ...)
+	return {
+		type = "namelist",
+		start = node.start,
+		finish = node.finish,
+		...
+	}
+end
+
+---@param node ASTNode @ Used for source position info
 ---@param how string
 ---@param expr ASTNode
 ---@param index ASTNode|nil
@@ -42,6 +54,20 @@ function ASTNodes.index(node, how, expr, index)
 		how = how,
 		expr = expr,
 		index = index,
+		finish = node.finish
+	}
+end
+
+---@param node ASTNode @ Used for source position info
+---@param args any[]|table|string
+---@param self nil|boolean
+---@return ASTNode
+function ASTNodes.call(node, args, self)
+	return {
+		type = "call",
+		start = node.start,
+		args = args,
+		self = self and "true",
 		finish = node.finish
 	}
 end

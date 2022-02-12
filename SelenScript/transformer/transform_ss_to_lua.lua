@@ -67,5 +67,22 @@ TransformerDefs["conditional_block"] = function(self, node)
 	return ASTNodes["if"](node, node.condition, block)
 end
 
+---@param node ASTNode
+TransformerDefs["functiondef"] = function(self, node)
+	if node.decorators ~= nil and #node.decorators > 0 then
+		local block, stmt = self:find_parent_of_type(node, "block")
+		local stmt_idx = Utils.find_key(block, stmt)
+		local func_name = node.name  -- TODO: deal with ":" in node.name
+		local call_node = func_name
+		for i, dec in ipairs(node.decorators) do
+			call_node = ASTNodes.index(node, nil, dec.expr, ASTNodes.call(node, call_node))
+		end
+		local assign_node = ASTNodes.assign(node, nil, ASTNodes.varlist(node, func_name), ASTNodes.expressionlist(node, call_node))
+		table.insert(block, stmt_idx+1, assign_node)
+		node.decorators = nil
+	end
+	return node
+end
+
 
 return TransformerDefs

@@ -114,17 +114,21 @@ stmt_foriter	<- {| {:type:''->"foriter":}
 						{:finish:{}:}
 					|}
 
+#block PreFunctionStmt
+#endblock
 stmt_function	<- stmt_local_function / stmt_general_function
 stmt_general_function	<- {| {:type:''->"functiondef":}
 								{:start:{}:}
+#include PreFunctionStmt
 								FUNCTION Sc {:name:funcname:} Sc {:funcbody:funcbody:}
 								{:finish:{}:}
 							|}
-stmt_local_function	<- {| {:type:''->"functiondef":}
-							{:start:{}:}
-							{:scope:LOCAL:} Sc FUNCTION Sc {:name:name:} Sc {:funcbody:funcbody:}
-							{:finish:{}:}
-						|}
+stmt_local_function		<- {| {:type:''->"functiondef":}
+								{:start:{}:}
+#include PreFunctionStmt
+								{:scope:LOCAL:} Sc FUNCTION Sc {:name:name:} Sc {:funcbody:funcbody:}
+								{:finish:{}:}
+							|}
 
 stmt_return	<- {| {:type:''->"return":}
 					{:start:{}:}

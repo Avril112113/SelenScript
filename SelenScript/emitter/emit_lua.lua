@@ -133,6 +133,9 @@ EmitterDefs["functiondef"] = function(self, node)
 	elseif node.scope ~= nil then
 		print_warn("Invalid scope \"" .. node.scope .. "\"")
 	end
+	if self.config.space_before_function then
+		self:new_line(false)
+	end
 	self:add_part("function")
 	self:add_space()
 	self:visit(node.name)

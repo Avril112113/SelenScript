@@ -15,7 +15,9 @@ local EmitterConfig = {
 	--- Lua Emitter
 	field_assign_space = true,
 	--- Lua Emitter
-	space_after_function = true,
+	space_before_function = false,
+	--- Lua Emitter
+	space_after_function = false,
 	--- Lua Emitter
 	math_always_parenthesised = false,
 }

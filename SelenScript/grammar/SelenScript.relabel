@@ -25,6 +25,22 @@ stmt_conditional	<- {| {:type:''->"conditional_block":}
 #endblock
 
 
+decorator	<-	{| {:type:''->"decorator":}
+					{:start:{}:}
+					'@' Sc {:expr:prefixexpression:}
+					{:finish:{}:}
+				|}
+decorator_list	<-	{| {:type:''->"decorator_list":}
+						{:start:{}:}
+						decorator (Sc decorator)*
+						{:finish:{}:}
+					|}
+
+#block PreFunctionStmt
+								({:decorators:decorator_list:} Sc)?
+#endblock
+
+
 expr_if	<- {| {:type:''->"ifexpr":}
 				{:start:{}:}
 				IF Sc {:condition:expression:} Sc THEN Sc {:lhs:expression:} Sc ELSE Sc {:rhs:expression:}
