@@ -1,0 +1,17 @@
+local SourceMapTraceback = require "test_source_map"
+
+
+local function potato(s)
+	assert(type(s) == "string", "`s` is not a string")
+	return "potato and " .. s
+end
+
+local function main()
+	print(potato({}))  -- Casues assert error
+end
+
+print(debug.traceback())
+print("------------------------------")
+print(SourceMapTraceback.traceback())
+print("------------------------------")
+xpcall(main, SourceMapTraceback.xpcall_handler)

@@ -1,4 +1,5 @@
 local Utils = require "SelenScript.utils"
+local SourceMap = require "SelenScript.emitter.source_map"
 
 
 ---@class EmitterConfig
@@ -28,12 +29,12 @@ end
 
 ---@class Emitter
 ---@field args table<string, any> @ Used for creating a copy emitter
----@field defs table<string, fun(node:ASTNode):any>
+---@field defs table<string, fun(self:Emitter, node:ASTNode):any>
 ---@field parts string[]
 ---@field config table<string, string>
 local Emitter = {
 	Emitters = {
-		lua = require "SelenScript.emitter.emit_lua"
+		lua = require "SelenScript.emitter.emit_lua",
 	},
 }
 Emitter.__index = Emitter
@@ -68,8 +69,10 @@ function Emitter:_visit(name, node)
 	if self.defs[name] == nil then
 		print_warn("Missing emitter method for node type \"" .. name .. "\"")
 	else
+		local start = self.char_position
 		table.insert(self.visit_path, name)
 		self.defs[name](self.self_proxy, node)
+		self.source_map:link(node, start, self.char_position)
 		local t = table.remove(self.visit_path)
 		assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
 	end
@@ -77,27 +80,29 @@ end
 
 function Emitter:add_part(s)
 	table.insert(self.parts, s)
+	self.char_position = self.char_position + #s
 end
 
 function Emitter:new_line(use_indent)
-	table.insert(self.parts, self.config.newline)
+	self:add_part(self.config.newline)
 	if use_indent == nil or use_indent then
 		self:add_indent()
 	end
 end
 
 function Emitter:add_indent()
-	table.insert(self.parts, string.rep(self.config.indent, self.indent_depth))
+	self:add_part(string.rep(self.config.indent, self.indent_depth))
 end
 
 function Emitter:add_space(b)
 	if b == nil or b then
-		table.insert(self.parts, " ")
+		self:add_part(" ")
 	end
 end
 
 function Emitter:is_space_required_boundary(s)
 	if type(s) == "table" and s.type ~= nil then
+		---@diagnostic disable-next-line: missing-parameter @ Idk why it's complaining with `unpack` :/
 		local emitter = Emitter.new(unpack(self.args))
 		s = emitter:generate(s)
 	end
@@ -121,12 +126,15 @@ end
 
 function Emitter:generate(ast)
 	self.parts = {}
+	self.char_position = 1
 	self.visit_path = {}  -- For debugging errors
 	self.indent_depth = 0
+	self.source_map = SourceMap.new()
 	self.self_proxy = setmetatable({}, {__index=self})
 	self:visit(ast)
 	self.self_proxy = nil
-	return table.concat(self.parts)
+	local output = table.concat(self.parts)
+	return output, self.source_map
 end
 
 

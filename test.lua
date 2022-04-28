@@ -5,8 +5,8 @@ require "logging".windows_enable_ansi()
 
 
 local PRINT_COMMENTS = false
-local PRINT_PARSED_AST = true
-local PRINT_TRANSFORMED_AST = true
+local PRINT_PARSED_AST = false
+local PRINT_TRANSFORMED_AST = false
 
 
 local function read_file(path)
@@ -44,6 +44,7 @@ write_file("test_ss_built_grammar.relabel", parser.grammar_src)
 if parser == nil then
 	print_warn("Exit early, parser object is nil")
 	os.exit(-1)
+	return  -- Make diagnostics happy
 end
 
 local source = read_file("test_input.sel")
@@ -83,8 +84,11 @@ if PRINT_TRANSFORMED_AST then
 	print(AST.tostring_ast(ast))
 end
 
-local emitter = Emitter.new("lua", {
+local emitter_lua = Emitter.new("lua", {
 	math_always_parenthesised = false
 })
-local output_lua_source = emitter:generate(ast)
+local output_lua_source, source_map = emitter_lua:generate(ast)
 write_file("test_input.lua", tostring(output_lua_source))
+write_file("test_input.lua.map", tostring(source_map:generate(source, output_lua_source)))
+
+print_info("-- Finished --")

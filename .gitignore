@@ -7,3 +7,4 @@ old/
 test_code.lua
 test_ss_built_grammar.relabel
 test_input.lua
+test_input.lua.map
