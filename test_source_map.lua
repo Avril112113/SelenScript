@@ -1,9 +1,14 @@
+local SourceMap = require "source-map"
+local json = require "json"
+
+
 local SourceMapTraceback = {
-	--- 0: Lua default
-	--- 1: SelenScript simple (Uses Lua default with replacing, for compatibility)
-	--- 2: SelenScript custom (Uses full custom, uses debug library extensively)
+	--- 0: Lua default (Simply does nothing)
+	--- 1: SelenScript simple (Default Lua traceback, replacing parts instead of using debug library)
+	--- 2: SelenScript custom (Custom Selenscript traceback, requires debug library)
 	mode = (debug~= nil and debug.getinfo ~= nil) and 2 or 1,
 
+	---@type table<string,SourceMap>
 	source_maps = {},
 }
 
@@ -16,41 +21,6 @@ local function read_file(path)
 	f:close()
 	return data
 end
-
----@param mapdata string
-local function parse_mapdata(mapdata)
-	local lines = {}
-	---@type string
-	for linedata in mapdata:gmatch("(.-)\n") do
-		-- These are all strings right now
-		local
-			out_start_ln, out_start_col,
-			out_finish_ln, out_finish_col,
-			src_start_ln, src_start_col,
-			src_finish_ln, src_finish_col,
-			node_type = linedata:match("^@(%d+):(%d+)~(%d+):(%d+)\t%->\t(%d+):(%d+)~(%d+):(%d+) %((%w+)%)")
-		-- And we convert them to numbers
-		out_start_ln, out_start_col = tonumber(out_start_ln), tonumber(out_start_col)
-		out_finish_ln, out_finish_col = tonumber(out_finish_ln), tonumber(out_finish_col)
-		src_start_ln, src_start_col = tonumber(src_start_ln), tonumber(src_start_col)
-		src_finish_ln, src_finish_col = tonumber(src_finish_ln), tonumber(src_finish_col)
-		local line = lines[out_start_ln] or {}
-		lines[out_start_ln] = line
-		table.insert(line, {
-			out={
-				start={line=out_start_ln, column=out_start_col},
-				finish={line=out_finish_ln, column=out_finish_col},
-			},
-			src={
-				start={line=src_start_ln, column=src_start_col},
-				finish={line=src_finish_ln, column=src_finish_col},
-			},
-			node_type=node_type,
-		})
-	end
-	return lines
-end
-
 
 local original_traceback = debug.traceback
 ---@param thread thread
@@ -67,53 +37,51 @@ end
 ---@param message any|nil
 ---@param level number|nil
 local function traceback_custom(thread, message, level)
-	local iterlevel = level+2
+	local iterLevel = level+2
 	local stack = {}
 	while true do
-		local data = getinfo(thread, iterlevel, "nSlufL")
+		local data = getinfo(thread, iterLevel, "nSlufL")
 		if data == nil then break end
 		if data.func ~= SourceMapTraceback.xpcall_handler then
 			table.insert(stack, data)
 		end
-		iterlevel = iterlevel + 1
+		iterLevel = iterLevel + 1
 	end
-	local stack_strs = {}
+	local stackStrs = {}
 	local parts = {"Stack trace: " .. (message and tostring(message) or "")}
 	for i, data in ipairs(stack) do
-		local map = SourceMapTraceback.source_maps[data.short_src]
-		if map == nil then
-			-- TODO: This is very crude, fix this
-			local mapdata = read_file(data.short_src .. ".map")
-			SourceMapTraceback.source_maps[data.short_src] = mapdata and parse_mapdata(mapdata) or false
+		local sourceMap = SourceMapTraceback.source_maps[data.short_src]
+		if sourceMap == nil then
+			local mappingData = read_file(data.short_src .. ".map")
+			SourceMapTraceback.source_maps[data.short_src] = mappingData and SourceMap.fromJson(json.decode(mappingData))
 		end
-		map = SourceMapTraceback.source_maps[data.short_src]
-		local currentline = data.currentline
-		local short_src = data.short_src
-		if map then
-			local line = map[currentline]
-			if line ~= nil then
-				currentline = line[1].src.start.line
-				short_src = short_src:gsub("%.lua", ".sel")
+		---@type SourceMap
+		sourceMap = SourceMapTraceback.source_maps[data.short_src]
+		local currentLine = data.currentline
+		local shortSrc = data.short_src
+		if sourceMap then
+			local spans = sourceMap:getSpansAt(currentLine)
+			if #spans >= 1 then
+				currentLine = spans[1].originalLine
+				shortSrc = spans[1].source
 			end
 		end
-		stack_strs[i] = {
-			line = currentline >= 0 and tostring(currentline) or "",
-			from = short_src,
+		stackStrs[i] = {
+			line = currentLine >= 0 and tostring(currentLine) or "",
+			from = shortSrc,
 			name = data.name or tostring(data.func),
 		}
 	end
-	local stack_strs_lens = {}
-	for i, strs in ipairs(stack_strs) do
+	local longestStackStr = 0
+	for i, strs in ipairs(stackStrs) do
 		for name, v in pairs(strs) do
-			if stack_strs_lens[name] == nil then
-				stack_strs_lens[name] = #v
-			elseif stack_strs_lens[name] < #v then
-				stack_strs_lens[name] = #v
+			if #v > longestStackStr then
+				longestStackStr = #v
 			end
 		end
 	end
-	for i, strs in ipairs(stack_strs) do
-		table.insert(parts, "\n\t" .. string.rep(" ", stack_strs_lens.from-#strs.from) .. strs.from .. " : " .. strs.name .. (#strs.line > 0 and " @ " .. strs.line or ""))
+	for i, strs in ipairs(stackStrs) do
+		table.insert(parts, ("\n\t%" .. longestStackStr .. "s : %s%s"):format(strs.from, strs.name, #strs.line > 0 and " @ " .. strs.line or ""))
 	end
 	return table.concat(parts)
 end
@@ -139,7 +107,7 @@ function SourceMapTraceback.traceback(thread, message, level)
 		return traceback_custom(thread, message, level)
 	else
 		if thread == nil then
-			-- An extra newline gets added because of `message`, but the argument is required :c
+			-- FIXME: An extra newline gets added because of `message`, but the argument is required :c
 			return original_traceback(message or "", level+2)
 		end
 		return original_traceback(thread, message, level+2)

@@ -1,4 +1,9 @@
-local relabel = require "relabel"
+-- This file will be removed in the future, once a system for managing multiple files is worked on
+
+
+local ReLabel = require "relabel"
+local Json = require "json"
+local SourceMapLib = require "source-map"
 
 
 local SourceMap = {}
@@ -20,33 +25,30 @@ end
 
 ---@param src string @ The source code for line and column calculations
 ---@param out string @ The output code for line and column calculations
-function SourceMap:generate(src, out)
+function SourceMap:generate(src, out, srcFile, outFile)
 	table.sort(self.links, function (a, b)
-		return a.start == b.start and a.node.start < b.node.start or a.start < b.start
+		return a.start > b.start
 	end)
-	local parts = {}
+	local sourceMap = SourceMapLib.new()
+	sourceMap:setFile(outFile)
 	for i, link in ipairs(self.links) do
-		local out_start_ln, out_start_col = relabel.calcline(out, link.start)
-		local out_finish_ln, out_finish_col = relabel.calcline(out, link.finish)
-		table.insert(parts, "@" .. out_start_ln .. ":" .. out_start_col)
-		table.insert(parts, "~")
-		table.insert(parts, out_finish_ln .. ":" .. out_finish_col)
-		table.insert(parts, "\t->\t")
-		local src_start_ln, src_start_col = relabel.calcline(src, link.node.start)
-		local src_finish_ln, src_finish_col = relabel.calcline(src, link.node.finish)
-		table.insert(parts, src_start_ln .. ":" .. src_start_col)
-		table.insert(parts, "~")
-		table.insert(parts, src_finish_ln .. ":" .. src_finish_col)
-		table.insert(parts, " (" .. link.node.type .. ")")
-		if type(link.node.name) == "string" then
-			table.insert(parts, " `" .. tostring(link.node.name) .. "`")
-		end
-		if link.node.value ~= nil then
-			table.insert(parts, " " .. tostring(link.node.value))
-		end
-		table.insert(parts, "\n")
+		local out_start_ln, out_start_col = ReLabel.calcline(out, link.start)
+		local out_finish_ln, out_finish_col = ReLabel.calcline(out, link.finish)
+		local src_start_ln, src_start_col = ReLabel.calcline(src, link.node.start)
+		local src_finish_ln, src_finish_col = ReLabel.calcline(src, link.node.finish)
+		local name
+		-- local name = type(link.node.name) == "string" and link.node.name or nil
+		-- if link.node.value ~= nil then
+		-- 	if name ~= nil then
+		-- 		name = name .. "=" .. tostring(link.node.value)
+		-- 	else
+		-- 		name = "=" .. tostring(link.node.value)
+		-- 	end
+		-- end
+		sourceMap:addSourceMapping(srcFile, src_start_ln, src_start_col, out_start_ln, out_start_col, name)
+		sourceMap:addSourceMapping(srcFile, src_finish_ln, src_finish_col, out_finish_ln, out_finish_col)
 	end
-	return table.concat(parts)
+	return Json.encode(sourceMap:toJson())
 end
 
 

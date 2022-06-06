@@ -22,6 +22,8 @@ local function write_file(path, data)
 	return data
 end
 
+local Json = require "json"
+
 local Parser = require "SelenScript.parser.parser"
 local AST = require "SelenScript.parser.ast"
 local Emitter = require "SelenScript.emitter.emitter"
@@ -89,6 +91,19 @@ local emitter_lua = Emitter.new("lua", {
 })
 local output_lua_source, source_map = emitter_lua:generate(ast)
 write_file("test_input.lua", tostring(output_lua_source))
-write_file("test_input.lua.map", tostring(source_map:generate(source, output_lua_source)))
+write_file("test_input.lua.map", tostring(source_map:generate(source, output_lua_source, "test_input.sel", "test_input.lua")))
+
+local SourceMap = require "source-map"
+local inSourceMap = SourceMap.fromJson(Json.decode(read_file("test_input.lua.map")))
+print(inSourceMap.sourceRoot .. " : " .. inSourceMap.file)
+for generatedLine, columnList in ipairs(inSourceMap.mappings) do
+	for _, column in ipairs(columnList) do
+		print(("%s:%s:%s\t->\t%s:%s:%s%s"):format(
+			inSourceMap.file, generatedLine, column.generatedColumn,
+			column.source, column.originalLine, column.originalColumn,
+			column.name and " ("..column.name..")" or ""
+		))
+	end
+end
 
 print_info("-- Finished --")
