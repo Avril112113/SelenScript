@@ -41,7 +41,7 @@ if #errors > 0 then
 	end
 end
 
-write_file("test_ss_built_grammar.relabel", parser.grammar_src)
+write_file("test_ss_built_grammar.relabel", parser ~= nil and parser.grammar_src or "")
 
 if parser == nil then
 	print_warn("Exit early, parser object is nil")

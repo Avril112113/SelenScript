@@ -13,7 +13,7 @@ local Parser = {}
 Parser.__index = Parser
 
 
----@return Parser, Error[]
+---@return Parser?, Error[]
 function Parser.new()
 	local ok, built_grammar, grammar_build_errors = Grammar.build()
 	if not ok then return nil, grammar_build_errors end

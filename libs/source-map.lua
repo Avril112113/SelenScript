@@ -76,10 +76,10 @@ end)()
 ---@field file string
 ---@field sourceRoot string
 ---@field sources string[]
----@field sourcesKVMap table<string,string>
+---@field sourcesKVMap table<string,integer>
 ---@field sourcesContent table<string,string>
 ---@field names string[]
----@field namesKVMap table<string,string>
+---@field namesKVMap table<string,integer>
 ---@field mappings SourceMapColumnMapping[][] # array<generatedLine, SourceMapFileMapping[sorted:>OriginalColumn]>
 --- NOTE: originalLine and originalColumn starts at 1 (not for the json output)
 local SourceMap = {

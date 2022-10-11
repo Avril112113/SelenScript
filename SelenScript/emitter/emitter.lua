@@ -31,7 +31,7 @@ end
 ---@field args table<string, any> @ Used for creating a copy emitter
 ---@field defs table<string, fun(self:Emitter, node:ASTNode):any>
 ---@field parts string[]
----@field config table<string, string>
+---@field config table<string, any>
 local Emitter = {
 	Emitters = {
 		lua = require "SelenScript.emitter.emit_lua",

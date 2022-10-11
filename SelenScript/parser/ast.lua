@@ -5,11 +5,10 @@ local re = require "drelabel"
 
 
 --- Typing
----@class ASTNode
+---@class ASTNode : table
 ---@field type string
----@field start number
----@field finish number
----@type table<any, any>
+---@field start integer
+---@field finish integer
 local ASTNode = {}
 
 
@@ -194,7 +193,7 @@ function AST:_climbPrecedence(data, min_precedence)
 	end
 	return lhs
 end
----@param data ASTNode[]
+---@param data ASTNode[]|{start:integer, finish:integer}
 ---@param min_precedence number
 function AST:climbPrecedence(data, min_precedence)
 	min_precedence = min_precedence or 1

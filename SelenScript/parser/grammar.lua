@@ -23,9 +23,9 @@ local Grammar = {
 
 
 --- Build the relabel grammar from the seperated files using RePreProcess
----@param declarations table<string,boolean>|nil @ Potentially mutated during call
----@param entry_point string @ Override the entry point
----@return boolean, string, Error[] @ TODO: make all errors ErrorBase, they are not currently
+---@param declarations table<string,boolean>? @ Potentially mutated during call
+---@param entry_point string? @ Override the entry point
+---@return boolean, string?, Error[] @ TODO: make all errors ErrorBase, they are not currently
 function Grammar.build(declarations, entry_point)
 	declarations = declarations or {}
 	local rpp = RePreProcess.new()
@@ -67,7 +67,7 @@ function Grammar.build(declarations, entry_point)
 	return true, result, all_errors
 end
 
----@return boolean, LPegGrammar
+---@return boolean, LPegGrammar, AST
 function Grammar.compile(built_grammar)
 	local ast_defs = AST.new()
 	local ok, regrammar = pcall(ReLabel.compile, built_grammar, ast_defs)

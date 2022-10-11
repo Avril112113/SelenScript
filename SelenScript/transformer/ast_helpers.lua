@@ -43,9 +43,9 @@ ASTNodes["namelist"] = function(node, ...)
 end
 
 ---@param node ASTNode @ Used for source position info
----@param how string
+---@param how string?
 ---@param expr ASTNode
----@param index ASTNode|nil
+---@param index ASTNode?
 ---@return ASTNode
 function ASTNodes.index(node, how, expr, index)
 	return {
@@ -99,7 +99,7 @@ end
 ---@param node ASTNode @ Used for source position info
 ---@param condition ASTNode
 ---@param block ASTNode
----@param _else ASTNode|nil
+---@param _else ASTNode?
 ---@return ASTNode
 ASTNodes["if"] = function(node, condition, block, _else)
 	return {
@@ -115,7 +115,7 @@ end
 ---@param node ASTNode @ Used for source position info
 ---@param condition ASTNode
 ---@param block ASTNode
----@param _else ASTNode|nil
+---@param _else ASTNode?
 ---@return ASTNode
 ASTNodes["elseif"] = function(node, condition, block, _else)
 	return {
@@ -142,7 +142,7 @@ end
 
 ---@param node ASTNode @ Used for source position info
 ---@param names ASTNode @ `varlist` or `attributenamelist`
----@param values ASTNode|nil @ `expressionlist`
+---@param values ASTNode? @ `expressionlist`
 ---@return ASTNode
 ASTNodes["assign"] = function(node, scope, names, values)
 	return {
@@ -193,7 +193,7 @@ end
 
 ---@param node ASTNode @ Used for source position info
 ---@param name string
----@param attribute string|nil
+---@param attribute string?
 ---@return ASTNode
 ASTNodes["attributename"] = function(node, name, attribute)
 	return {

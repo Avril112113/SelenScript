@@ -1,4 +1,7 @@
 ---@class LPegGrammar
+local ReGrammar = {}
+
 ---@param source string
----@return table, string, number
-local ReGrammar = {match=function(self,source)end}
+---@return table
+function ReGrammar:match(source)
+end

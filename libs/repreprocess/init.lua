@@ -129,7 +129,7 @@ local Emitter = {}
 Emitter.__index = Emitter
 RePreProcess.Emitter = Emitter
 
----@param declarations table|nil
+---@param declarations table?
 function Emitter.new(declarations)
 	return setmetatable({
 		declarations = declarations or {},
@@ -246,11 +246,12 @@ function RePreProcess.new()
 	}, RePreProcess)
 end
 
+---@return boolean ok, table|string result, table errors
 function RePreProcess:process(src, args)
 	errors = {}
 	local result, err, errPos = grammar:match(src)
 	if result == nil then
-		return false, "Internal error: Failed to parse grammar at " .. tostring(errPos) .. " : " .. err
+		return false, "Internal error: Failed to parse grammar at " .. tostring(errPos) .. " : " .. err, errors
 	end
 	-- if #errors > 0 then
 	-- 	print("-- Parsing errors: --")
@@ -262,13 +263,13 @@ function RePreProcess:process(src, args)
 	-- print("-- Parting result: --")
 	-- require 'pl.pretty'.dump(result)
 	if result.type ~= "chunk" then
-		return false, "Internal error: AST root node is not a 'chunk'"
+		return false, "Internal error: AST root node is not a 'chunk'", errors
 	end
 	table.insert(self.chunks, result)
 	return true, result, errors
 end
 
----@param declarations table<string,boolean>|nil @ Potentially mutated during call
+---@param declarations table<string,boolean>? @ Potentially mutated during call
 function RePreProcess:generate(declarations)
 	local emitter = Emitter.new(declarations)
 	for _, chunk in ipairs(self.chunks) do

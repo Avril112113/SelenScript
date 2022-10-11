@@ -23,7 +23,7 @@ local function read_file(path)
 end
 
 local original_traceback = debug.traceback
----@param thread thread
+---@param thread thread?
 ---@param f number|fun()
 ---@param what string|"n"|"S"|"l"|"t"|"u"|"f"|"L"
 local function getinfo(thread, f, what)
@@ -33,9 +33,9 @@ local function getinfo(thread, f, what)
 	return debug.getinfo(thread, f, what)
 end
 
----@param thread thread|nil
----@param message any|nil
----@param level number|nil
+---@param thread thread?
+---@param message any?
+---@param level number?
 local function traceback_custom(thread, message, level)
 	local iterLevel = level+2
 	local stack = {}
@@ -86,9 +86,9 @@ local function traceback_custom(thread, message, level)
 	return table.concat(parts)
 end
 
----@param thread thread|nil
----@param message any|nil
----@param level number|nil
+---@param thread thread?
+---@param message any?
+---@param level number?
 ---@overload fun(message: string, level: number): string
 ---@overload fun(message: string): string
 ---@return string

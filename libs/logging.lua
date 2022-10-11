@@ -1,11 +1,9 @@
 -- Created by: Dude112113
--- Version: 1.1
+-- Version: 1.2
 local original_print = print
 
 local socket = require "socket"
 local colors = require "terminal_colors"
----@type DLoop
-local _, DLoop = xpcall(require, function() end, "DLoop")
 
 
 -- TODO: log to file
@@ -34,23 +32,14 @@ end
 function logging._log(log_type, s, ...)
 	local source = logging.get_source()
 	local prefix = colors.fix .. "[" .. log_type .. colors.fix .. "]\t" .. colors.reset .. source .. colors.fix
-	if DLoop ~= nil then
-		if DLoop.current_task_id ~= nil then
-			prefix = prefix .. " <task:" .. colors.reset .. tostring(DLoop.current_task_id) .. colors.fix .. ">: "
-		else
-			prefix = prefix .. " <" .. colors.reset .. "MAIN" .. colors.fix .. ">: "
-		end
-	else
-		prefix = prefix .. ": "
-	end
-	local msg = {prefix .. colors.reset .. tostring(s)}
+	prefix = prefix .. ": "
+	local msgParts = {prefix .. colors.reset .. tostring(s)}
 	for _, v in ipairs({...}) do
-		table.insert(msg, "\t")
-		table.insert(msg, tostring(v))
+		table.insert(msgParts, "\t")
+		table.insert(msgParts, tostring(v))
 	end
-	table.insert(msg, colors.reset)
-	msg = table.concat(msg)
-	local str = msg:gsub("(\r?\n\r?)", "%1" .. colors.strip(prefix):gsub("[^\t]", " "))
+	table.insert(msgParts, colors.reset)
+	local str = table.concat(msgParts):gsub("(\r?\n\r?)", "%1" .. colors.strip(prefix):gsub("[^\t]", " "))
 	original_print(str)
 	if logging.sock ~= nil then
 		logging.sock:send(str .. "\n")
@@ -87,11 +76,6 @@ function logging.print_error(s, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_error = logging.print_error
-
-
-if DLoop ~= nil then
-	DLoop.error_printer = print_error
-end
 
 
 --- Requires LuaJIT

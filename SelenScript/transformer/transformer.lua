@@ -4,7 +4,7 @@ local TransformerErrors = require "SelenScript.transformer.errors"
 
 
 ---@class Transformer
----@field defs table<string, fun(node:ASTNode):any>
+---@field defs table<string, fun(self:Transformer, node:ASTNode):any>
 local Transformer = {
 	VAR_NAME_BASE = "___SS_",
 	Transformers = {
@@ -87,7 +87,7 @@ end
 --- Recursively gets the parent of a node until it reaches a specific type of node and returns
 ---@param node ASTNode
 ---@param node_type string|fun(node:ASTNode):boolean
----@return ASTNode, ASTNode @ Node matches node_type, child of parent that matched node_type
+---@return ASTNode?, ASTNode @ Node matches node_type, child of parent that matched node_type
 function Transformer:find_parent_of_type(node, node_type, depth)
 	depth = depth or 0
 	local parent = self:get_parent(node)
