@@ -213,7 +213,7 @@ function TestLib.assert_table_match(tbl, partial, _recur)
 		local function processFailedField(fields, original, expected, path)
 			for k, v in pairs(fields) do
 				if type(v) == "table" then
-					processFailedField(v, original[k], expected[k])
+					processFailedField(v, original[k], expected[k], path .. "." .. k)
 				else
 					local expectedQuote = type(expected[k]) == "string" and (expected[k]:find("\"") and "'" or "\"") or "`"
 					local originalQuote = type(original[k]) == "string" and (original[k]:find("\"") and "'" or "\"") or "`"
