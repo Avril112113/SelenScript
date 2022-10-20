@@ -4,7 +4,7 @@ local ParserTestUtils = require "tests.1_parser.parserTestUtils"
 local AST = require "SelenScript.parser.ast"
 
 
-TestLib.test("assign", function ()
+TestLib.test("decorator", function ()
 	local parser = TestLib.assert(ParserTestUtils.getTestParser())
 	local ast, errors, comments = ParserTestUtils.parse(parser, [[
 		@testdecsimple
