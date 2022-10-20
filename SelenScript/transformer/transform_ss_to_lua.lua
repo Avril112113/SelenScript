@@ -69,7 +69,7 @@ end
 
 ---@param self Transformer_SS_to_Lua
 ---@param node ASTNode
-TransformerDefs["conditional_block"] = function(self, node)
+TransformerDefs["conditional_stmt"] = function(self, node)
 	local block = ASTNodes.block(node, unpack(node))
 	return ASTNodes["if"](node, node.condition, block)
 end

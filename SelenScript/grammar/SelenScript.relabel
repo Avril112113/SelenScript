@@ -6,7 +6,7 @@ stmt_continue	<- {| {:type:''->"continue":}
 						{:finish:{}:}
 					|}
 
-stmt_conditional	<- {| {:type:''->"conditional_block":}
+stmt_conditional	<- {| {:type:''->"conditional_stmt":}
 							{:start:{}:}
 							IF Sc {:condition:expression:} Sc THEN Sc
 							(
