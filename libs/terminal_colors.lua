@@ -1,4 +1,5 @@
 -- Created by: Dude112113
+-- Version: 1.1
 
 local colors = setmetatable({
 	os = love ~= nil and love.system.getOS() or "Windows"
@@ -9,7 +10,7 @@ local colors = setmetatable({
 })
 
 function colors.strip(s)
-	return s:gsub("\x1b[%[%]][%d;]*m", "")
+	return (s:gsub("\x1b[%[%]][%d;]*m", ""))
 end
 
 colors.CSI = "\x1b["

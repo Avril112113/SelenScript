@@ -4,6 +4,7 @@
 
 local plpath = require "pl.path"
 local pldir = require "pl.dir"
+local logging = require "logging"
 local colors = require "terminal_colors"
 
 
@@ -14,13 +15,13 @@ local colors = require "terminal_colors"
 ---@field f fun()
 ---@field log TestLib.TestLog[]
 ---@field status string
----@field msg string
+---@field msg string?
 local TestResult
 
 ---@class TestLib.TestResults
 ---@field path string
 ---@field status string
----@field statusMsg string
+---@field statusMsg string?
 ---@field tests TestLib.TestResult[]
 ---@field log TestLib.TestLog[]
 local TestsResult
@@ -28,6 +29,16 @@ local TestsResult
 
 ---@class TestLib
 local TestLib = {
+	STATUS = {
+		-- TestResult
+		FAIL = colors.bright_red .. "FAIL" .. colors.reset,
+		PASS = colors.bright_green .. "PASS" .. colors.reset,
+		-- TestResults
+		UNKNOWN = colors.bright_yellow .. "UNKNOWN" .. colors.reset,
+		FAIL_LOAD = colors.bright_red .. "FAIL_LOAD" .. colors.reset,
+		FAIL_EXEC = colors.bright_red .. "FAIL_EXEC" .. colors.reset,
+		LOADED = colors.bright_green .. "LOADED" .. colors.reset,
+	},
 }
 
 
@@ -39,51 +50,52 @@ function TestLib.run_tests(basepath, testPathResults)
 	for path, isDir in pldir.dirtree(basepath) do
 		if not isDir then
 			local filename = plpath.basename(path)
-			if filename:gsub("%d%.+", ""):sub(1, 5) == "test_" and filename:sub(-4, -1) == ".lua" then
+			if filename:gsub("%d%_+", ""):sub(1, 5) == "test_" and filename:sub(-4, -1) == ".lua" then
 				---@type TestLib.TestResults
 				local testResults = {
 					path = path,
 					tests = {},
 					log = {},
+					status = TestLib.STATUS.UNKNOWN,
+					statusMsg = nil,
 				}
 				testPathResults[path] = testResults
 				table.insert(testPathResults, testResults)
 				TestLib._testResult = testResults
 				---@type TestLib.TestResult
 				local currentTest
-				local f, loadErr = loadfile(path, "t", setmetatable({
-					print = function(...)
-						table.insert(currentTest ~= nil and currentTest.log or testResults.log, {level=1, ...})
-					end,
-					print_error = function(...)
-						table.insert(currentTest ~= nil and currentTest.log or testResults.log, {level=2, ...})
-					end,
-				}, {__index=_G}))
+				local f, loadErr = loadfile(path, "t")
 				if f == nil then
-					testResults.status = "FAIL_LOAD"
+					testResults.status = TestLib.STATUS.FAIL_LOAD
 					testResults.statusMsg = loadErr or "NO_MSG"
-					table.insert(testResults.log, {level=2, testResults.status, testResults.statusMsg})
+					table.insert(testResults.log, {level=logging.LEVELS.ERROR, testResults.status, testResults.statusMsg})
 				else
+					local original_log = logging._log
+					logging._log = function(log_type, ...)
+						table.insert(currentTest ~= nil and currentTest.log or testResults.log, {level=log_type, ...})
+					end
 					xpcall(f, function(msg)
-						testResults.status = "FAIL_EXEC"
+						testResults.status = TestLib.STATUS.FAIL_EXEC
 						testResults.statusMsg = debug.traceback(msg, 1)
-						table.insert(testResults.log, {level=2, testResults.status, testResults.statusMsg})
+						table.insert(testResults.log, {level=logging.LEVELS.ERROR, testResults.status, testResults.statusMsg})
 					end)
+					testResults.status = TestLib.STATUS.LOADED
 					for _, test in ipairs(testResults.tests) do
 						currentTest = test
-						test.status = "PASS"
+						test.status = TestLib.STATUS.PASS
 						xpcall(test.f, function(msg)
-							test.status = "FAIL"
+							test.status = TestLib.STATUS.FAIL
 							test.msg = msg
 							test.trace = debug.traceback(msg, 1)
-							table.insert(test.log, {level=2, test.trace})
+							table.insert(test.log, {level=logging.LEVELS.ERROR, test.trace})
 						end)
 					end
+					logging._log = original_log
 				end
+				TestLib._testResult = nil
 			end
 		end
 	end
-	TestLib._testResult = nil
 	return testPathResults
 end
 
@@ -93,24 +105,25 @@ function TestLib.print_results(testPathResults, print_logs)
 	for _, testResults in ipairs(testPathResults) do
 		local passCount = 0
 		for _, test in ipairs(testResults.tests) do
-			if test.status == "PASS" then
+			if test.status == TestLib.STATUS.PASS then
 				passCount = passCount + 1
 			end
 		end
-		print_info(("~ File: %s (%s%s/%s%s)"):format(
+		print_info(("~ File: %s (%s) (%s%s/%s%s passed)"):format(
 			testResults.path,
+			testResults.status .. (testResults.statusMsg and " : "..testResults.statusMsg or ""),
 			passCount == #testResults.tests and colors.bright_green or colors.bright_red, passCount, #testResults.tests, colors.reset
 		))
 		for _, log in ipairs(testResults.log) do
-			(log.level == 2 and print_error or print_info)("  " .. TestLib._stringify_log(log, "  "))
+			logging._log(log.level, "  " .. TestLib._stringify_log(log, "  "))
 		end
 		for _, test in ipairs(testResults.tests) do
-			local failed = test.status ~= "PASS"
+			local failed = test.status ~= TestLib.STATUS.PASS
 			local coloredStatus = failed and (colors.bright_red .. test.status .. colors.reset) or (colors.bright_green .. test.status .. colors.reset)
 			print_info(("  ~ Test: %s\t(%s)"):format(test.name, coloredStatus))
 			if failed and print_logs == true then
 				for _, log in ipairs(test.log) do
-					(log.level == 2 and print_error or print_info)("    " .. TestLib._stringify_log(log, "    "))
+					logging._log(log.level, "    " .. TestLib._stringify_log(log, "    "))
 				end
 			end
 		end
@@ -123,20 +136,18 @@ function TestLib.write_results(testPathResults)
 		local logFile = assert(io.open(testResults.path .. ".log", "w"))
 		local passCount = 0
 		for _, test in ipairs(testResults.tests) do
-			if test.status == "PASS" then
+			if test.status == TestLib.STATUS.PASS then
 				passCount = passCount + 1
 			end
 		end
-		logFile:write(("%s\n%s/%s tests passed.\n\n"):format(testResults.path, passCount, #testResults.tests))
+		logFile:write(("%s (%s)\n%s/%s tests passed.\n\n"):format(testResults.path, colors.strip(testResults.status), passCount, #testResults.tests))
 		for _, log in ipairs(testResults.log) do
-			local prefix = log.level == 2 and "[ERROR] " or "[INFO]  "
-			logFile:write(prefix .. TestLib._stringify_log(log, "        ") .. "\n")
+			logFile:write(colors.strip("[" .. log.level .. "]\t" .. TestLib._stringify_log(log, "        ") .. "\n"))
 		end
 		for _, test in ipairs(testResults.tests) do
-			logFile:write(("~~~~~~~ Test: %s\t(%s)\n"):format(test.name, test.status))
+			logFile:write(("~~~~~~~ Test: %s\t(%s)\n"):format(test.name, colors.strip(test.status)))
 			for _, log in ipairs(test.log) do
-				local prefix = log.level == 2 and "[ERROR] " or "[INFO]  "
-				logFile:write(prefix .. TestLib._stringify_log(log, "        ") .. "\n")
+				logFile:write(colors.strip("[" .. log.level .. "]\t" .. TestLib._stringify_log(log, "        ") .. "\n"))
 			end
 			logFile:write("\n")
 		end

@@ -1,5 +1,5 @@
 -- Created by: Dude112113
--- Version: 1.2.1
+-- Version: 1.3
 local original_print = print
 
 local socket = require "socket"
@@ -8,8 +8,15 @@ local colors = require "terminal_colors"
 
 -- TODO: log to file
 local logging = {
-	logging_source = debug.getinfo(1).source
+	logging_source = debug.getinfo(1).source,
+	LEVELS = {
+		DEBUG = colors.debug .. "DEBUG" .. colors.reset,
+		INFO = colors.info .. "INFO" .. colors.reset,
+		WARN = colors.warn .. "WARN" .. colors.reset,
+		ERROR = colors.error .. "ERROR" .. colors.reset,
+	},
 }
+logging.LEVELS.DEFAULT = logging.LEVELS.DEBUG
 
 
 function logging.get_source()
@@ -49,14 +56,22 @@ end
 ---@param s any
 ---@param ... any
 function logging.print(s, ...)
-	logging._log(colors.debug .. "DEBUG" .. colors.reset, s, ...)
+	logging._log(logging.LEVELS.DEFAULT, s, ...)
 end
 print = logging.print
 
 ---@param s any
 ---@param ... any
+function logging.print_debug(s, ...)
+	logging._log(logging.LEVELS.DEFAULT, s, ...)
+end
+---@diagnostic disable-next-line: lowercase-global
+print_debug = logging.print_debug
+
+---@param s any
+---@param ... any
 function logging.print_info(s, ...)
-	logging._log(colors.info .. "INFO" .. colors.reset, s, ...)
+	logging._log(logging.LEVELS.INFO, s, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_info = logging.print_info
@@ -64,7 +79,7 @@ print_info = logging.print_info
 ---@param s any
 ---@param ... any
 function logging.print_warn(s, ...)
-	logging._log(colors.warn .. "WARN" .. colors.reset, s, ...)
+	logging._log(logging.LEVELS.WARN, s, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_warn = logging.print_warn
@@ -72,7 +87,7 @@ print_warn = logging.print_warn
 ---@param s any
 ---@param ... any
 function logging.print_error(s, ...)
-	logging._log(colors.error .. "ERROR" .. colors.reset, s, ...)
+	logging._log(logging.LEVELS.ERROR, s, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_error = logging.print_error
