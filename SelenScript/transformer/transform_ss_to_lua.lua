@@ -3,11 +3,12 @@ local ASTHelpers = require "SelenScript.transformer.ast_helpers"
 local ASTNodes = ASTHelpers.Nodes
 
 
----@type Transformer
+---@class Transformer_SS_to_Lua : Transformer
 local TransformerDefs = {}
 
 
 local _loop_types = {["while"]=true,["foriter"]=true,["forrange"]=true,["repeat"]=true}
+---@param self Transformer_SS_to_Lua
 ---@param node ASTNode
 TransformerDefs["continue"] = function(self, node)
 	local parent_loop = self:find_parent_of_type(node, function(parent) return _loop_types[parent.type] end)
@@ -31,11 +32,16 @@ TransformerDefs["continue"] = function(self, node)
 	return nil
 end
 
+---@param self Transformer_SS_to_Lua
 ---@param node ASTNode
 TransformerDefs["ifexpr"] = function(self, node)
 	-- TODO: We might sometimes be able to just use lua expressions instead of needing the `if` statement before the assign
 	--       This will probably depend on the type of whats used
 	local block, stmt = self:find_parent_of_type(node, "block")
+	if block == nil then
+		self:add_error("INTERNAL", node, "`ifexpr` failed to find a parent block node.")
+		return nil
+	end
 	local stmt_idx = Utils.find_key(block, stmt)
 	local var_name = self:get_var("ifexpr")
 	local local_assign_node = ASTNodes.assign(
@@ -61,16 +67,22 @@ TransformerDefs["ifexpr"] = function(self, node)
 	return ASTNodes.index(node, nil, ASTNodes.name(node, var_name))
 end
 
+---@param self Transformer_SS_to_Lua
 ---@param node ASTNode
 TransformerDefs["conditional_block"] = function(self, node)
 	local block = ASTNodes.block(node, unpack(node))
 	return ASTNodes["if"](node, node.condition, block)
 end
 
+---@param self Transformer_SS_to_Lua
 ---@param node ASTNode
 TransformerDefs["functiondef"] = function(self, node)
 	if node.decorators ~= nil and #node.decorators > 0 then
 		local block, stmt = self:find_parent_of_type(node, "block")
+		if block == nil then
+			self:add_error("INTERNAL", node, "`functiondef` failed to find a parent block node.")
+			return nil
+		end
 		local stmt_idx = Utils.find_key(block, stmt)
 		local func_name = node.name  -- TODO: deal with ":" in node.name
 		local call_node = func_name
