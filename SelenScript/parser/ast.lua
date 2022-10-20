@@ -9,6 +9,7 @@ local re = require "drelabel"
 ---@field type string
 ---@field start integer
 ---@field finish integer
+---@field [any] any
 local ASTNode = {}
 
 

@@ -1,5 +1,5 @@
 -- Created by: Dude112113
--- Version: 1.2
+-- Version: 1.2.1
 local original_print = print
 
 local socket = require "socket"
@@ -27,8 +27,8 @@ function logging.get_source()
 end
 
 ---@param log_type string
----@param s string
----@vararg string
+---@param s any
+---@param ... any
 function logging._log(log_type, s, ...)
 	local source = logging.get_source()
 	local prefix = colors.fix .. "[" .. log_type .. colors.fix .. "]\t" .. colors.reset .. source .. colors.fix
@@ -46,31 +46,31 @@ function logging._log(log_type, s, ...)
 	end
 end
 
----@param s string
----@vararg string
+---@param s any
+---@param ... any
 function logging.print(s, ...)
 	logging._log(colors.debug .. "DEBUG" .. colors.reset, s, ...)
 end
 print = logging.print
 
----@param s string
----@vararg string
+---@param s any
+---@param ... any
 function logging.print_info(s, ...)
 	logging._log(colors.info .. "INFO" .. colors.reset, s, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_info = logging.print_info
 
----@param s string
----@vararg string
+---@param s any
+---@param ... any
 function logging.print_warn(s, ...)
 	logging._log(colors.warn .. "WARN" .. colors.reset, s, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_warn = logging.print_warn
 
----@param s string
----@vararg string
+---@param s any
+---@param ... any
 function logging.print_error(s, ...)
 	logging._log(colors.error .. "ERROR" .. colors.reset, s, ...)
 end
