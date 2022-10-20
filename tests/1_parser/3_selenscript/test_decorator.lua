@@ -1,14 +1,13 @@
 local TestLib = require "testlib"
 
 local ParserTestUtils = require "tests.1_parser.parserTestUtils"
-local AST = require "SelenScript.parser.ast"
 
 
 TestLib.test("decorator", function ()
 	local parser = TestLib.assert(ParserTestUtils.getTestParser())
 	local ast, errors, comments = ParserTestUtils.parse(parser, [[
-		@testdecsimple
-		@testdeccomplex()
+		@testDecSimple
+		@testDecComplex()
 		function test()
 		end
 	]])
@@ -26,14 +25,14 @@ TestLib.test("decorator", function ()
 						type = "decorator",
 						expr = {
 							type = "index",
-							expr = { type="name", name="testdecsimple" }
+							expr = { type="name", name="testDecSimple" }
 						}
 					},
 					{
 						type = "decorator",
 						expr = {
 							type = "index",
-							expr = { type="name", name="testdeccomplex" },
+							expr = { type="name", name="testDecComplex" },
 							index = {
 								type = "index",
 								expr = { type = "call" }

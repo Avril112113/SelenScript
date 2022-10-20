@@ -1,16 +1,12 @@
 local TestLib = require "testlib"
 
 local ParserTestUtils = require "tests.1_parser.parserTestUtils"
-local AST = require "SelenScript.parser.ast"
 
 
-TestLib.test("continue", function ()
+TestLib.test("ifexpr", function ()
 	local parser = TestLib.assert(ParserTestUtils.getTestParser())
 	local ast, errors, comments = ParserTestUtils.parse(parser, [[
-		while true do
-			continue
-			continue
-		end
+		_ = if true then 1 else 0
 	]])
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
@@ -20,11 +16,15 @@ TestLib.test("continue", function ()
 		block = {
 			type = "block",
 			{
-				type = "while",
-				block = {
-					type = "block",
-					{ type="continue" },
-					{ type="continue" }
+				type = "assign",
+				values = {
+					type = "expressionlist",
+					{
+						type = "ifexpr",
+						lhs = { type="numeral" },
+						condition = { type="boolean" },
+						rhs = { type="numeral" },
+					}
 				}
 			}
 		}
