@@ -14,4 +14,51 @@ TestLib.test("assign", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
+	TestLib.assert_table_match(ast, {
+		type = "chunk",
+		block = {
+			type = "block",
+			{
+				type = "assign",
+				scope = "local",
+				values = {},
+				names = {
+					type = "attributenamelist",
+					{
+						type = "attributename",
+						name = { name="_local_novalue" }
+					},
+				},
+			},
+			{
+				type = "assign",
+				scope = "local",
+				values = {
+					type = "expressionlist",
+					{ type="nil" }
+				},
+				names = {
+					type = "attributenamelist",
+					{
+						type = "attributename",
+						name = { name="_local_value" }
+					},
+				},
+			},
+			{
+				type = "assign",
+				values = {
+					type = "expressionlist",
+					{ type="nil" }
+				},
+				names = {
+					type = "varlist",
+					{
+						type = "index",
+						expr = { name="_global_value" }
+					},
+				},
+			},
+		}
+	})
 end)
