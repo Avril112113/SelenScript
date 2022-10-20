@@ -1,6 +1,8 @@
 local Utils = {}
 
 
+---@param path string
+---@return string data
 function Utils.readFile(path)
 	local f = assert(io.open(path, "r"))
 	local data = f:read("*a")
@@ -8,16 +10,22 @@ function Utils.readFile(path)
 	return data
 end
 
+---@param modpath string
+---@return string
 function Utils.modPathParent(modpath)
-	return modpath:gsub("(.*)%..*$","%1")
+	return (modpath:gsub("(.*)%..*$","%1"))
 end
 
+---@param modpath string
+---@return string
 function Utils.modPathToPath(modpath)
-	return modpath:gsub("%.", "/")
+	return (modpath:gsub("%.", "/"))
 end
 
+---@param modpath string
+---@return string
 function Utils.modPathToDir(modpath)
-	return modpath:gsub("%.", "/"):gsub("(.*)/.*$","%1")
+	return (modpath:gsub("%.", "/"):gsub("(.*)/.*$","%1"))
 end
 
 function Utils.merge(from, into, overwrite)
@@ -39,6 +47,9 @@ function Utils.merge(from, into, overwrite)
 	return into
 end
 
+---@generic T : table
+---@param tbl T
+---@return T
 function Utils.shallowcopy(tbl)
 	local t = {}
 	for i, v in pairs(tbl) do
@@ -47,6 +58,9 @@ function Utils.shallowcopy(tbl)
 	return t
 end
 
+---@generic T : table
+---@param tbl T
+---@return T
 function Utils.deepcopy(tbl)
 	local t = {}
 	for i, v in pairs(tbl) do
@@ -59,6 +73,9 @@ function Utils.deepcopy(tbl)
 	return t
 end
 
+---@param tbl table
+---@param value any
+---@return string|any?
 function Utils.find_key(tbl, value)
 	for i, v in pairs(tbl) do
         if v == value then
