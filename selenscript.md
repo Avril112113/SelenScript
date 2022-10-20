@@ -15,8 +15,8 @@ end
 function f(foo: number) -> number
 	return -foo
 end
--- Use a string for more dynamic typing, any valid SelenScript is valid within the string
-GetLevel: function(tbl: table) -> "tbl.GetLevel()"
+-- Use a backtick string for more dynamic typing, any valid SelenScript expression is valid within the backticks
+GetLevel: function(tbl: table) -> `tbl.GetLevel()`
 g: table<string, number>
 h: array<string>
 local i1: string, i2: string, i3: number = "i1", "i2", 3
@@ -77,7 +77,7 @@ function gz(b)
 	::later::
 	return "later happened"
 end
-assert(gz(false), "early happened")
+print(gz(false) == "early happened")
 ```
 The same applies for `for`, `while`, `repeat` and any other expressionable statements.
 
@@ -159,7 +159,7 @@ also variables starting with `__ss_` is reserved, using these may cause unexpect
 `string`  
 `number` int or float  
 `int` whole number  
-`float` floating point number  
+`float` non-whole number (contains decimal)  
 `function`  
 `fun`  Shorthand for `function` (because EmmyLua)  
 `function(arg: ArgType)`  
