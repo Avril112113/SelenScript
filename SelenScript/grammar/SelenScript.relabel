@@ -8,7 +8,7 @@ stmt_continue	<- {| {:type:''->"continue":}
 
 stmt_conditional	<- {| {:type:''->"conditional_stmt":}
 							{:start:{}:}
-							IF Sc {:condition:expression:} Sc THEN Sc
+							IF Sc {:condition:expression:} Sc
 							(
 								stmt_continue
 							  / stmt_break
