@@ -34,10 +34,10 @@ function Parser.new()
 	end
 	local ok, grammar, ast_defs = Grammar.compile(built_grammar)
 	if not ok then
-		---@cast grammar Error
+		---@cast grammar -LPegGrammar
 		return nil, {grammar}
 	end
-	---@cast grammar LPegGrammar
+	---@cast grammar -Error
 
 	local self = setmetatable({
 		grammar_src=built_grammar,

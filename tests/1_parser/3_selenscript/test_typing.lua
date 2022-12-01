@@ -14,7 +14,7 @@ TestLib.test("assignment_type", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",
@@ -34,7 +34,7 @@ TestLib.test("type_args", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",
@@ -55,7 +55,7 @@ TestLib.test("type_special", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",
@@ -75,7 +75,7 @@ TestLib.test("function_type", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",
@@ -98,7 +98,7 @@ TestLib.test("interface", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",

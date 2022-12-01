@@ -13,7 +13,7 @@ TestLib.test("while", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",
@@ -34,7 +34,7 @@ TestLib.test("do", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",
@@ -55,7 +55,7 @@ TestLib.test("forrange", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",
@@ -76,7 +76,7 @@ TestLib.test("foriter", function ()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
-	TestLib.assert_table_match(ast, {
+	TestLib.assert_table_match(ast.block, {
 		type = "chunk",
 		block = {
 			type = "block",

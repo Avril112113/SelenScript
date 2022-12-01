@@ -13,7 +13,7 @@ TestLib.test("Parser.new()", function()
 			print_error((v.id or "NO_ID") .. ": " .. v.msg)
 		end
 	end
-	TestLib.assert(parser ~= nil, "parser ~= nil")  ---@cast parser Parser
+	TestLib.assert(parser ~= nil, "parser ~= nil")  ---@cast parser -?
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	ParserTestUtils.setTestParser(parser)
 end)
@@ -24,4 +24,10 @@ TestLib.test("parser:parse(\"\")", function()
 	TestLib.assert(ast ~= nil, "ast ~= nil")
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	TestLib.assert(#comments <= 0, "#comments <= 0")
+	TestLib.assert_table_match(ast, {
+		type = "source",
+		start = 1,
+		finish = 1,
+		source = ""
+	})
 end)
