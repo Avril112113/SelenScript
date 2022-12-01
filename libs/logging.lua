@@ -1,12 +1,11 @@
 -- Created by: Dude112113
--- Version: 1.3
+-- Version: 1.4
 local original_print = print
 
 local socket = require "socket"
 local colors = require "terminal_colors"
 
 
--- TODO: log to file
 local logging = {
 	logging_source = debug.getinfo(1).source,
 	LEVELS = {
@@ -18,6 +17,14 @@ local logging = {
 }
 logging.LEVELS.DEFAULT = logging.LEVELS.DEBUG
 
+
+function logging.set_log_file(file, overwrite)
+	if logging._log_file ~= nil then
+		logging._log_file:close()
+	end
+	logging._log_file = assert(io.open(file, overwrite and "w" or "a"))
+	return logging
+end
 
 function logging.get_source()
 	local i = 0
@@ -48,6 +55,9 @@ function logging._log(log_type, s, ...)
 	table.insert(msgParts, colors.reset)
 	local str = table.concat(msgParts):gsub("(\r?\n\r?)", "%1" .. colors.strip(prefix):gsub("[^\t]", " "))
 	original_print(str)
+	if logging._log_file ~= nil then
+		logging._log_file:write(os.date("[%x %X]") .. " " .. colors.strip(str) .. "\n")
+	end
 	if logging.sock ~= nil then
 		logging.sock:send(str .. "\n")
 	end
@@ -111,8 +121,10 @@ function logging.windows_enable_ansi()
 	assert(console_handle ~= ffi.C.INVALID_HANDLE_VALUE)
 	local prev_console_mode = ffi.new"int[1]"
 	assert(ffi.C.GetConsoleMode(console_handle, prev_console_mode) ~= 0, "This script must be run from a console application")
+	---@diagnostic disable-next-line: param-type-mismatch
 	assert(ffi.C.SetConsoleMode(console_handle, bit.bor(prev_console_mode[0], ffi.C.ENABLE_VIRTUAL_TERMINAL_PROCESSING or 0)) ~= 0)
 	---@diagnostic enable: undefined-field
+	return logging
 end
 
 function logging.remote_connect(ip, port)
