@@ -33,6 +33,7 @@ end
 ---@field defs table<string, fun(self:Emitter, node:ASTNode):any>
 ---@field config table<string, any>
 -- self_proxy fields
+---@field ast ASTNodeSource
 ---@field parts string[]
 ---@field char_position integer
 ---@field indent_depth integer
@@ -112,10 +113,11 @@ function Emitter:add_space(b)
 	end
 end
 
+--- Checks if a space is required to separate the last character and `s`
+---@param s string|ASTNode
 function Emitter:is_space_required_boundary(s)
 	if type(s) == "table" and s.type ~= nil then
-		---@diagnostic disable-next-line: missing-parameter # Idk why it's complaining with `unpack` :/
-		local emitter = Emitter.new(unpack(self.args))
+		local emitter = self:_create_proxy(self.ast)
 		s = emitter:generate(s)
 	end
 	local char = s:sub(1, 1)
@@ -139,17 +141,24 @@ function Emitter:unindent()
 	self.indent_depth = self.indent_depth - 1
 end
 
----@param ast ASTNode
----@return string, NodeLinkedSourceMap
-function Emitter:generate(ast)
-	local self_proxy = setmetatable({
+--- Creates a proxy of self, with the required limited lifetime variables for emitting.
+---@param ast ASTNodeSource
+function Emitter:_create_proxy(ast)
+	return setmetatable({
+		ast = ast,
 		parts = {},
 		char_position = 1,
 		indent_depth = 0,
 		source_map = SourceMap.new(),
 		visit_path = {},
-		ast = ast,
 	}, {__index=self})
+end
+
+--- Run the emitter to generate the output.
+---@param ast ASTNodeSource
+---@return string, NodeLinkedSourceMap
+function Emitter:generate(ast)
+	local self_proxy = self:_create_proxy(ast)
 	self_proxy:visit(ast)
 	local output = table.concat(self_proxy.parts)
 	return output, self_proxy.source_map

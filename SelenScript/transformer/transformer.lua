@@ -112,11 +112,10 @@ function Transformer:get_var(name)
 	return var_name..n
 end
 
---- Runs a transformer thought an AST in-place
---- NOTE: make sure that the base node being transformed does not get replaced (`ast` param)
----@param ast ASTNodeSource # WARNING: Modified
-function Transformer:transform(ast)
-	local self_proxy = setmetatable({
+--- Creates a proxy of self, with the required limited lifetime variables for transformation.
+---@param ast ASTNodeSource
+function Transformer:_create_proxy(ast)
+	return setmetatable({
 		errors = {},
 		node_parents = {},
 		visit_path = {},  -- For debugging errors
@@ -124,6 +123,13 @@ function Transformer:transform(ast)
 		var_names = {},
 		ast = ast,
 	}, {__index=self})
+end
+
+--- Runs a transformer though the `ast`, mutating the input parameter.
+---@param ast ASTNodeSource # WARNING: Mutated
+function Transformer:transform(ast)
+	-- NOTE: The `ast` param shouldn't be transformed, as that will replace it, causing potentially untransformed ast nodes.
+	local self_proxy = self:_create_proxy(ast)
 	self_proxy:visit(assert(ast, "Missing `ast` argument."))
 	return self_proxy.errors
 end
