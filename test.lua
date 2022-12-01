@@ -48,8 +48,9 @@ if parser == nil then
 	return  -- Make diagnostics happy
 end
 
-local source = read_file("test_input.sel")
-local ast_source, errors, comments = parser:parse(source)
+local input_path = "test_input.sel"
+local source = read_file(input_path)
+local ast_source, errors, comments = parser:parse(source, input_path)
 
 if #errors > 0 then
 	print_error("-- Parse Errors: " .. #errors .. " --")

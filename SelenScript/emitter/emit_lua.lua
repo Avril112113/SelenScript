@@ -157,6 +157,11 @@ end
 ---@param self LuaEmitter
 ---@param node ASTNode # TODO: Node types
 EmitterDefs["functiondef"] = function(self, node)
+	if self.config.functiondef_source and self.ast.file ~= nil then
+		local ln, col = ReLabel.calcline(self.ast.source, node.start)
+		self:add_part(("---@source %s:%i:%i"):format(self.ast.file, ln, col-1))
+		self:add_new_line()
+	end
 	if node.scope == "local" then
 		self:add_part(node.scope)
 		self:add_space()

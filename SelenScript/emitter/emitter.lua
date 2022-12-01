@@ -16,6 +16,7 @@ local EmitterConfig = {
 	space_before_function = false,
 	space_after_function = false,
 	math_always_parenthesised = false,
+	functiondef_source = true,  -- https://github.com/sumneko/lua-language-server/wiki/Annotations#source
 }
 function EmitterConfig.create(from)
 	return Utils.merge(EmitterConfig, Utils.deepcopy(from), false)
