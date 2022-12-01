@@ -269,7 +269,7 @@ function RePreProcess:process(src, args)
 	return true, result, errors
 end
 
----@param declarations table<string,boolean>? @ Potentially mutated during call
+---@param declarations table<string,boolean>? # Potentially mutated during call
 function RePreProcess:generate(declarations)
 	local emitter = Emitter.new(declarations)
 	for _, chunk in ipairs(self.chunks) do

@@ -6,7 +6,7 @@ local ASTHelpers = {}
 local ASTNodes = {}
 ASTHelpers.Nodes = ASTNodes
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
 function ASTNodes.block(node, ...)
@@ -18,7 +18,7 @@ function ASTNodes.block(node, ...)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param name string
 ---@return ASTNode
 function ASTNodes.name(node, name)
@@ -30,7 +30,7 @@ function ASTNodes.name(node, name)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
 ASTNodes["namelist"] = function(node, ...)
@@ -42,7 +42,7 @@ ASTNodes["namelist"] = function(node, ...)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param how string?
 ---@param expr ASTNode
 ---@param index ASTNode?
@@ -58,7 +58,7 @@ function ASTNodes.index(node, how, expr, index)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param args any[]|table|string
 ---@param self nil|boolean
 ---@return ASTNode
@@ -72,7 +72,7 @@ function ASTNodes.call(node, args, self)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param name string|ASTNode
 ---@return ASTNode
 function ASTNodes.label(node, name)
@@ -84,7 +84,7 @@ function ASTNodes.label(node, name)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param name string|ASTNode
 ---@return ASTNode
 ASTNodes["goto"] = function(node, name)
@@ -96,7 +96,7 @@ ASTNodes["goto"] = function(node, name)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param condition ASTNode
 ---@param block ASTNode
 ---@param _else ASTNode?
@@ -112,7 +112,7 @@ ASTNodes["if"] = function(node, condition, block, _else)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param condition ASTNode
 ---@param block ASTNode
 ---@param _else ASTNode?
@@ -128,7 +128,7 @@ ASTNodes["elseif"] = function(node, condition, block, _else)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param block ASTNode
 ---@return ASTNode
 ASTNodes["else"] = function(node, block)
@@ -140,9 +140,9 @@ ASTNodes["else"] = function(node, block)
 	}
 end
 
----@param node ASTNode @ Used for source position info
----@param names ASTNode @ `varlist` or `attributenamelist`
----@param values ASTNode? @ `expressionlist`
+---@param node ASTNode # Used for source position info
+---@param names ASTNode # `varlist` or `attributenamelist`
+---@param values ASTNode? # `expressionlist`
 ---@return ASTNode
 ASTNodes["assign"] = function(node, scope, names, values)
 	return {
@@ -155,7 +155,7 @@ ASTNodes["assign"] = function(node, scope, names, values)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
 ASTNodes["expressionlist"] = function(node, ...)
@@ -167,7 +167,7 @@ ASTNodes["expressionlist"] = function(node, ...)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
 ASTNodes["varlist"] = function(node, ...)
@@ -179,7 +179,7 @@ ASTNodes["varlist"] = function(node, ...)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
 ASTNodes["attributenamelist"] = function(node, ...)
@@ -191,7 +191,7 @@ ASTNodes["attributenamelist"] = function(node, ...)
 	}
 end
 
----@param node ASTNode @ Used for source position info
+---@param node ASTNode # Used for source position info
 ---@param name string
 ---@param attribute string?
 ---@return ASTNode

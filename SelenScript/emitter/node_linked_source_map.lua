@@ -18,15 +18,15 @@ function NodeLinkedSourceMap.new()
 	}, NodeLinkedSourceMap)
 end
 
----@param node ASTNode @ The source node that is being mapped
----@param start number @ The position in the output this node starts
----@param finish number @ The position in the output this node finishes
+---@param node ASTNode # The source node that is being mapped
+---@param start number # The position in the output this node starts
+---@param finish number # The position in the output this node finishes
 function NodeLinkedSourceMap:link(node, start, finish)
 	table.insert(self.links, {node=node, start=start, finish=finish})
 end
 
----@param src string @ The source code for line and column calculations
----@param out string @ The output code for line and column calculations
+---@param src string # The source code for line and column calculations
+---@param out string # The output code for line and column calculations
 function NodeLinkedSourceMap:generate(src, out, srcFile, outFile)
 	table.sort(self.links, function (a, b)
 		return a.start > b.start

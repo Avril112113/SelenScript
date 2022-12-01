@@ -1,6 +1,6 @@
 ---@class FunctionSignature
 local FunctionSignature = {
-	---@type string[] @ type
+	---@type string[] # type
 	args=nil
 }
 
@@ -63,7 +63,7 @@ function overloadedFunctionMT:__call(...)
 		error("Failed to find overload for (" .. strTblValueTypes(args) .. ") and has no default overload.")
 	end
 end
----@param orig function|table @ table = already overloaded function
+---@param orig function|table # table = already overloaded function
 ---@param f function
 ---@param signature FunctionSignature
 local function overload(orig, f, signature)

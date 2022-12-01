@@ -5,6 +5,16 @@ local Grammar = require "SelenScript.parser.grammar"
 local ParserErrors = require "SelenScript.parser.errors"
 
 
+
+--- Unique custom ASTNode type that encompasses the ast of a source, it's start and end are inherited from it's block node.
+---@class ASTNodeSource : ASTNode
+---@field type "source"
+---@field block ASTNode # TODO: Node types
+---@field source string # The plain text source
+---@field file string? # Defines the origin of the source, special value `[stdin]`, path must use `/`
+local ASTNodeSource = nil
+
+
 ---@class Parser
 ---@field ast_defs AST
 ---@field grammar_src string
@@ -51,7 +61,7 @@ function Parser.cleanup_nodes(node)
 end
 
 ---@param source string
-function Parser:parse(source)
+function Parser:parse(source, file)
 	self.ast_defs:init(source)
 	---@type ASTNode, any?, integer?
 	local ast, err, pos = self.grammar:match(source)
@@ -61,7 +71,16 @@ function Parser:parse(source)
 	if err ~= nil then
 		table.insert(self.ast_defs.errors, ParserErrors.SYNTAX_UNIDENTIFIED({pos=pos,err=err,ast=ast}, re.calcline(source, pos), err))
 	end
-	return ast, self.ast_defs.errors, self.ast_defs.comments
+	---@type ASTNodeSource
+	local ast_source = {
+		type = "source",
+		start = ast.start,
+		finish = ast.finish,
+		source = source,
+		block = ast,
+		file = file,
+	}
+	return ast_source, self.ast_defs.errors, self.ast_defs.comments
 end
 
 

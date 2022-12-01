@@ -2,6 +2,7 @@ local Utils = require "SelenScript.utils"
 local SourceMap = require "SelenScript.emitter.node_linked_source_map"
 
 
+-- TODO: Make emitter config seperated for each emitter type
 ---@class EmitterConfig
 local EmitterConfig = {
 	--- All Emitters
@@ -28,10 +29,15 @@ end
 
 
 ---@class Emitter
----@field args table<string, any> @ Used for creating a copy emitter
+---@field args table<string, any> # Used for creating a copy emitter
 ---@field defs table<string, fun(self:Emitter, node:ASTNode):any>
----@field parts string[]
 ---@field config table<string, any>
+-- self_proxy fields
+---@field parts string[]
+---@field char_position integer
+---@field indent_depth integer
+---@field source_map NodeLinkedSourceMap
+---@field visit_path string[] # For debugging errors
 local Emitter = {
 	Emitters = {
 		lua = require "SelenScript.emitter.emit_lua",
@@ -40,8 +46,8 @@ local Emitter = {
 Emitter.__index = Emitter
 
 
----@param target string @ The emitter to use
----@param config EmitterConfig @ Config modifications, any un-suppied values use defaults
+---@param target string # The emitter to use
+---@param config EmitterConfig # Config modifications, any un-supplied values use defaults
 function Emitter.new(target, config)
 	config = config or {}
 	local self = setmetatable({
@@ -56,13 +62,13 @@ end
 
 ---@param node ASTNode
 function Emitter:visit(node)
-	return self:_visit(node.type, node)
+	return self:visit_type(node.type, node)
 end
 
---- Used by EmitterDef to reduce code duplication
+--- Used by EmitterDef's to reduce code duplication
 ---@param name string
 ---@param node ASTNode
-function Emitter:_visit(name, node)
+function Emitter:visit_type(name, node)
 	if type(node) ~= "table" or node.type == nil then
 		print_error("_visit(node) didn't get a node but instead \"" .. tostring(node) .. "\"")
 		return
@@ -72,7 +78,7 @@ function Emitter:_visit(name, node)
 	else
 		local start = self.char_position
 		table.insert(self.visit_path, name)
-		self.defs[name](self.self_proxy, node)
+		self.defs[name](self, node)
 		self.source_map:link(node, start, self.char_position)
 		local t = table.remove(self.visit_path)
 		assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
@@ -108,7 +114,7 @@ end
 
 function Emitter:is_space_required_boundary(s)
 	if type(s) == "table" and s.type ~= nil then
-		---@diagnostic disable-next-line: missing-parameter @ Idk why it's complaining with `unpack` :/
+		---@diagnostic disable-next-line: missing-parameter # Idk why it's complaining with `unpack` :/
 		local emitter = Emitter.new(unpack(self.args))
 		s = emitter:generate(s)
 	end
@@ -136,18 +142,17 @@ end
 ---@param ast ASTNode
 ---@return string, NodeLinkedSourceMap
 function Emitter:generate(ast)
-	self.parts = {}
-	self.char_position = 1
-	self.visit_path = {}  -- For debugging errors
-	self.indent_depth = 0
-	self.source_map = SourceMap.new()
-	self.self_proxy = setmetatable({}, {__index=self})
-	self.ast = ast
-	self:visit(ast)
-	self.self_proxy = nil
-	self.ast = nil
-	local output = table.concat(self.parts)
-	return output, self.source_map
+	local self_proxy = setmetatable({
+		parts = {},
+		char_position = 1,
+		indent_depth = 0,
+		source_map = SourceMap.new(),
+		visit_path = {},
+		ast = ast,
+	}, {__index=self})
+	self_proxy:visit(ast)
+	local output = table.concat(self_proxy.parts)
+	return output, self_proxy.source_map
 end
 
 

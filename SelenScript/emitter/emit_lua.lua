@@ -7,6 +7,11 @@ local Precedence = require "SelenScript.parser.precedence"
 local EmitterDefs = {}
 
 
+---@param node ASTNodeSource
+function EmitterDefs:source(node)
+	self:visit(node.block)
+end
+
 ---@param node ASTNode # TODO: Node types
 function EmitterDefs:chunk(node)
 	self:visit(node.block)
@@ -68,7 +73,7 @@ end
 ---@param node ASTNode # TODO: Node types
 EmitterDefs["do"] = function(self, node)
 	self:add_part("do")
-	self:_visit("_indented_block", node)
+	self:visit_type("_indented_block", node)
 	self:add_part("end")
 end
 
@@ -79,7 +84,7 @@ EmitterDefs["while"] = function(self, node)
 	self:add_space()
 	self:visit(node.expr)
 	self:add_space()
-	self:_visit("do", node)
+	self:visit_type("do", node)
 end
 
 ---@param self LuaEmitter
@@ -106,7 +111,7 @@ EmitterDefs["if"] = function(self, node)
 		self:add_space()
 		self:add_part("then")
 	end
-	self:_visit("_indented_block", node)
+	self:visit_type("_indented_block", node)
 	if node["else"] ~= nil then
 		self:visit(node["else"])
 	end
@@ -132,7 +137,7 @@ EmitterDefs["forrange"] = function(self, node)
 		self:visit(node.increment)
 	end
 	self:add_space()
-	self:_visit("do", node)
+	self:visit_type("do", node)
 end
 
 ---@param self LuaEmitter
@@ -146,7 +151,7 @@ EmitterDefs["foriter"] = function(self, node)
 	self:add_space()
 	self:visit(node.values)
 	self:add_space()
-	self:_visit("do", node)
+	self:visit_type("do", node)
 end
 
 ---@param self LuaEmitter
@@ -239,7 +244,8 @@ end
 function EmitterDefs:_list(node)
 	local compact = self.config[node.type.."_compact"]
 	if compact == nil then compact = true end
-	if not compact then
+	local hasElements = #node > 0
+	if not compact and hasElements then
 		self:indent()
 	end
 	for i,v in ipairs(node) do
@@ -254,7 +260,7 @@ function EmitterDefs:_list(node)
 			end
 		end
 	end
-	if not compact then
+	if not compact and hasElements then
 		self:unindent()
 		self:new_line()
 	end

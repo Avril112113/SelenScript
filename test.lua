@@ -49,7 +49,7 @@ if parser == nil then
 end
 
 local source = read_file("test_input.sel")
-local ast, errors, comments = parser:parse(source)
+local ast_source, errors, comments = parser:parse(source)
 
 if #errors > 0 then
 	print_error("-- Parse Errors: " .. #errors .. " --")
@@ -67,11 +67,11 @@ end
 
 if PRINT_PARSED_AST then
 	print_info("-- Parsed AST: --")
-	print(AST.tostring_ast(ast))
+	print(AST.tostring_ast(ast_source))
 end
 
 local transformer = Transformer.new("ss_to_lua")
-local errors = transformer:transform(ast, source)
+local errors = transformer:transform(ast_source)
 
 if #errors > 0 then
 	print_error("-- Transform Errors: " .. #errors .. " --")
@@ -82,13 +82,13 @@ end
 
 if PRINT_TRANSFORMED_AST then
 	print_info("-- Transformed AST: --")
-	print(AST.tostring_ast(ast))
+	print(AST.tostring_ast(ast_source))
 end
 
 local emitter_lua = Emitter.new("lua", {
 	math_always_parenthesised = false
 })
-local output_lua_source, source_map = emitter_lua:generate(ast)
+local output_lua_source, source_map = emitter_lua:generate(ast_source)
 write_file("test_input.lua", tostring(output_lua_source))
 write_file("test_input.lua.map", tostring(source_map:generate(source, output_lua_source, "test_input.sel", "test_input.lua")))
 

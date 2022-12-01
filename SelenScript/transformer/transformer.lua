@@ -1,10 +1,14 @@
-local Grammar = require "SelenScript.parser.grammar"
-local Parser = require "SelenScript.parser.parser"
 local TransformerErrors = require "SelenScript.transformer.errors"
 
 
 ---@class Transformer
 ---@field defs table<string, fun(self:Transformer, node:ASTNode):any>
+-- self_proxy fields
+---@field errors Error[]
+---@field node_parents table<any,ASTNode>
+---@field visit_path string[] # For debugging errors
+---@field var_names table<string, number> # A table for the amount of times a SS variable name has been used
+---@field ast ASTNodeSource
 local Transformer = {
 	VAR_NAME_BASE = "___SS_",
 	Transformers = {
@@ -14,7 +18,7 @@ local Transformer = {
 Transformer.__index = Transformer
 
 
----@param target string @ The emitter to use
+---@param target string # The emitter to use
 function Transformer.new(target)
 	local self = setmetatable({
 		defs = assert(Transformer.Transformers[target], "Unknown transformer \"" .. tostring(target) .. "\""),
@@ -56,7 +60,7 @@ function Transformer:_visit(name, node)
 	end
 	if self.defs[name] ~= nil then
 		table.insert(self.visit_path, name)
-		local result = self.defs[name](self.self_proxy, node)
+		local result = self.defs[name](self, node)
 		local t = table.remove(self.visit_path)
 		assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
 		return result
@@ -66,20 +70,24 @@ function Transformer:_visit(name, node)
 end
 
 ---@param idOrErrorBase string|ErrorBase
----@param node ASTNode @ The node at which the error appeared
+---@param node ASTNode # The node at which the error appeared
 ---@param ... string
 function Transformer:add_error(idOrErrorBase, node, ...)
 	local errorBase = type(idOrErrorBase) == "table" and idOrErrorBase or TransformerErrors[idOrErrorBase]
 	if errorBase == nil then
 		table.insert(self.errors, errorBase)
 	else
-		local ln, col = re.calcline(self.source, node.start)
-		table.insert(self.errors, errorBase({start=node.start,finish=node.finish,src=self.source}, ln, col, ...))
+		local ln, col = re.calcline(self.ast.source, node.start)
+		table.insert(self.errors, errorBase({
+			start = node.start,
+			finish = node.finish,
+			src = self.ast.source
+		}, ln, col, ...))
 	end
 end
 
 --- NOTE: parent nodes will not have been transformed yet!
----@param node ASTNode @ The node to get parent of
+---@param node ASTNode # The node to get parent of
 function Transformer:get_parent(node)
 	return self.node_parents[node]
 end
@@ -87,7 +95,7 @@ end
 --- Recursively gets the parent of a node until it reaches a specific type of node and returns
 ---@param node ASTNode
 ---@param node_type string|fun(node:ASTNode):boolean
----@return ASTNode?, ASTNode @ Node matches node_type, child of parent that matched node_type
+---@return ASTNode?, ASTNode # Node matches node_type, child of parent that matched node_type
 function Transformer:find_parent_of_type(node, node_type, depth)
 	depth = depth or 0
 	local parent = self:get_parent(node)
@@ -106,19 +114,18 @@ end
 
 --- Runs a transformer thought an AST in-place
 --- NOTE: make sure that the base node being transformed does not get replaced (`ast` param)
----@param ast ASTNode @ WARNING: Modified
----@param source string @ Required for error message position calculations
-function Transformer:transform(ast, source)
-	self.source = assert(source, "Missing source argument.")
-	self.errors = {}
-	self.node_parents = {}
-	self.visit_path = {}  -- For debugging errors
-	---@type table<string, number> @ A table for the amount of times a SS variable name has been used
-	self.var_names = {}
-	self.self_proxy = setmetatable({}, {__index=self})
-	self:visit(assert(ast, "Missing `ast` argument."))
-	self.self_proxy = nil
-	return self.errors
+---@param ast ASTNodeSource # WARNING: Modified
+function Transformer:transform(ast)
+	local self_proxy = setmetatable({
+		errors = {},
+		node_parents = {},
+		visit_path = {},  -- For debugging errors
+		---@type table<string, number> # A table for the amount of times a SS variable name has been used
+		var_names = {},
+		ast = ast,
+	}, {__index=self})
+	self_proxy:visit(assert(ast, "Missing `ast` argument."))
+	return self_proxy.errors
 end
 
 

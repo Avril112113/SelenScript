@@ -85,7 +85,7 @@ function AST.new()
 end
 
 --- Initialize that something new is going to be parsed with this AST definitions object
----@param source string @ Required for error message position calculations
+---@param source string # Required for error message position calculations
 function AST:init(source)
 	self.source = source
 	self.errors = {}
@@ -163,7 +163,7 @@ function AST:_climbPrecedence(data, min_precedence)
 		local lahead = data[1]
 		if lahead.type ~= "binary_op" and lahead.type ~= "unary_op" then break end
 
-		---@diagnostic disable-next-line: undefined-field @ Because it does exist...
+		---@diagnostic disable-next-line: undefined-field # Because it does exist...
 		local op = lahead.op:lower()
 		local opData = Precedence.binaryOpData[op]
 		if opData == nil then
