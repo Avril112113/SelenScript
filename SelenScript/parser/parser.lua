@@ -16,10 +16,18 @@ Parser.__index = Parser
 ---@return Parser?, Error[]
 function Parser.new()
 	local ok, built_grammar, grammar_build_errors = Grammar.build()
-	if not ok then return nil, grammar_build_errors end
-	if next(grammar_build_errors) ~= nil then return nil, grammar_build_errors end
+	if not ok then
+		return nil, grammar_build_errors
+	end
+	if next(grammar_build_errors) ~= nil then
+		return nil, grammar_build_errors
+	end
 	local ok, grammar, ast_defs = Grammar.compile(built_grammar)
-	if not ok then return nil, {grammar} end
+	if not ok then
+		---@cast grammar Error
+		return nil, {grammar}
+	end
+	---@cast grammar LPegGrammar
 
 	local self = setmetatable({
 		grammar_src=built_grammar,
@@ -29,7 +37,8 @@ function Parser.new()
 	return self, {}
 end
 
---- Removes all keys beginning with `_` from the node and child nodes, these are used for in-grammar use and should not in the resulting AST
+--- Removes all keys beginning with `_` from the node and child nodes, these are used for in-grammar use and should not be in the resulting AST
+---@param node ASTNode
 function Parser.cleanup_nodes(node)
 	for i, v in pairs(node) do
 		if type(i) == "string" and i:sub(1, 1) == "_" then
@@ -41,8 +50,10 @@ function Parser.cleanup_nodes(node)
 	end
 end
 
+---@param source string
 function Parser:parse(source)
 	self.ast_defs:init(source)
+	---@type ASTNode, any?, integer?
 	local ast, err, pos = self.grammar:match(source)
 	if type(ast) == "table" then
 		Parser.cleanup_nodes(ast)

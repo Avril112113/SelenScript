@@ -71,6 +71,7 @@ function TestLib.run_tests(basepath, testPathResults)
 					table.insert(testResults.log, {level=logging.LEVELS.ERROR, testResults.status, testResults.statusMsg})
 				else
 					local original_log = logging._log
+					---@diagnostic disable-next-line: duplicate-set-field
 					logging._log = function(log_type, ...)
 						table.insert(currentTest ~= nil and currentTest.log or testResults.log, {level=log_type, ...})
 					end
@@ -181,13 +182,14 @@ function TestLib.test(name, f)
 	table.insert(TestLib._testResult.tests, test)
 end
 
+TestLib.assert = assert
 ---@generic T
----@param condition T
----@param msg any?
----@param ... any
----@return T, any ...
-function TestLib.assert(condition, msg, ...)
-	return assert(condition, msg, ...)
+---@param v? T
+---@param message? any
+---@return T
+---@return any ...
+function TestLib.assert(v, message, ...)
+	return assert(v, message, ...)
 end
 
 ---@param tbl table  # The table to check

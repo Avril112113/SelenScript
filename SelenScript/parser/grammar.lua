@@ -9,6 +9,7 @@ local GRAMMAR_DIRECTORY = Utils.modPathToPath(Utils.modPathParent(Utils.modPathP
 
 -- Builds up a relabel grammer from seperated parts
 local Grammar = {
+	---@type table<string, boolean|string>
 	files = {
 		["LuaBase.relabel"]=false,
 		["Lua.relabel"]=false,
@@ -67,7 +68,8 @@ function Grammar.build(declarations, entry_point)
 	return true, result, all_errors
 end
 
----@return boolean, LPegGrammar, AST
+---@return true, LPegGrammar, AST
+---@overload fun(built_grammar): false, Error
 function Grammar.compile(built_grammar)
 	local ast_defs = AST.new()
 	local ok, regrammar = pcall(ReLabel.compile, built_grammar, ast_defs)

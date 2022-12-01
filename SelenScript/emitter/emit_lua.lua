@@ -1,14 +1,18 @@
+local ReLabel = require "relabel"
+
 local Precedence = require "SelenScript.parser.precedence"
 
 
----@type Emitter
+---@class LuaEmitter : Emitter
 local EmitterDefs = {}
 
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:chunk(node)
 	self:visit(node.block)
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:block(node)
 	for i, v in ipairs(node) do
 		self:visit(v)
@@ -17,6 +21,7 @@ function EmitterDefs:block(node)
 		end
 	end
 end
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:_indented_block(node)
 	self:indent()
 	self:new_line()
@@ -25,6 +30,8 @@ function EmitterDefs:_indented_block(node)
 	self:new_line()
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["assign"] = function(self, node)
 	if node.scope == "local" then
 		self:add_part(node.scope)
@@ -41,24 +48,32 @@ EmitterDefs["assign"] = function(self, node)
 	end
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["label"] = function(self, node)
 	self:add_part("::")
 	self:visit(node.name)
 	self:add_part("::")
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["goto"] = function(self, node)
 	self:add_part("goto")
 	self:add_space()
 	self:visit(node.name)
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["do"] = function(self, node)
 	self:add_part("do")
 	self:_visit("_indented_block", node)
 	self:add_part("end")
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["while"] = function(self, node)
 	self:add_part("while")
 	self:add_space()
@@ -67,6 +82,8 @@ EmitterDefs["while"] = function(self, node)
 	self:_visit("do", node)
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["repeat"] = function(self, node)
 	self:add_part("repeat")
 	self:indent()
@@ -79,6 +96,8 @@ EmitterDefs["repeat"] = function(self, node)
 	self:visit(node.expr)
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["if"] = function(self, node)
 	self:add_part(node.type)  -- "if" or "elseif" or "else"
 	if node.type ~= "else" then
@@ -98,6 +117,8 @@ end
 EmitterDefs["elseif"] = EmitterDefs["if"]
 EmitterDefs["else"] = EmitterDefs["if"]
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["forrange"] = function(self, node)
 	self:add_part("for")
 	self:add_space()
@@ -114,6 +135,8 @@ EmitterDefs["forrange"] = function(self, node)
 	self:_visit("do", node)
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["foriter"] = function(self, node)
 	self:add_part("for")
 	self:add_space()
@@ -126,6 +149,8 @@ EmitterDefs["foriter"] = function(self, node)
 	self:_visit("do", node)
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["functiondef"] = function(self, node)
 	if node.scope == "local" then
 		self:add_part(node.scope)
@@ -145,10 +170,14 @@ EmitterDefs["functiondef"] = function(self, node)
 	end
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["break"] = function(self, node)
 	self:add_part("break")
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["return"] = function(self, node)
 	self:add_part("return")
 	if #node.values > 0 then
@@ -157,6 +186,7 @@ EmitterDefs["return"] = function(self, node)
 	end
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:index(node)
 	if node.how ~= nil then
 		self:add_part(node.how)
@@ -170,12 +200,14 @@ function EmitterDefs:index(node)
 	end
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:call(node)
 	self:add_part("(")
 	self:visit(node.args)
 	self:add_part(")")
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:funcbody(node)
 	self:add_part("(")
 	self:visit(node.args)
@@ -188,10 +220,12 @@ function EmitterDefs:funcbody(node)
 	self:add_part("end")
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:name(node)
 	self:add_part(node.name)
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:attributename(node)
 	self:visit(node.name)
 	if node.attribute ~= nil then
@@ -201,6 +235,7 @@ function EmitterDefs:attributename(node)
 	end
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:_list(node)
 	local compact = self.config[node.type.."_compact"]
 	if compact == nil then compact = true end
@@ -231,36 +266,46 @@ EmitterDefs.fieldlist = EmitterDefs._list
 EmitterDefs.varlist = EmitterDefs._list
 EmitterDefs.attributenamelist = EmitterDefs._list
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["nil"] = function(self, node)
 	self:add_part("nil")
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:var_args(node)
 	self:add_part("...")
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:numeral(node)
 	self:add_part(node.value)
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:string(node)
 	self:add_part(node.value)
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:boolean(node)
 	self:add_part(node.value)
 end
 
+---@param self LuaEmitter
+---@param node ASTNode # TODO: Node types
 EmitterDefs["function"] = function(self, node)
 	self:add_part("function")
 	self:visit(node.funcbody)
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:table(node)
 	self:add_part("{")
 	self:visit(node.fields)
 	self:add_part("}")
 end
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:field(node)
 	if node.key ~= nil and node.key.type == "name" then
 		self:visit(node.key)
@@ -277,6 +322,7 @@ function EmitterDefs:field(node)
 	self:visit(node.value)
 end
 
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:_math(node)
 	-- TODO: check if this can cause extra brackets in nested math sections (seperated sections of math)
 	local old_precedence = self._math_precedence

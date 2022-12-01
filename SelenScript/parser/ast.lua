@@ -16,6 +16,7 @@ local ASTNode = {}
 --- All the AST definitions
 ---@class AST
 ---@field errors Error[]
+---@field comments ASTNode[] # TODO: Node types
 local AST = {
 	esc_t = "\t",
 	nl = lp.P'\r\n' + lp.S'\r\n',

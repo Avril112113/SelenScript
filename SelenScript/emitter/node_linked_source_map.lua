@@ -6,26 +6,28 @@ local Json = require "json"
 local SourceMapLib = require "source-map"
 
 
-local SourceMap = {}
-SourceMap.__index = SourceMap
+---@class NodeLinkedSourceMap
+---@field links {node:ASTNode, start:integer, finish:integer}[]
+local NodeLinkedSourceMap = {}
+NodeLinkedSourceMap.__index = NodeLinkedSourceMap
 
 
-function SourceMap.new()
+function NodeLinkedSourceMap.new()
 	return setmetatable({
 		links={}
-	}, SourceMap)
+	}, NodeLinkedSourceMap)
 end
 
 ---@param node ASTNode @ The source node that is being mapped
 ---@param start number @ The position in the output this node starts
 ---@param finish number @ The position in the output this node finishes
-function SourceMap:link(node, start, finish)
+function NodeLinkedSourceMap:link(node, start, finish)
 	table.insert(self.links, {node=node, start=start, finish=finish})
 end
 
 ---@param src string @ The source code for line and column calculations
 ---@param out string @ The output code for line and column calculations
-function SourceMap:generate(src, out, srcFile, outFile)
+function NodeLinkedSourceMap:generate(src, out, srcFile, outFile)
 	table.sort(self.links, function (a, b)
 		return a.start > b.start
 	end)
@@ -52,4 +54,4 @@ function SourceMap:generate(src, out, srcFile, outFile)
 end
 
 
-return SourceMap
+return NodeLinkedSourceMap

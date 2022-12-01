@@ -13,7 +13,7 @@ TestLib.test("Parser.new()", function()
 			print_error((v.id or "NO_ID") .. ": " .. v.msg)
 		end
 	end
-	TestLib.assert(parser ~= nil, "parser ~= nil")
+	TestLib.assert(parser ~= nil, "parser ~= nil")  ---@cast parser Parser
 	TestLib.assert(#errors <= 0, "#errors <= 0")
 	ParserTestUtils.setTestParser(parser)
 end)

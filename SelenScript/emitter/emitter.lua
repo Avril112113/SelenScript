@@ -1,5 +1,5 @@
 local Utils = require "SelenScript.utils"
-local SourceMap = require "SelenScript.emitter.source_map"
+local SourceMap = require "SelenScript.emitter.node_linked_source_map"
 
 
 ---@class EmitterConfig
@@ -60,6 +60,7 @@ function Emitter:visit(node)
 end
 
 --- Used by EmitterDef to reduce code duplication
+---@param name string
 ---@param node ASTNode
 function Emitter:_visit(name, node)
 	if type(node) ~= "table" or node.type == nil then
@@ -83,6 +84,8 @@ function Emitter:add_part(s)
 	self.char_position = self.char_position + #s
 end
 
+--- Adds a new line, optionally adding indentation.
+---@param use_indent boolean? # Defaults `true`, Adds indention to the new line if true.
 function Emitter:new_line(use_indent)
 	self:add_part(self.config.newline)
 	if use_indent == nil or use_indent then
@@ -90,10 +93,13 @@ function Emitter:new_line(use_indent)
 	end
 end
 
+--- Adds current indentation
 function Emitter:add_indent()
 	self:add_part(string.rep(self.config.indent, self.indent_depth))
 end
 
+--- Adds a space
+---@param b boolean? # Defaults `true`, weather or not to actually add a space, or `false` to skip.
 function Emitter:add_space(b)
 	if b == nil or b then
 		self:add_part(" ")
@@ -110,20 +116,25 @@ function Emitter:is_space_required_boundary(s)
 	return self:last_is_word() and char:gmatch("%w")() == char
 end
 
+--- Weather or not the last added character (from the last part) is a word character
 function Emitter:last_is_word()
 	local part = self.parts[#self.parts]
 	local char = part:sub(#part)
 	return char:gmatch("%w")() == char
 end
 
+--- Increases the indent depth
 function Emitter:indent()
 	self.indent_depth = self.indent_depth + 1
 end
 
+--- Decreases the indent depth
 function Emitter:unindent()
 	self.indent_depth = self.indent_depth - 1
 end
 
+---@param ast ASTNode
+---@return string, NodeLinkedSourceMap
 function Emitter:generate(ast)
 	self.parts = {}
 	self.char_position = 1
@@ -131,8 +142,10 @@ function Emitter:generate(ast)
 	self.indent_depth = 0
 	self.source_map = SourceMap.new()
 	self.self_proxy = setmetatable({}, {__index=self})
+	self.ast = ast
 	self:visit(ast)
 	self.self_proxy = nil
+	self.ast = nil
 	local output = table.concat(self.parts)
 	return output, self.source_map
 end
