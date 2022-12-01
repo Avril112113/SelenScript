@@ -1,11 +1,4 @@
 {
     "Lua.runtime.version": "LuaJIT",
-    "Lua.workspace.ignoreDir": [
-        "basic_tests/pure lua/*"
-    ],
-    "Lua.diagnostics.globals": [
-        "love",
-        "unpack"
-    ],
     "Lua.workspace.checkThirdParty": false
 }

@@ -1,7 +1,8 @@
 -- Created by: Dude112113
--- Version: 1.1
+-- Version: 1.1.1
 
 local colors = setmetatable({
+	---@diagnostic disable-next-line: undefined-global
 	os = love ~= nil and love.system.getOS() or "Windows"
 }, {
 	__index=function(self, index)
