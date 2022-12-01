@@ -7,20 +7,14 @@ local SourceMap = require "SelenScript.emitter.node_linked_source_map"
 local EmitterConfig = {
 	--- All Emitters
 	newline = "\n",
-	--- All Emitters
 	indent = "\t",
 
 	--- Lua Emitter
 	fieldlist_trail_comma = true,
-	--- Lua Emitter
 	fieldlist_compact = false,
-	--- Lua Emitter
 	field_assign_space = true,
-	--- Lua Emitter
 	space_before_function = false,
-	--- Lua Emitter
 	space_after_function = false,
-	--- Lua Emitter
 	math_always_parenthesised = false,
 }
 function EmitterConfig.create(from)
@@ -93,7 +87,7 @@ end
 
 --- Adds a new line, optionally adding indentation.
 ---@param use_indent boolean? # Defaults `true`, Adds indention to the new line if true.
-function Emitter:new_line(use_indent)
+function Emitter:add_new_line(use_indent)
 	self:add_part(self.config.newline)
 	if use_indent == nil or use_indent then
 		self:add_indent()

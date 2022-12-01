@@ -22,17 +22,17 @@ function EmitterDefs:block(node)
 	for i, v in ipairs(node) do
 		self:visit(v)
 		if i ~= #node then
-			self:new_line()
+			self:add_new_line()
 		end
 	end
 end
 ---@param node ASTNode # TODO: Node types
 function EmitterDefs:_indented_block(node)
 	self:indent()
-	self:new_line()
+	self:add_new_line()
 	self:visit(node.block)
 	self:unindent()
-	self:new_line()
+	self:add_new_line()
 end
 
 ---@param self LuaEmitter
@@ -92,10 +92,10 @@ end
 EmitterDefs["repeat"] = function(self, node)
 	self:add_part("repeat")
 	self:indent()
-	self:new_line()
+	self:add_new_line()
 	self:visit(node.block)
 	self:unindent()
-	self:new_line()
+	self:add_new_line()
 	self:add_part("until")
 	self:add_space()
 	self:visit(node.expr)
@@ -164,14 +164,14 @@ EmitterDefs["functiondef"] = function(self, node)
 		print_warn("Invalid scope \"" .. node.scope .. "\"")
 	end
 	if self.config.space_before_function then
-		self:new_line(false)
+		self:add_new_line(false)
 	end
 	self:add_part("function")
 	self:add_space()
 	self:visit(node.name)
 	self:visit(node.funcbody)
 	if self.config.space_after_function then
-		self:new_line(false)
+		self:add_new_line(false)
 	end
 end
 
@@ -218,10 +218,10 @@ function EmitterDefs:funcbody(node)
 	self:visit(node.args)
 	self:add_part(")")
 	self:indent()
-	self:new_line()
+	self:add_new_line()
 	self:visit(node.block)
 	self:unindent()
-	self:new_line()
+	self:add_new_line()
 	self:add_part("end")
 end
 
@@ -250,7 +250,7 @@ function EmitterDefs:_list(node)
 	end
 	for i,v in ipairs(node) do
 		if not compact then
-			self:new_line()
+			self:add_new_line()
 		end
 		self:visit(v)
 		if i ~= #node or self.config[node.type.."_trail_comma"] then
@@ -262,7 +262,7 @@ function EmitterDefs:_list(node)
 	end
 	if not compact and hasElements then
 		self:unindent()
-		self:new_line()
+		self:add_new_line()
 	end
 end
 EmitterDefs.expressionlist = EmitterDefs._list

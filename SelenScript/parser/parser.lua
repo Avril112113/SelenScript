@@ -11,7 +11,7 @@ local ParserErrors = require "SelenScript.parser.errors"
 ---@field type "source"
 ---@field block ASTNode # TODO: Node types
 ---@field source string # The plain text source
----@field file string? # Defines the origin of the source, special value `[stdin]`, path must use `/`
+---@field file string? # Defines the origin of the source, special value `[stdin]`, path be relitive to src root and use `/`
 local ASTNodeSource = nil
 
 
@@ -61,6 +61,7 @@ function Parser.cleanup_nodes(node)
 end
 
 ---@param source string
+---@param file string?
 function Parser:parse(source, file)
 	self.ast_defs:init(source)
 	---@type ASTNode, any?, integer?
