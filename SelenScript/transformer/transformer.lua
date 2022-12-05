@@ -33,7 +33,11 @@ function Transformer:visit(node)
 	for i, v in pairs(node) do
 		self.node_parents[v] = node
 		if type(v) == "table" and v.type ~= nil then
+			local old_length = #node  -- Required in-case transform inserted nodes
 			local new_v = self:visit(v)
+			if type(i) == "number" and old_length ~= #node then
+				i = i + #node-old_length
+			end
 			if new_v == nil then
 				if type(i) == "number" then
 					table.insert(indices_to_remove, 1, i)
