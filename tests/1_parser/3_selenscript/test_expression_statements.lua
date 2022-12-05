@@ -18,7 +18,31 @@ TestLib.test("while", function ()
 		block = {
 			type = "block",
 			{
-				-- TODO
+				type = "assign",
+				values = {
+					type = "expressionlist",
+					{
+						type = "stmt_expr",
+						stmt = {
+							type = "while",
+							block = {
+								type = "block",
+								{
+									type = "break",
+									values = {
+										type = "expressionlist",
+										{
+											type = "numeral"
+										},
+										{
+											type = "numeral"
+										},
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	})
@@ -39,7 +63,31 @@ TestLib.test("do", function ()
 		block = {
 			type = "block",
 			{
-				-- TODO
+				type = "assign",
+				values = {
+					type = "expressionlist",
+					{
+						type = "stmt_expr",
+						stmt = {
+							type = "do",
+							block = {
+								type = "block",
+								{
+									type = "return",
+									values = {
+										type = "expressionlist",
+										{
+											type = "numeral"
+										},
+										{
+											type = "numeral"
+										},
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	})
@@ -60,7 +108,29 @@ TestLib.test("forrange", function ()
 		block = {
 			type = "block",
 			{
-				-- TODO
+				type = "assign",
+				values = {
+					type = "expressionlist",
+					{
+						type = "stmt_expr",
+						stmt = {
+							type = "forrange",
+							block = {
+								type = "block",
+								{
+									type = "break",
+									values = {
+										type = "expressionlist",
+										{
+											type = "index",
+											expr = {type = "name", name = "i"},
+										},
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	})
@@ -81,8 +151,38 @@ TestLib.test("foriter", function ()
 		block = {
 			type = "block",
 			{
-				-- TODO
+				type = "assign",
+				values = {
+					type = "expressionlist",
+					{
+						type = "stmt_expr",
+						stmt = {
+							type = "foriter",
+							block = {
+								type = "block",
+								{
+									type = "break",
+									values = {
+										type = "expressionlist",
+										{
+											type = "index",
+											expr = {type = "name", name = "i"},
+										},
+										{
+											type = "index",
+											expr = {type = "name", name = "v"},
+										},
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	})
 end)
+
+-- TODO: Add "very complex" tests:
+--       Expression `do` with inner function and 2 inner `do` blocks.
+--       Expression `while` (or any breakables) WITHOUT a `break` with an inner breakable WITH a `break`

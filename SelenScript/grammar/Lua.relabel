@@ -56,7 +56,10 @@ stmt_label	<- {| {:type:''->"label":}
 
 stmt_break	<- {| {:type:''->"break":}
 					{:start:{}:}
+#block stmt_break
 					BREAK
+#endblock
+#include stmt_break
 					{:finish:{}:}
 				|}
 

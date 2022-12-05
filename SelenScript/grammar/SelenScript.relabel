@@ -47,7 +47,24 @@ expr_if	<- {| {:type:''->"ifexpr":}
 				{:finish:{}:}
 			|}
 
+expr_stmt	<- {| {:type:''->"stmt_expr":}
+					{:start:{}:}
+					{:stmt:
+						  stmt_while
+						/ stmt_do
+						/ stmt_forrange
+						/ stmt_foriter
+					:}
+					{:finish:{}:}
+				|}
+
 #block Expressions
 			 / expr_if
+			 / expr_stmt
 #include Expressions
+#endblock
+
+#block stmt_break
+#include stmt_break
+					(Sc {:values:expressionlist_opt:})
 #endblock

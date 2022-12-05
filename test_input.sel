@@ -1,20 +1,75 @@
-package.path = "?/init.lua;libs/?.lua;libs/?/init.lua;libs/?/?.lua;" .. package.path
-package.cpath = "libs/" .. _VERSION:sub(5) .. "/?.dll;libs/?.dll;" .. package.cpath
+-- package.path = "?/init.lua;libs/?.lua;libs/?/init.lua;libs/?/?.lua;" .. package.path
+-- package.cpath = "libs/" .. _VERSION:sub(5) .. "/?.dll;libs/?.dll;" .. package.cpath
 
-local SourceMapTraceback = require "test_source_map"
+-- local SourceMapTraceback = require "test_source_map"
 
 
-local function potato(s)
-	assert(type(s) == "string", "`s` is not a string")
-	return "potato and " .. s
+-- local function potato(s)
+-- 	assert(type(s) == "string", "`s` is not a string")
+-- 	return "potato and " .. s
+-- end
+
+-- local function main()
+-- 	print(potato({}))  -- Casues assert error
+-- end
+
+-- print(debug.traceback())
+-- print("------------------------------")
+-- print(SourceMapTraceback.traceback())
+-- print("------------------------------")
+-- xpcall(main, SourceMapTraceback.xpcall_handler)
+
+
+local _while = while true do
+	break 123
 end
+print("_while", _while)
 
-local function main()
-	print(potato({}))  -- Casues assert error
+local _do_simple = do
+	return 456
 end
+print("_do_simple", _do_simple)
 
-print(debug.traceback())
-print("------------------------------")
-print(SourceMapTraceback.traceback())
-print("------------------------------")
-xpcall(main, SourceMapTraceback.xpcall_handler)
+local _do_complex = do
+	print(-1)
+	if true then
+		return 456
+	end
+	print(1)
+	print(2)
+	print(3)
+end
+print("_do_complex", _do_complex)
+
+local _forrange = for i=1,10 do
+	break 789
+end
+print("_forrange", _forrange)
+
+local _foriter = for i, v in pairs({1}) do
+	break 101112
+end
+print("_foriter", _foriter)
+
+local _do_very_complex = do
+	local function test()
+		return "from func (bad)"
+	end
+	test()
+	do
+		return "from inner do (good)"
+	end
+	do
+		return "from 2nd inner do (bad)"
+	end
+	return "from do (bad)"
+end
+print("_do_very_complex", _do_very_complex)
+
+local _while_very_complex = while true do
+	while true do
+		break "from inner while (bad)"  -- This should produce an error
+	end
+	break
+end
+print("_while_very_complex", _while_very_complex or "nil (good)")

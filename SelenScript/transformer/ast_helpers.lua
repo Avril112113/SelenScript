@@ -31,6 +31,18 @@ function ASTNodes.name(node, name)
 end
 
 ---@param node ASTNode # Used for source position info
+---@param value string
+---@return ASTNode
+function ASTNodes.numeral(node, value)
+	return {
+		type = "numeral",
+		start = node.start,
+		value = value,
+		finish = node.finish
+	}
+end
+
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
 ASTNodes["namelist"] = function(node, ...)
@@ -141,6 +153,7 @@ ASTNodes["else"] = function(node, block)
 end
 
 ---@param node ASTNode # Used for source position info
+---@param scope "local"?
 ---@param names ASTNode # `varlist` or `attributenamelist`
 ---@param values ASTNode? # `expressionlist`
 ---@return ASTNode
@@ -192,6 +205,32 @@ ASTNodes["attributenamelist"] = function(node, ...)
 end
 
 ---@param node ASTNode # Used for source position info
+---@param ... ASTNode
+---@return ASTNode
+ASTNodes["fieldlist"] = function(node, ...)
+	return {
+		type = "fieldlist",
+		start = node.start,
+		finish = node.finish,
+		...
+	}
+end
+
+---@param node ASTNode # Used for source position info
+---@param key ASTNode? # Expression or name
+---@param value ASTNode
+---@return ASTNode
+ASTNodes["field"] = function(node, key, value)
+	return {
+		type = "field",
+		start = node.start,
+		key = key,
+		value = value,
+		finish = node.finish,
+	}
+end
+
+---@param node ASTNode # Used for source position info
 ---@param name string
 ---@param attribute string?
 ---@return ASTNode
@@ -201,6 +240,18 @@ ASTNodes["attributename"] = function(node, name, attribute)
 		start = node.start,
 		name = ASTNodes.name(node, name),
 		attribute = attribute and ASTNodes.name(node, attribute) or nil,
+		finish = node.finish
+	}
+end
+
+---@param node ASTNode # Used for source position info
+---@param fieldlist ASTNode
+---@return ASTNode
+ASTNodes["table"] = function(node, fieldlist)
+	return {
+		type = "table",
+		start = node.start,
+		fields = fieldlist,
 		finish = node.finish
 	}
 end

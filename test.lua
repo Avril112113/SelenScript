@@ -6,6 +6,7 @@ require "logging".set_log_file("out.log", true).windows_enable_ansi()
 local PRINT_COMMENTS = false
 local PRINT_PARSED_AST = false
 local PRINT_TRANSFORMED_AST = false
+local PRINT_SOURCE_MAP = false
 
 
 local function read_file(path)
@@ -95,14 +96,16 @@ write_file("test_input.lua.map", tostring(source_map:generate(source, output_lua
 
 local SourceMap = require "source-map"
 local inSourceMap = SourceMap.fromJson(Json.decode(read_file("test_input.lua.map")))
-print(inSourceMap.sourceRoot .. " : " .. inSourceMap.file)
-for generatedLine, columnList in ipairs(inSourceMap.mappings) do
-	for _, column in ipairs(columnList) do
-		print(("%s:%s:%s\t->\t%s:%s:%s%s"):format(
-			inSourceMap.file, generatedLine, column.generatedColumn,
-			column.source, column.originalLine, column.originalColumn,
-			column.name and " ("..column.name..")" or ""
-		))
+if PRINT_SOURCE_MAP then
+	print(inSourceMap.sourceRoot .. " : " .. inSourceMap.file)
+	for generatedLine, columnList in ipairs(inSourceMap.mappings) do
+		for _, column in ipairs(columnList) do
+			print(("%s:%s:%s\t->\t%s:%s:%s%s"):format(
+				inSourceMap.file, generatedLine, column.generatedColumn,
+				column.source, column.originalLine, column.originalColumn,
+				column.name and " ("..column.name..")" or ""
+			))
+		end
 	end
 end
 
