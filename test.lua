@@ -1,6 +1,6 @@
 package.path = "?/init.lua;libs/?.lua;libs/?/init.lua;libs/?/?.lua;" .. package.path
 package.cpath = "libs/" .. _VERSION:sub(5) .. "/?.dll;libs/?.dll;" .. package.cpath
-require "logging".set_log_file("out.log").windows_enable_ansi()
+require "logging".set_log_file("out.log", true).windows_enable_ansi()
 
 
 local PRINT_COMMENTS = false
