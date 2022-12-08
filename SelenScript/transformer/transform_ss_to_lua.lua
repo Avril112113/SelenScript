@@ -98,53 +98,13 @@ end
 
 ---@param self Transformer_SS_to_Lua
 ---@param node ASTNode
-TransformerDefs["return"] = function(self, node)
-	local stmt_expr, _, stmt_expr_depth = self:find_parent_of_type(node, "stmt_expr")
-	local _, _, parent_funcbody_depth = self:find_parent_of_type(node, "funcbody")
-	if (parent_funcbody_depth == 0 or parent_funcbody_depth > stmt_expr_depth) and stmt_expr ~= nil and #node.values > 0 then
-		local stmt_expr_block = stmt_expr.stmt.block
-		local block, stmt = self:find_parent_of_type(node, "block")
-		if block == nil then
-			self:add_error("INTERNAL", node, "`break` failed to find a parent block node.")
-			return nil
-		end
-		local stmt_idx = Utils.find_key(block, stmt)
-		stmt_expr._var_name = stmt_expr._var_name or self:get_var("stmt_expr_" .. stmt_expr.stmt.type)
-		local fields = {}
-		for i, value_node in ipairs(node.values) do
-			table.insert(fields, ASTNodes.field(node, nil, value_node))
-		end
-		local assign_node = ASTNodes.assign(node,
-			nil,
-			ASTNodes.varlist(node, ASTNodes.index(node, nil, ASTNodes.name(node, stmt_expr._var_name))),
-			ASTNodes.expressionlist(node, ASTNodes.table(node, ASTNodes.fieldlist(node, unpack(fields))))
-		)
-		table.insert(block, stmt_idx, assign_node)
-		local label_node = stmt_expr_block[#stmt_expr_block]
-		-- TODO: Our label might not be last right now? Ideally this should be within last set of labels in the block
-		local is_our_label_last = label_node ~= node and (label_node == nil or label_node.type ~= "label" or label_node.name.name ~= stmt_expr._var_name)
-		-- TODO: Remove redundant `goto` when a label is in use but this `return` is at the end
-		if stmt_expr_block[#stmt_expr_block] ~= node then
-			table.insert(block, stmt_idx+1, ASTNodes["goto"](node, stmt_expr._var_name))
-		end
-		if is_our_label_last then
-			table.insert(stmt_expr_block, #stmt_expr_block+1, ASTNodes.label(node, stmt_expr._var_name))
-		end
-		node.values = {}
-		return nil
-	end
-	return node
-end
-
----@param self Transformer_SS_to_Lua
----@param node ASTNode
 TransformerDefs["break"] = function(self, node)
-	local stmt_expr, _, stmt_expr_depth = self:find_parent_of_type(node, "stmt_expr")
-	local _, _, parent_breakable_depth = self:find_parent_of_type(self:get_parent(self:get_parent(node)), function(filter_node)
-		return filter_node.type == "while" or filter_node.type == "forrange" or filter_node.type == "foriter"
+	local stmt_expr, _, _ = self:find_parent_of_type(node, "stmt_expr")
+	local parent_breakable, _, _ = self:find_parent_of_type(node, function(filter_node)
+		return filter_node.type == "while" or filter_node.type == "forrange" or filter_node.type == "foriter" or filter_node.type == "do"
 	end)
 	if stmt_expr ~= nil and #node.values > 0 then
-		if (parent_breakable_depth ~= 0 and parent_breakable_depth < stmt_expr_depth) then
+		if (stmt_expr.stmt ~= parent_breakable) then
 			self:add_error("BREAK_VALUES_NON_EXPR", node)
 			return node
 		end
@@ -166,7 +126,22 @@ TransformerDefs["break"] = function(self, node)
 		)
 		table.insert(block, stmt_idx, assign_node)
 		node.values = {}
-		return node
+		if stmt_expr.stmt.type == "do" then
+			local stmt_expr_block = stmt_expr.stmt.block
+			local label_node = stmt_expr_block[#stmt_expr_block]
+			-- TODO: Our label might not be last right now? Ideally this should be within last set of labels in the block
+			local is_our_label_last = label_node ~= node and (label_node == nil or label_node.type ~= "label" or label_node.name.name ~= stmt_expr._var_name)
+			-- TODO: Remove redundant `goto` when a label is in use but this `return` is at the end
+			if stmt_expr_block[#stmt_expr_block] ~= node then
+				table.insert(block, stmt_idx+1, ASTNodes["goto"](node, stmt_expr._var_name))
+			end
+			if is_our_label_last then
+				table.insert(stmt_expr_block, #stmt_expr_block+1, ASTNodes.label(node, stmt_expr._var_name))
+			end
+			return nil
+		else
+			return node
+		end
 	end
 	return node
 end

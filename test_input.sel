@@ -24,16 +24,23 @@ local _while = while true do
 	break 123
 end
 print("_while", _while)
+local _while_complex = while true do
+	if true then
+		break "from if (good)"
+	end
+	break "from while (bad)"
+end
+print("_while_complex", _while_complex)
 
 local _do_simple = do
-	return 456
+	break 456
 end
 print("_do_simple", _do_simple)
 
 local _do_complex = do
 	print(-1)
 	if true then
-		return 456
+		break 789
 	end
 	print(1)
 	print(2)
@@ -42,27 +49,20 @@ end
 print("_do_complex", _do_complex)
 
 local _forrange = for i=1,10 do
-	break 789
+	break 101112
 end
 print("_forrange", _forrange)
 
 local _foriter = for i, v in pairs({1}) do
-	break 101112
+	break 131415
 end
 print("_foriter", _foriter)
 
 local _do_very_complex = do
-	local function test()
-		return "from func (bad)"
+	while true do
+		break "from inner while (bad)"  -- This should produce an error
 	end
-	test()
-	do
-		return "from inner do (good)"
-	end
-	do
-		return "from 2nd inner do (bad)"
-	end
-	return "from do (bad)"
+	break "from do (good)"
 end
 print("_do_very_complex", _do_very_complex)
 

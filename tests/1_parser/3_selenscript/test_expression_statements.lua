@@ -184,5 +184,4 @@ TestLib.test("foriter", function ()
 end)
 
 -- TODO: Add "very complex" tests:
---       Expression `do` with inner function and 2 inner `do` blocks.
---       Expression `while` (or any breakables) WITHOUT a `break` with an inner breakable WITH a `break`
+--       Expression `do` and `while` (or any breakables) WITHOUT a `break` with an inner breakable WITH a `break`
