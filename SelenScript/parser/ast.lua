@@ -41,7 +41,7 @@ function AST:__index(name)
 	return value
 end
 
-local tostring_ast_ignored_keys = {type=true, start=true, finish=true}
+local tostring_ast_ignored_keys = {type=true, start=true, finish=true, source=true}
 local tostring_ast_indent = "    "
 function AST.tostring_ast(ast)
 	local function str_value(value)
@@ -53,7 +53,6 @@ function AST.tostring_ast(ast)
 	local parts = {}
 	local function str_node(node, depth)
 		local indent = string.rep(tostring_ast_indent, depth)
-		-- { type=chunk 1:1
 		table.insert(parts, "<type: ")
 		table.insert(parts, tostring(node.type))
 		table.insert(parts, "> @ ")

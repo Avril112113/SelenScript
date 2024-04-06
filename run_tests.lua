@@ -1,11 +1,19 @@
-package.path = "?/init.lua;libs/?.lua;libs/?/init.lua;libs/?/?.lua;" .. package.path
-package.cpath = "libs/" .. _VERSION:sub(5) .. "/?.dll;libs/?.dll;" .. package.cpath
-require "logging".set_log_file("tests.log", true).windows_enable_ansi()
+local args = {...}
+
+package.path = package.path .. "libs/?.lua;libs/?/init.lua;test/libs/?.lua;test/libs/?/init.lua;"
+package.cpath = package.cpath .. "libs/" .. _VERSION:sub(5) .. "/?.dll;libs/?.dll;"
 
 
-local TestLib = require "testlib"
+local AvTest = require "avtest.init"
 
 
-local testResults = TestLib.run_tests("tests")
-TestLib.print_results(testResults)
-TestLib.write_results(testResults)
+AvTest.Runner.new()
+	:setOutputFileEnabled(true)
+	:setOutputFilePerTest(true)
+	:setOutputFileStripColors(false)
+	:addWhitelist(args[1])
+	:addBlacklist("./tests/test_utils.lua")
+	:addBlacklist("./tests/parser/lua/lua_official_tests/tests")
+	:addBlacklist("./tests/parser/selenscript/typing.lua")
+	:addDir("./tests")
+	:runTests()

@@ -6,6 +6,7 @@ entry	<- chunk
 
 chunk	<- {| {:type:''->"chunk":}
 				{:start:{}:}
+				{:hashline:HASHLINE:}?
 				Sc {:block:block:} Sc
 				{:finish:{}:}
 			|}
@@ -19,7 +20,6 @@ block	<- {| {:type:''->"block":}
 statement	<- ";"
 #block Statements
 			 / stmt_assign
-			 / stmt_call
 			 / stmt_label
 			 / stmt_break
 			 / stmt_goto
@@ -30,6 +30,7 @@ statement	<- ";"
 			 / stmt_forrange
 			 / stmt_foriter
 			 / stmt_function
+			 / stmt_call
 #endblock
 #include Statements
 			 / ({}->"SYNTAX_FLOAT_EXPR" {} {expression / index} {})->add_error_o
@@ -242,8 +243,8 @@ value	<- nil
 		 / numeral
 		 / string
 		 / function
-		 / "(" Sc expression Sc ")"
 		 / prefixexpression
+		 / "(" Sc expression Sc ")"
 		 / tableconstructor
 #endblock
 #include Values
@@ -284,31 +285,20 @@ selfcall	<- {| {:type:''->"call":}
 					{:self:''->"true":}
 				|}
 
-/* nlcall - NotLastCall */
 /* lcall - LastCall */
-/* Unfortunetly there is a lot of duplication and lcall/nlcall is needed because, parsing... */
 index_continues	<- DOT / "[" / ":" / "("
 index_part	<- {:how:"[":} Sc {:expr:expression:} Sc "]"
 			 / {:how:DOT:} Sc {:expr:name:}
 			 / {:expr:call:}
-index_part_nlcall	<- {:how:"[":} Sc {:expr:expression:} Sc "]"
-					 / {:how:DOT:} Sc {:expr:name:}
-					 / {:expr:call &index_nlcall:}
 index	<- {| {:type:''->"index":}
 				{:start:{}:}
 				index_part
 				{:finish:{}:}
 				(Sc {:index:index:})?
 			|}
-index_nlcall	<- {| {:type:''->"index":}
-						{:start:{}:}
-						index_part_nlcall
-						{:finish:{}:}
-						(Sc {:index:index_nlcall:})?
-					|}
 index_lcall	<- {| {:type:''->"index":}
 					{:start:{}:}
-					index_part_nlcall
+					index_part
 					{:finish:{}:}
 					(Sc {:index:index_lcall / call:})
 				|}
@@ -321,15 +311,6 @@ prefixexpression	<- {| {:type:''->"index":}
 							{:finish:{}:}
 							(Sc {:index:index:})?
 						|}
-prefixexpression_nlcall	<- {| {:type:''->"index":}
-								{:start:{}:}
-								(
-									{:expr:name:}
-								/ "(" Sc {:expr:expression:} Sc ")"
-								)
-								{:finish:{}:}
-								(Sc {:index:Sc index_nlcall:})?
-							|}
 prefixexpression_lcall	<- {| {:type:''->"index":}
 								{:start:{}:}
 								(
@@ -367,16 +348,16 @@ field	<- {| {:type:''->"field":}
 			|}
 
 Numeral	<- { "-"? (
-				  "0" [Xx] [0-9A-Fa-f]+ ('.' [0-9]+)? ([Ee] [-+]? [0-9]+)?
-				/ [0-9]+ ('.' [0-9]+)? ([Ee] [-+]? [0-9]+)?
+				  "0" [Xx] '.'? [0-9A-Fa-f]+ ('.' [0-9A-Fa-f]* [Ee]? [0-9A-Fa-f]* / [Ee]? [0-9A-Fa-f]* '.'? [0-9A-Fa-f]*) ([Pp] [+-]? [0-9]+)?
+				/ '.' [0-9]+ ([Ee] [-+]? [0-9]+)?
+				/ [0-9]+ '.'? [0-9]* ([Ee] [-+]? [0-9]+)?
 			)}
 LiteralString	<- ShortString / LongString
-ShortString	<- {:prefix:["']:} (EscapedQuote / !=prefix .)* =prefix
+ShortString	<- {:prefix:["']:} ('\\' / '\'=prefix / !=prefix .)* =prefix
 /* TODO: see if I can get the "=" chars in the `prefix` field */
 LongString	<- {:prefix:''->'[[':} LongStringOpen (!LongStringClose .)* LongStringClose
 LongStringOpen	<- "[" {:_LongStringEQs:"="*:} "["
 LongStringClose	<- "]" =_LongStringEQs "]"
-EscapedQuote	<- '\"' / "\'"
 
 /* Space Comment */
 Sc		<- {:_:(Sp / Comment)*:}
@@ -390,8 +371,8 @@ LineComment	<- {| {:type:''->"LineComment":}
 				|} -> add_comment
 LongComment	<- {| {:type:''->"LongComment":}
 					{:start:{}:}
-/* TODO: see if I can get the "--" chars in the `prefix` field from `LongStringOpen` */
-					LongStringOpen
+					{:prefix:''->'[[':}
+					"--" LongStringOpen
 					{:value:(!LongStringClose .)*:}
 					LongStringClose
 					{:finish:{}:}

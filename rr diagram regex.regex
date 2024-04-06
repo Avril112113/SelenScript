@@ -1,4 +1,0 @@
-This is a regex that was crudely created to convert to PEG.js
-This allows us to use the tools provided in issue #2
-
-\{:\w+:(.*?):\}|\{\}->\{nil\}|->\s*"?\w+"?|\{\w?\}(?:->'')?|%(?=\w)|''->["'].*?["']|\{\||\|\}|\{(?!")(.*?)\}|=(?:\w+)|\^\+2

@@ -12,6 +12,8 @@ WORD        <-  [a-zA-Z0-9_]
 Cut         <-  !WORD
 Rest        <-  (!%nl .)*
 
+HASHLINE	<- "#" Rest
+
 X16         <-  [a-fA-F0-9]
 NAME		<- (!RESERVED [a-zA-Z_][a-zA-Z_0-9]*) / RESERVED [a-zA-Z_0-9]+
 EXPECT_NAME	<- NAME / ({}->"SYNTAX_MISS_NAME"{}{})->add_error
@@ -25,7 +27,7 @@ DOUBLECOLON	<- '::'
 FIELD_SEP	<- ',' / ';'
 BINARY_OP	<- '^'
 			 /* UNARY_OP */
-			 / '*' / '/' / '//' / '%'
+			 / '*' / '//' / '/' / '%'
 			 / '+' / '-'
 			 / CONCAT
 			 / '<<' / '>>'

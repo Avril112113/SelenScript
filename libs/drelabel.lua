@@ -33,15 +33,16 @@ local any = m.P(1)
 local dummy = mm.P(false)
 
 -- CUSTOM EDIT START --
+debug.relabelDbgPrint = print
 if debug.relabelDbgFilter == nil then
-  ---@type fun(n:string)
+  ---@type fun(n:string):boolean
   debug.relabelDbgFilter = nil
 end
 local track_depth = 0
 -- For Debugging
 local track_enter = function(n)
   return m.Cmt(m.P(true), function(subject, pos, ...)
-    print(string.rep(" ", track_depth) .. "check match at " .. tostring(pos) .. " : " .. tostring(n))
+    debug.relabelDbgPrint(string.rep("│", track_depth) .. "┌check match at " .. tostring(pos) .. " : " .. tostring(n))
     track_depth = track_depth + 1
     return true
   end)
@@ -50,7 +51,7 @@ end
 local track_match = function(n)
   return m.Cmt(m.P(true), function(subject, pos, ...)
     track_depth = track_depth - 1
-    print(string.rep(" ", track_depth) .. "good match at " .. tostring(pos) .. " : " .. tostring(n))
+    debug.relabelDbgPrint(string.rep("│", track_depth) .. "└good match at " .. tostring(pos) .. " : " .. tostring(n))
     return true
   end)
 end
@@ -58,7 +59,7 @@ end
 local track_leave = function(n)
   return m.Cmt(m.P(true), function(subject, pos, ...)
     track_depth = track_depth - 1
-    print(string.rep(" ", track_depth) .. "failed match at " .. tostring(pos) .. " : " .. tostring(n))
+    debug.relabelDbgPrint(string.rep("│", track_depth) .. "└failed match at " .. tostring(pos) .. " : " .. tostring(n))
     return true
   end)
 end

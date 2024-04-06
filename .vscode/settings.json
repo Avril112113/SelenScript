@@ -1,4 +1,16 @@
 {
     "Lua.runtime.version": "LuaJIT",
-    "Lua.workspace.checkThirdParty": false
+    "Lua.workspace.checkThirdParty": false,
+    "Lua.workspace.library": [
+        "C:/Users/avril/AppData/Roaming/Code/User/globalStorage/sumneko.lua/addonManager/addons/luafilesystem/module/library",
+        "C:/Users/avril/AppData/Roaming/Code/User/globalStorage/sumneko.lua/addonManager/addons/luasocket/module/library"
+    ],
+    "Lua.workspace.ignoreDir": [
+        ".vscode",
+        "tests/parser/lua/lua_official_tests/tests"
+    ],
+    "liveServer.settings.file": "trace_preview.html",
+    "liveServer.settings.ignoreFiles": [
+        "**"
+    ]
 }
