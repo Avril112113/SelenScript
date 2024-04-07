@@ -114,6 +114,7 @@
 					});
 				}
 				recur(structure, trace);
+				$("#trace-tree").empty();
 				new Treant({
 					chart: {
 						container: "#trace-tree",
@@ -134,6 +135,7 @@
 				source_editor.setShowPrintMargin(false);
 				source_editor.session.on("change", function(delta) {
 					// delta.start, delta.end, delta.lines, delta.action
+					console.log(delta);
 					update_trace_preview();
 				});
 				// source_editor.session.selection.on("changeCursor", function(e) {
@@ -154,13 +156,17 @@
 					fetch(SOURCE_FILE_PATH)
 						.then((res) => res.text())
 						.then((text) => {
-							source_editor.setValue(text);
+							if (text !== source_editor.getValue()){
+								source_editor.setValue(text);
+							}
 						})
 						.catch((e) => console.error(e));
 					fetch(TRACE_FILE_PATH)
 						.then((res) => res.text())
 						.then((text) => {
-							trace_editor.setValue(text);
+							if (text !== trace_editor.getValue()) {
+								trace_editor.setValue(text);
+							}
 						})
 						.catch((e) => console.error(e));
 				}

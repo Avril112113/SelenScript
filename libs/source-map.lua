@@ -1,4 +1,4 @@
--- Created by Dude112113
+-- Created by Avril112113
 -- Only supports source-map version 3
 -- Spec: https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k
 -- The `sections` field is NOT supported
@@ -241,31 +241,38 @@ function SourceMap:addSourceMapping(source, originalLine, originalColumn, genera
 end
 
 --- NOTE: You will need to replace `false` values in `sourcesContent` with a value representing `null` for your json encoder
-function SourceMap:toJson()
+---@param optimise boolean? # Defaut true, will join seperate sections for generated that are identical for original.
+function SourceMap:toJson(optimise)
 	local mapping = {}
-	local lastSourceIndex = 1
-	local lastOriginalLine = 1
-	local lastOriginalColumn = 1
-	local lastNameIndex = 1
+	local lastSourceIndex = 0
+	local lastOriginalLine = 0
+	local lastOriginalColumn = 0
+	local lastNameIndex = 0
 	for generatedLine, columnMappings in ipairs(self.mappings) do
-		local lastGeneratedColumn = 1
+		local lastGeneratedColumn = 0
 		local columnStrs = {}
+		local last_values
 		for _, column in ipairs(columnMappings) do
 			local values = {
-				column.generatedColumn - lastGeneratedColumn,
-				self.sourcesKVMap[column.source] - lastSourceIndex,
-				column.originalLine - lastOriginalLine,
-				column.originalColumn - lastOriginalColumn
+				column.generatedColumn - 1 - lastGeneratedColumn,
+				self.sourcesKVMap[column.source] - 1 - lastSourceIndex,
+				column.originalLine - 1 - lastOriginalLine,
+				column.originalColumn - 1 - lastOriginalColumn
 			}
 			if column.name ~= nil then
-				table.insert(values, self.namesKVMap[column.name]-1 - lastNameIndex)
-				lastNameIndex = self.namesKVMap[column.name]
+				table.insert(values, self.namesKVMap[column.name] - 1 - lastNameIndex)
 			end
-			lastGeneratedColumn = column.generatedColumn
-			lastSourceIndex = self.sourcesKVMap[column.source]
-			lastOriginalLine = column.originalLine
-			lastOriginalColumn = column.originalColumn
-			table.insert(columnStrs, Base64VQL.encode(values))
+			if optimise == false or last_values == nil or values[2] ~= 0 or values[3] ~= 0 or values[4] ~= 0 or (values[5] ~= last_values[5] and values[5] ~= 0) then
+				table.insert(columnStrs, Base64VQL.encode(values))
+				lastGeneratedColumn = column.generatedColumn - 1
+				lastSourceIndex = self.sourcesKVMap[column.source] - 1
+				lastOriginalLine = column.originalLine - 1
+				lastOriginalColumn = column.originalColumn - 1
+				if column.name ~= nil then
+					lastNameIndex = self.namesKVMap[column.name] - 1
+				end
+			end
+			last_values = values
 		end
 		table.insert(mapping, table.concat(columnStrs, ","))
 	end

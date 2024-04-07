@@ -72,16 +72,21 @@ function Emitter:visit_type(name, node)
 	if self.defs[name] == nil then
 		print_warn("Missing emitter method for node type \"" .. name .. "\"")
 	else
-		local start = self.char_position
 		table.insert(self.visit_path, name)
+		local prev_node = self.last_node
+		self.last_node = node
 		self.defs[name](self, node)
-		self.source_map:link(node, start, self.char_position)
+		self.last_node = prev_node
 		local t = table.remove(self.visit_path)
 		assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
 	end
 end
 
+---@param s string
 function Emitter:add_part(s)
+	if s ~= "\n" then
+		self.source_map:link(self.last_node, self.last_node.start, self.char_position)
+	end
 	table.insert(self.parts, s)
 	self.char_position = self.char_position + #s
 end

@@ -1,5 +1,5 @@
 -- Created by: Dude112113
--- Version: 1.4
+-- Version: 1.5
 local original_print = print
 
 local socket = require "socket"
@@ -41,17 +41,17 @@ function logging.get_source()
 end
 
 ---@param log_type string
----@param s any
 ---@param ... any
-function logging._log(log_type, s, ...)
+function logging._log(log_type, ...)
 	local source = logging.get_source()
 	local prefix = colors.fix .. "[" .. log_type .. colors.fix .. "]\t" .. colors.reset .. source .. colors.fix
 	prefix = prefix .. ": "
-	local msgParts = {prefix .. colors.reset .. tostring(s)}
-	for _, v in ipairs({...}) do
-		table.insert(msgParts, "\t")
-		table.insert(msgParts, tostring(v))
+	local msgParts = {prefix .. colors.reset}
+	local values = {...}
+	for i=1,select("#", ...) do
+		values[i] = tostring(values[i])
 	end
+	table.insert(msgParts, table.concat(values, "\t"))
 	table.insert(msgParts, colors.reset)
 	local str = table.concat(msgParts):gsub("(\r?\n\r?)", "%1" .. colors.strip(prefix):gsub("[^\t]", " "))
 	original_print(str)
@@ -63,41 +63,36 @@ function logging._log(log_type, s, ...)
 	end
 end
 
----@param s any
 ---@param ... any
-function logging.print(s, ...)
-	logging._log(logging.LEVELS.DEFAULT, s, ...)
+function logging.print(...)
+	logging._log(logging.LEVELS.DEFAULT, ...)
 end
 print = logging.print
 
----@param s any
 ---@param ... any
-function logging.print_debug(s, ...)
-	logging._log(logging.LEVELS.DEFAULT, s, ...)
+function logging.print_debug(...)
+	logging._log(logging.LEVELS.DEFAULT, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_debug = logging.print_debug
 
----@param s any
 ---@param ... any
-function logging.print_info(s, ...)
-	logging._log(logging.LEVELS.INFO, s, ...)
+function logging.print_info(...)
+	logging._log(logging.LEVELS.INFO, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_info = logging.print_info
 
----@param s any
 ---@param ... any
-function logging.print_warn(s, ...)
-	logging._log(logging.LEVELS.WARN, s, ...)
+function logging.print_warn(...)
+	logging._log(logging.LEVELS.WARN, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_warn = logging.print_warn
 
----@param s any
 ---@param ... any
 function logging.print_error(s, ...)
-	logging._log(logging.LEVELS.ERROR, s, ...)
+	logging._log(logging.LEVELS.ERROR, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global
 print_error = logging.print_error

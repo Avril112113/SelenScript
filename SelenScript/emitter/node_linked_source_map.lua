@@ -7,7 +7,7 @@ local SourceMapLib = require "source-map"
 
 
 ---@class NodeLinkedSourceMap
----@field links {node:ASTNode, start:integer, finish:integer}[]
+---@field links {node:ASTNode, src_pos:integer, out_pos:integer}[]
 local NodeLinkedSourceMap = {}
 NodeLinkedSourceMap.__index = NodeLinkedSourceMap
 
@@ -19,26 +19,24 @@ function NodeLinkedSourceMap.new()
 end
 
 ---@param node ASTNode # The source node that is being mapped
----@param start number # The position in the output this node starts
----@param finish number # The position in the output this node finishes
-function NodeLinkedSourceMap:link(node, start, finish)
-	table.insert(self.links, {node=node, start=start, finish=finish})
+---@param src_pos number # The position in the output this node starts
+---@param out_pos number # The position in the output this node starts
+function NodeLinkedSourceMap:link(node, src_pos, out_pos)
+	table.insert(self.links, {node=node, src_pos=src_pos, out_pos=out_pos})
 end
 
 ---@param src string # The source code for line and column calculations
 ---@param out string # The output code for line and column calculations
 function NodeLinkedSourceMap:generate(src, out, srcFile, outFile)
 	table.sort(self.links, function (a, b)
-		return a.start > b.start
+		return a.out_pos > b.out_pos
 	end)
 	local sourceMap = SourceMapLib.new()
 	sourceMap:setFile(outFile)
 	for i, link in ipairs(self.links) do
-		local out_start_ln, out_start_col = ReLabel.calcline(out, link.start)
-		local out_finish_ln, out_finish_col = ReLabel.calcline(out, link.finish)
-		local src_start_ln, src_start_col = ReLabel.calcline(src, link.node.start)
-		local src_finish_ln, src_finish_col = ReLabel.calcline(src, link.node.finish)
-		local name
+		local src_start_ln, src_start_col = ReLabel.calcline(src, link.src_pos)
+		local out_start_ln, out_start_col = ReLabel.calcline(out, link.out_pos)
+		local name = link.node.type
 		-- local name = type(link.node.name) == "string" and link.node.name or nil
 		-- if link.node.value ~= nil then
 		-- 	if name ~= nil then
@@ -48,8 +46,8 @@ function NodeLinkedSourceMap:generate(src, out, srcFile, outFile)
 		-- 	end
 		-- end
 		sourceMap:addSourceMapping(srcFile, src_start_ln, src_start_col, out_start_ln, out_start_col, name)
-		sourceMap:addSourceMapping(srcFile, src_finish_ln, src_finish_col, out_finish_ln, out_finish_col)
 	end
+	sourceMap:addSourceContent(srcFile, src)
 	return Json.encode(sourceMap:toJson())
 end
 
