@@ -9,13 +9,15 @@ local GRAMMAR_DIRECTORY = Utils.modPathToPath(Utils.modPathParent(Utils.modPathP
 
 -- Builds up a relabel grammer from seperated parts
 local Grammar = {
-	---@type table<string, boolean|string>
+	---@type string[]
 	files = {
-		["LuaBase.relabel"]=false,
-		["Lua.relabel"]=false,
-		["SelenScript.relabel"]=false,
-		["SelenScriptBase.relabel"]=false,
+		"LuaBase.relabel",
+		"Lua.relabel",
+		"SelenScriptBase.relabel",
+		"SelenScript.relabel",
 	},
+	---@type table<string, string>
+	_loaded_files={},
 	cache = {},
 	CORE_GRAMMAR = [[
 #include EntryPoint
@@ -40,10 +42,11 @@ function Grammar.build(declarations, entry_point)
 	if not ok then
 		return ok, nil, all_errors
 	end
-	for file, data in pairs(Grammar.files) do
+	for _, file in pairs(Grammar.files) do
+		local data = Grammar._loaded_files[file]
 		if not data then
 			data = Utils.readFile(GRAMMAR_DIRECTORY .. "/" .. file)
-			Grammar.files[file] = data
+			Grammar._loaded_files[file] = data
 		end
 		-- TODO: convert errors from rpp:process() to our error objects
 		---@diagnostic disable-next-line: redefined-local
