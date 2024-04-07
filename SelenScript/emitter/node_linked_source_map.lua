@@ -36,15 +36,14 @@ function NodeLinkedSourceMap:generate(src, out, srcFile, outFile)
 	for i, link in ipairs(self.links) do
 		local src_start_ln, src_start_col = ReLabel.calcline(src, link.src_pos)
 		local out_start_ln, out_start_col = ReLabel.calcline(out, link.out_pos)
-		local name = link.node.type
-		-- local name = type(link.node.name) == "string" and link.node.name or nil
-		-- if link.node.value ~= nil then
-		-- 	if name ~= nil then
-		-- 		name = name .. "=" .. tostring(link.node.value)
-		-- 	else
-		-- 		name = "=" .. tostring(link.node.value)
-		-- 	end
-		-- end
+		local name = type(link.node.name) == "string" and link.node.name or nil
+		if link.node.value ~= nil then
+			if name ~= nil then
+				name = name .. "=" .. tostring(link.node.value)
+			else
+				name = "=" .. tostring(link.node.value)
+			end
+		end
 		sourceMap:addSourceMapping(srcFile, src_start_ln, src_start_col, out_start_ln, out_start_col, name)
 	end
 	sourceMap:addSourceContent(srcFile, src)
