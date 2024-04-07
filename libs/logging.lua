@@ -91,7 +91,7 @@ end
 print_warn = logging.print_warn
 
 ---@param ... any
-function logging.print_error(s, ...)
+function logging.print_error(...)
 	logging._log(logging.LEVELS.ERROR, ...)
 end
 ---@diagnostic disable-next-line: lowercase-global

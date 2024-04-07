@@ -1,5 +1,5 @@
 Start	<- chunk (!. / ({} {.*} {}->'Start') -> UNPARSED_INPUT)
-chunk	<- (statement+ / {}->empty) -> chunk
+chunk	<- (statement+ / {}->{nil}) -> chunk
 
 statement	<- (
 			   comment
@@ -21,7 +21,7 @@ block	<- (directive_block_start Cl chunk (directive_block_end/{}->MISSING_ENDBLO
 include	<- (directive_include Cl) -> include
 define	<- (directive_define Cl) -> define
 
-source	<- !directive !"//" !"/*" {(!%nl .)+} -> source
+source	<- !directive !comment {(!%nl .)+} -> source
 
 directive				<- directive_if
 						 / directive_elseif

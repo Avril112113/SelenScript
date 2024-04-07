@@ -21,9 +21,6 @@ local defs = {
 	dbg = function(...)
 		print("dbg:", ...)
 	end,
-	empty = function()
-		return {}
-	end,
 
 	UNPARSED_INPUT = function(pos, str, name)
 		table.insert(errors, {
@@ -152,6 +149,10 @@ function Emitter:generate()
 			local block = self.blocks[part.name]
 			if block ~= nil then
 				self:visit(block.chunk)
+				-- If the block is empty, it may have never set the part to something.
+				if self.parts[i] == nil then
+					self.parts[i] = ""
+				end
 			else
 				self.parts[i] = ""
 				table.insert(self.errors,  {
