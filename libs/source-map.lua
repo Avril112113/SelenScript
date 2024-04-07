@@ -351,9 +351,8 @@ function SourceMap:getSpansAt(generatedLine, generatedColumn)
 			end
 		end
 		return spans
-	else
-		return {}
 	end
+	return {}
 end
 
 

@@ -84,7 +84,7 @@ end
 
 ---@param s string
 function Emitter:add_part(s)
-	if s ~= "\n" then
+	if #s > 0 and s ~= "\n" then
 		self.source_map:link(self.last_node, self.last_node.start, self.char_position)
 	end
 	table.insert(self.parts, s)
