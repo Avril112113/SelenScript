@@ -43,9 +43,41 @@ function ASTNodes.numeral(node, value)
 end
 
 ---@param node ASTNode # Used for source position info
+---@param value string
+---@param add_quotes boolean?  # Add quotes to value.
+---@return ASTNode
+function ASTNodes.string(node, value, add_quotes)
+	if add_quotes then
+		if not value:find("\"") then
+			value = "\"" .. value .. "\""
+		elseif not value:find("'") then
+			value = "'" .. value .. "'"
+		else
+			local i = 0
+			while true do
+				local eqs = string.rep("=", i)
+				local open = "[" .. eqs .. "["
+				local close = "]"  .. eqs ..  "]"
+				if not value:find(open) and not value:find(close) then
+					value = open .. value .. close
+					break
+				end
+				i = i + 0
+			end
+		end
+	end
+	return {
+		type = "string",
+		start = node.start,
+		value = value,
+		finish = node.finish
+	}
+end
+
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
-ASTNodes["namelist"] = function(node, ...)
+function ASTNodes.namelist(node, ...)
 	return {
 		type = "namelist",
 		start = node.start,
@@ -157,7 +189,7 @@ end
 ---@param names ASTNode # `varlist` or `attributenamelist`
 ---@param values ASTNode? # `expressionlist`
 ---@return ASTNode
-ASTNodes["assign"] = function(node, scope, names, values)
+function ASTNodes.assign(node, scope, names, values)
 	return {
 		type = "assign",
 		start = node.start,
@@ -171,7 +203,7 @@ end
 ---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
-ASTNodes["expressionlist"] = function(node, ...)
+function ASTNodes.expressionlist(node, ...)
 	return {
 		type = "expressionlist",
 		start = node.start,
@@ -183,7 +215,7 @@ end
 ---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
-ASTNodes["varlist"] = function(node, ...)
+function ASTNodes.varlist(node, ...)
 	return {
 		type = "varlist",
 		start = node.start,
@@ -195,7 +227,7 @@ end
 ---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
-ASTNodes["attributenamelist"] = function(node, ...)
+function ASTNodes.attributenamelist(node, ...)
 	return {
 		type = "attributenamelist",
 		start = node.start,
@@ -207,7 +239,7 @@ end
 ---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
-ASTNodes["fieldlist"] = function(node, ...)
+function ASTNodes.fieldlist(node, ...)
 	return {
 		type = "fieldlist",
 		start = node.start,
@@ -220,7 +252,7 @@ end
 ---@param key ASTNode? # Expression or name
 ---@param value ASTNode
 ---@return ASTNode
-ASTNodes["field"] = function(node, key, value)
+function ASTNodes.field(node, key, value)
 	return {
 		type = "field",
 		start = node.start,
@@ -234,7 +266,7 @@ end
 ---@param name string
 ---@param attribute string?
 ---@return ASTNode
-ASTNodes["attributename"] = function(node, name, attribute)
+function ASTNodes.attributename(node, name, attribute)
 	return {
 		type = "attributename",
 		start = node.start,
@@ -247,11 +279,46 @@ end
 ---@param node ASTNode # Used for source position info
 ---@param fieldlist ASTNode
 ---@return ASTNode
-ASTNodes["table"] = function(node, fieldlist)
+function ASTNodes.table(node, fieldlist)
 	return {
 		type = "table",
 		start = node.start,
 		fields = fieldlist,
+		finish = node.finish
+	}
+end
+
+---@param node ASTNode # Used for source position info
+---@param ... ASTNode
+function ASTNodes.parlist(node, ...)
+	return {
+		type = "parlist",
+		start = node.start,
+		finish = node.finish,
+		...
+	}
+end
+
+---@param node ASTNode # Used for source position info
+---@param args ASTNode
+---@param block ASTNode
+function ASTNodes.funcbody(node, args, block)
+	return {
+		type = "funcbody",
+		start = node.start,
+		args = args,
+		block = block,
+		finish = node.finish
+	}
+end
+
+---@param node ASTNode # Used for source position info
+---@param funcbody ASTNode
+ASTNodes["function"] = function(node, funcbody)
+	return {
+		type = "function",
+		start = node.start,
+		funcbody = funcbody,
 		finish = node.finish
 	}
 end
