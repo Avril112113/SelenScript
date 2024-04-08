@@ -302,7 +302,7 @@ prefixexpression	<- {| {:type:''->"index":}
 							{:start:{}:}
 							(
 								{:expr:name:}
-							/ "(" Sc {:expr:expression:} Sc ")"
+							/ {:braces:"(":} Sc {:expr:expression:} Sc ")"
 							)
 							{:finish:{}:}
 							(Sc {:index:index:})?
@@ -311,7 +311,7 @@ prefixexpression_lcall	<- {| {:type:''->"index":}
 								{:start:{}:}
 								(
 									{:expr:name:}
-								/ "(" Sc {:expr:expression:} Sc ")"
+								/ {:braces:"(":} Sc {:expr:expression:} Sc ")"
 								)
 								{:finish:{}:}
 								(Sc {:index:Sc index_lcall / call:})
