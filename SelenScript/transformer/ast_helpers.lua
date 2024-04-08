@@ -7,6 +7,34 @@ local ASTNodes = {}
 ASTHelpers.Nodes = ASTNodes
 
 ---@param node ASTNode # Used for source position info
+---@param prefix string?
+---@param value string
+---@return ASTNode
+function ASTNodes.LineComment(node, prefix, value)
+	return {
+		type = "LineComment",
+		start = node.start,
+		prefix = prefix or "--",
+		value = value,
+		finish = node.finish,
+	}
+end
+
+---@param node ASTNode # Used for source position info
+---@param prefix string?
+---@param value string
+---@return ASTNode
+function ASTNodes.LongComment(node, prefix, value)
+	return {
+		type = "LongComment",
+		start = node.start,
+		prefix = prefix or "[[",
+		value = value,
+		finish = node.finish,
+	}
+end
+
+---@param node ASTNode # Used for source position info
 ---@param ... ASTNode
 ---@return ASTNode
 function ASTNodes.block(node, ...)

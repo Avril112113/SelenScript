@@ -44,6 +44,19 @@ function EmitterDefs:_indented_block(node)
 	self:add_new_line()
 end
 
+---@param node ASTNode # TODO: Node types
+function EmitterDefs:LineComment(node)
+	self:add_part(node.prefix)
+	self:add_part(node.value)
+end
+
+---@param node ASTNode # TODO: Node types
+function EmitterDefs:LongComment(node)
+	self:add_part("--" .. node.prefix)
+	self:add_part(node.value)
+	self:add_part(node.prefix:gsub("%[", "%]"))
+end
+
 ---@param self LuaEmitter
 ---@param node ASTNode # TODO: Node types
 EmitterDefs["assign"] = function(self, node)
