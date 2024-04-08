@@ -135,7 +135,12 @@ function Transformer:_create_proxy(ast, env)
 		---@type table<string, number> # A table for the amount of times a SS variable name has been used
 		var_names = {},
 		ast = ast,
-	}, {__index=self})
+	}, {__index=function(mt, index)
+		local value = rawget(self.defs, index)
+		if value ~= nil then return value end
+		value = self[index]
+		if value ~= nil then return value end
+	end})
 	if env then
 		for i, v in pairs(env) do
 			self_proxy[i] = v
