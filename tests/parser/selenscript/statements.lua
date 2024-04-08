@@ -2,7 +2,7 @@ local TestUtils = require "tests.test_utils"
 
 
 TEST.addTest("continue", function ()
-	local parser = TestUtils.CreateParser(TEST)
+	local parser = TestUtils.CreateNewParser(TEST)
 	local ast, errors, comments = parser:parse([[
 		while true do
 			continue
@@ -30,7 +30,7 @@ TEST.addTest("continue", function ()
 end)
 
 TEST.addTest("conditional_stmt", function ()
-	local parser = TestUtils.CreateParser(TEST)
+	local parser = TestUtils.CreateNewParser(TEST)
 	local ast, errors, comments = parser:parse([[
 		if true continue
 		if true break

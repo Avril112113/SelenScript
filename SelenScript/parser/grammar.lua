@@ -7,8 +7,10 @@ local AST = require "SelenScript.parser.ast"
 
 local GRAMMAR_DIRECTORY = Utils.modPathToPath(Utils.modPathParent(Utils.modPathParent(...)) .. ".grammar")
 
+
 -- Builds up a relabel grammer from seperated parts
 local Grammar = {
+	default_entry = "chunk",
 	---@type string[]
 	files = {
 		"LuaBase.relabel",
@@ -18,27 +20,25 @@ local Grammar = {
 	},
 	---@type table<string, string>
 	_loaded_files={},
-	cache = {},
-	CORE_GRAMMAR = [[
-#include EntryPoint
-]],
 }
 
 
 --- Build the relabel grammar from the seperated files using RePreProcess
----@param declarations table<string,boolean>? # Potentially mutated during call
+---@param declarations table<string,boolean>?
 ---@param entry_point string? # Override the entry point
 ---@return boolean, string?, Error[] # TODO: make all errors ErrorBase, they are not currently
 function Grammar.build(declarations, entry_point)
 	declarations = declarations or {}
+	entry_point = entry_point or Grammar.default_entry
+
 	local rpp = RePreProcess.new()
+	local all_errors = {}
 	-- TODO: convert errors from rpp:process() to our error objects
-	local entry_code = Grammar.CORE_GRAMMAR
-	if entry_point ~= nil then
-		entry_code = "entry <- " .. entry_point
+	local ok, result, errors = rpp:process("entry <- " .. entry_point)
+	if not ok then table.insert(errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end
+	for _, err in ipairs(errors) do
+		table.insert(all_errors, err)
 	end
-	local ok, result, all_errors = rpp:process(entry_code)
-	if not ok then table.insert(all_errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end
 	if not ok then
 		return ok, nil, all_errors
 	end

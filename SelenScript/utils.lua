@@ -73,6 +73,23 @@ function Utils.deepcopy(tbl)
 	return t
 end
 
+-- Simplifed from https://gist.github.com/sapphyrus/fd9aeb871e3ce966cc4b0b969f62f539
+function Utils.deepeq(t1, t2)
+	-- iterate over t1
+	for key1, value1 in pairs(t1) do
+		local value2 = t2[key1]
+		if value2 == nil or Utils.deepeq(value1, value2) == false then
+			return false
+		end
+	end
+
+	--- check keys in t2 but missing from t1
+	for key2, _ in pairs(t2) do
+		if t1[key2] == nil then return false end
+	end
+	return true
+end
+
 ---@param tbl table
 ---@param value any
 ---@return string|any?

@@ -2,7 +2,7 @@ local TestUtils = require "tests.test_utils"
 
 
 TEST.addTest("ifexpr", function ()
-	local parser = TestUtils.CreateParser(TEST)
+	local parser = TestUtils.CreateNewParser(TEST)
 	local ast, errors, comments = parser:parse([[
 		_ = if true then 1 else 0
 	]])

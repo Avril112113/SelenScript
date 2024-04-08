@@ -6,7 +6,7 @@ package.cpath = package.cpath .. "libs/" .. _VERSION:sub(5) .. "/?.dll;libs/?.dl
 
 local AvTest = require "avtest.init"
 
-
+local start = os.clock()
 AvTest.Runner.new()
 	:setOutputFileEnabled(true)
 	:setOutputFilePerTest(true)
@@ -17,3 +17,6 @@ AvTest.Runner.new()
 	:addBlacklist("./tests/parser/selenscript/typing.lua")
 	:addDir("./tests")
 	:runTests()
+local finish = os.clock()
+
+print(("\n%sTook %s%ss %sto run tests.%s"):format(AvTest.Config.PREFIX_TAG, AvTest.Config.PREFIX_TEXT, finish-start, AvTest.Config.PREFIX_TAG, AvTest.Config.RESET))

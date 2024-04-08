@@ -5,14 +5,13 @@ local Grammar = require "SelenScript.parser.grammar"
 local ParserErrors = require "SelenScript.parser.errors"
 
 
-
 --- Unique custom ASTNode type that encompasses the ast of a source, it's start and end are inherited from it's block node.
 ---@class ASTNodeSource : ASTNode
 ---@field type "source"
 ---@field block ASTNode # TODO: Node types
 ---@field source string # The plain text source
 ---@field file string? # Defines the origin of the source, special value `[stdin]`, path be relitive to src root and use `/`
-local ASTNodeSource = nil
+local ASTNodeSource
 
 
 ---@class Parser

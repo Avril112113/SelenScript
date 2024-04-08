@@ -2,7 +2,7 @@ local TestUtils = require "tests.test_utils"
 
 
 TEST.addTest("while", function ()
-	local parser = TestUtils.CreateParser(TEST)
+	local parser = TestUtils.CreateNewParser(TEST)
 	local ast, errors, comments = parser:parse([[
 		_ = while true do
 			break 123, 456
@@ -48,7 +48,7 @@ TEST.addTest("while", function ()
 end)
 
 TEST.addTest("do", function ()
-	local parser = TestUtils.CreateParser(TEST)
+	local parser = TestUtils.CreateNewParser(TEST)
 	local ast, errors, comments = parser:parse([[
 		_ = do
 			return 123, 456
@@ -94,7 +94,7 @@ TEST.addTest("do", function ()
 end)
 
 TEST.addTest("forrange", function ()
-	local parser = TestUtils.CreateParser(TEST)
+	local parser = TestUtils.CreateNewParser(TEST)
 	local ast, errors, comments = parser:parse([[
 		_ = for i=1,10,2 do
 			break i
@@ -138,7 +138,7 @@ TEST.addTest("forrange", function ()
 end)
 
 TEST.addTest("foriter", function ()
-	local parser = TestUtils.CreateParser(TEST)
+	local parser = TestUtils.CreateNewParser(TEST)
 	local ast, errors, comments = parser:parse([[
 		_ = for i,v in iter do
 			break i, v

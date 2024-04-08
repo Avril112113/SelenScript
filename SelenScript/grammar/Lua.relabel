@@ -1,9 +1,5 @@
 /**** Lua ****/
 
-#block EntryPoint
-entry	<- chunk
-#endblock
-
 chunk	<- {| {:type:''->"chunk":}
 				{:start:{}:}
 				{:hashline:HASHLINE:}?

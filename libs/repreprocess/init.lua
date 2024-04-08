@@ -9,6 +9,21 @@ local function read_file(path)
 	return data
 end
 
+---@generic T : table
+---@param t T
+---@return T
+local function deepcopy(t)
+	local new = {}
+	for i, v in pairs(t) do
+		if type(v) == "table" then
+			new = deepcopy(v)
+		else
+			new[i] = v
+		end
+	end
+	return new
+end
+
 
 local RePreProcess = {}
 RePreProcess.__index = RePreProcess
@@ -270,13 +285,15 @@ function RePreProcess:process(src, args)
 	return true, result, errors
 end
 
----@param declarations table<string,boolean>? # Potentially mutated during call
+---@param declarations table<string,boolean>?
+---@return boolean, string, table[], table<string,boolean>
 function RePreProcess:generate(declarations)
-	local emitter = Emitter.new(declarations)
+	local declarations_copy = declarations and deepcopy(declarations) or {}
+	local emitter = Emitter.new(declarations_copy)
 	for _, chunk in ipairs(self.chunks) do
 		emitter:visit(chunk)
 	end
-	return true, emitter:generate(), emitter.errors
+	return true, emitter:generate(), emitter.errors, declarations_copy
 end
 
 

@@ -41,8 +41,28 @@ end
 
 ---@param TEST TestEnv
 ---@return Parser
-function TestUtils.CreateParser(TEST)
+function TestUtils.CreateNewParser(TEST)
 	local parser, errors = Parser.new()
+	if #errors > 0 then
+		print_error("-- Grammar Errors: " .. #errors .. " --")
+		for _, v in ipairs(errors) do
+			print_error((v.id or "NO_ID") .. ": " .. v.msg)
+		end
+	end
+	TEST.assert("parser ~= nil", parser ~= nil)  ---@cast parser -?
+	TEST.assert("#errors <= 0", #errors <= 0)
+	return parser
+end
+
+local test_parser
+local test_parser_errors
+---@param TEST TestEnv
+---@return Parser
+function TestUtils.GetSharedParser(TEST)
+	if test_parser == nil and test_parser_errors == nil then
+		test_parser, test_parser_errors = Parser.new()
+	end
+	local parser, errors = test_parser, test_parser_errors
 	if #errors > 0 then
 		print_error("-- Grammar Errors: " .. #errors .. " --")
 		for _, v in ipairs(errors) do
