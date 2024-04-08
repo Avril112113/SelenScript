@@ -206,7 +206,15 @@ EmitterDefs["return"] = function(self, node)
 end
 
 ---@param node ASTNode # TODO: Node types
+local function is_indexing_multi_value(node)
+	return (node.expr and node.expr.type == "call" and not node.index) or (node.index and is_indexing_multi_value(node.index))
+end
+---@param node ASTNode # TODO: Node types
 function EmitterDefs:index(node)
+	local braces = node.how == nil and node.braces ~= nil and is_indexing_multi_value(node.expr)
+	if braces and node.braces == "(" then
+		self:add_part("(")
+	end
 	if node.how ~= nil then
 		self:add_part(node.how)
 	end
@@ -223,6 +231,9 @@ function EmitterDefs:index(node)
 	end
 	if node.index ~= nil then
 		self:visit(node.index)
+	end
+	if braces and node.braces == "(" then
+		self:add_part(")")
 	end
 end
 
@@ -369,7 +380,7 @@ function EmitterDefs:_math(node)
 		self:add_space(self.config.space_between_math or self:is_space_required_boundary(node.op))
 	end
 	self:add_part(node.op)
-	self:add_space(self.config.space_between_math or self:is_space_required_boundary(node.rhs))
+	self:add_space((node.lhs ~= nil and self.config.space_between_math) or self:is_space_required_boundary(node.rhs))
 	self:visit(node.rhs)
 	if brackets then
 		self:add_part(")")
