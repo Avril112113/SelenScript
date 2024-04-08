@@ -7,6 +7,15 @@ local Precedence = require "SelenScript.parser.precedence"
 local EmitterDefs = {}
 
 
+EmitterDefs._VALUE_TYPES = {
+	["string"]=true,
+	["numeral"]=true,
+	["table"]=true,
+	["function"]=true,
+	["var_args"]=true,
+}
+
+
 ---@param node ASTNodeSource
 function EmitterDefs:source(node)
 	self:visit(node.block)
@@ -201,9 +210,16 @@ function EmitterDefs:index(node)
 	if node.how ~= nil then
 		self:add_part(node.how)
 	end
+	local needs_parens = node.index ~= nil and EmitterDefs._VALUE_TYPES[node.expr.type]
+	if needs_parens then
+		self:add_part("(")
+	end
 	self:visit(node.expr)
 	if node.how == "[" then
 		self:add_part("]")
+	end
+	if needs_parens then
+		self:add_part(")")
 	end
 	if node.index ~= nil then
 		self:visit(node.index)
