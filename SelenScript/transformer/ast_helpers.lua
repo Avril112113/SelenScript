@@ -144,6 +144,15 @@ function ASTNodes.call(node, args, self)
 	}
 end
 
+function ASTNodes.var_args(node)
+	return {
+		type = "var_args",
+		start = node.start,
+		value = "...",
+		finish = node.finish,
+	}
+end
+
 ---@param node ASTNode # Used for source position info
 ---@param name string|ASTNode
 ---@return ASTNode
@@ -348,6 +357,17 @@ ASTNodes["function"] = function(node, funcbody)
 		start = node.start,
 		funcbody = funcbody,
 		finish = node.finish
+	}
+end
+
+---@param node ASTNode # Used for source position info
+---@param values ASTNode
+ASTNodes["return"] = function(node, values)
+	return {
+		type = "return",
+		start = node.start,
+		values = values,
+		finish = node.finish,
 	}
 end
 
