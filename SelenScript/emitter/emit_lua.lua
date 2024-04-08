@@ -215,11 +215,11 @@ function EmitterDefs:index(node)
 		self:add_part("(")
 	end
 	self:visit(node.expr)
-	if node.how == "[" then
-		self:add_part("]")
-	end
 	if needs_parens then
 		self:add_part(")")
+	end
+	if node.how == "[" then
+		self:add_part("]")
 	end
 	if node.index ~= nil then
 		self:visit(node.index)
@@ -366,10 +366,10 @@ function EmitterDefs:_math(node)
 	end
 	if node.lhs ~= nil then
 		self:visit(node.lhs)
-		self:add_space(self:is_space_required_boundary(node.op))
+		self:add_space(self.config.space_between_math or self:is_space_required_boundary(node.op))
 	end
 	self:add_part(node.op)
-	self:add_space(self:is_space_required_boundary(node.rhs))
+	self:add_space(self.config.space_between_math or self:is_space_required_boundary(node.rhs))
 	self:visit(node.rhs)
 	if brackets then
 		self:add_part(")")

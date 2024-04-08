@@ -15,6 +15,7 @@ local EmitterConfig = {
 	field_assign_space = true,
 	space_before_function = false,
 	space_after_function = false,
+	space_between_math = true,
 	math_always_parenthesised = false,
 	functiondef_source = true,  -- https://github.com/sumneko/lua-language-server/wiki/Annotations#source
 }
@@ -114,6 +115,7 @@ function Emitter:add_space(b)
 end
 
 --- Checks if a space is required to separate the last character and `s`
+--- Checks for word chars [%w_] and digits followed by [%d.]
 ---@param s string|ASTNode
 function Emitter:is_space_required_boundary(s)
 	if type(s) == "table" and s.type ~= nil then
@@ -121,14 +123,21 @@ function Emitter:is_space_required_boundary(s)
 		s = emitter:generate(s)
 	end
 	local char = s:sub(1, 1)
-	return self:last_is_word() and char:gmatch("%w")() == char
+	return (self:last_is_word() and char:match("[%w_]") ~= nil) or (self:last_is_digit() and char:match("[%d.]") ~= nil)
 end
 
 --- Weather or not the last added character (from the last part) is a word character
 function Emitter:last_is_word()
 	local part = self.parts[#self.parts]
 	local char = part:sub(#part)
-	return char:gmatch("%w")() == char
+	return char:match("[%w_]") ~= nil
+end
+
+--- Weather or not the last added character (from the last part) is a word character
+function Emitter:last_is_digit()
+	local part = self.parts[#self.parts]
+	local char = part:sub(#part)
+	return char:match("%d") ~= nil
 end
 
 --- Increases the indent depth
