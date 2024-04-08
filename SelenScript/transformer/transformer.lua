@@ -126,8 +126,9 @@ end
 
 --- Creates a proxy of self, with the required limited lifetime variables for transformation.
 ---@param ast ASTNodeSource
-function Transformer:_create_proxy(ast)
-	return setmetatable({
+---@param env table? # Copied into the proxied transformer object.
+function Transformer:_create_proxy(ast, env)
+	local self_proxy = setmetatable({
 		errors = {},
 		node_parents = {},
 		visit_path = {},  -- For debugging errors
@@ -135,13 +136,20 @@ function Transformer:_create_proxy(ast)
 		var_names = {},
 		ast = ast,
 	}, {__index=self})
+	if env then
+		for i, v in pairs(env) do
+			self_proxy[i] = v
+		end
+	end
+	return self_proxy
 end
 
 --- Runs a transformer though the `ast`, mutating the input parameter.
 ---@param ast ASTNodeSource # WARNING: Mutated
-function Transformer:transform(ast)
+---@param env table? # Copied into the proxied transformer object.
+function Transformer:transform(ast, env)
 	-- NOTE: The `ast` param shouldn't be transformed, as that will replace it, causing potentially untransformed ast nodes.
-	local self_proxy = self:_create_proxy(ast)
+	local self_proxy = self:_create_proxy(ast, env)
 	self_proxy:visit(assert(ast, "Missing `ast` argument."))
 	return self_proxy.errors
 end

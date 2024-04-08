@@ -10,6 +10,14 @@ function Utils.readFile(path)
 	return data
 end
 
+---@param path string
+---@param data string
+function Utils.writeFile(path, data)
+	local f = assert(io.open(path, "w"))
+	f:write(data)
+	f:close()
+end
+
 ---@param modpath string
 ---@return string
 function Utils.modPathParent(modpath)
