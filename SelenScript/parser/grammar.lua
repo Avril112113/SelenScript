@@ -1,11 +1,14 @@
+local modpath = ...
+local modfolderpath = package.searchpath(modpath, package.path):gsub("[\\/][^\\/]*[\\/][^\\/]*$", "")
+local GRAMMAR_DIRECTORY = modfolderpath .. "/grammar"
+
+
 local RePreProcess = require "repreprocess"
 local ReLabel = require "drelabel"
 
 local ParserErrors = require "SelenScript.parser.errors"
 local Utils = require "SelenScript.utils"
 local AST = require "SelenScript.parser.ast"
-
-local GRAMMAR_DIRECTORY = Utils.modPathToPath(Utils.modPathParent(Utils.modPathParent(...)) .. ".grammar")
 
 
 -- Builds up a relabel grammer from seperated parts

@@ -1,3 +1,8 @@
+local modpath = ...
+local modfolderpath = package.searchpath(modpath, package.path):gsub("[\\/][^\\/]*$", "")
+local GRAMMAR_PATH = modfolderpath .. "/grammar.relabel"
+
+
 local relabel = require "drelabel"
 local lpeg = require "lpeglabel"
 
@@ -252,7 +257,7 @@ Emitter["if"] = function(self, ast)
 end
 Emitter["elseif"] = Emitter["if"]
 
-local grammar_src = read_file("libs/repreprocess/grammar.relabel")  -- TEMPORARY PATH!
+local grammar_src = read_file(GRAMMAR_PATH)
 local grammar = relabel.compile(grammar_src, defs)
 RePreProcess.grammar = grammar
 
