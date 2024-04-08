@@ -92,9 +92,12 @@ end
 
 ---@param tbl table
 ---@param value any
+---@generic K, V
+---@param iter (fun(table: table<K, V>, index?: K):K, V)?
 ---@return string|any?
-function Utils.find_key(tbl, value)
-	for i, v in pairs(tbl) do
+function Utils.find_key(tbl, value, iter)
+	iter = iter or pairs
+	for i, v in iter(tbl) do
         if v == value then
             return i
         end

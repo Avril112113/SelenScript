@@ -1,3 +1,4 @@
+local Utils = require "SelenScript.utils"
 local TransformerErrors = require "SelenScript.transformer.errors"
 
 
@@ -12,16 +13,20 @@ local TransformerErrors = require "SelenScript.transformer.errors"
 local Transformer = {
 	VAR_NAME_BASE = "___SS_",
 	Transformers = {
-		ss_to_lua = require "SelenScript.transformer.transform_ss_to_lua"
+		ss_to_lua = require "SelenScript.transformer.transform_ss_to_lua",
 	},
 }
 Transformer.__index = Transformer
 
 
----@param target string # The emitter to use
+---@param target string|Transformer # The transformer to use
 function Transformer.new(target)
+	if type(target) == "string" then
+		target = assert(Transformer.Transformers[target], "Unknown transformer \"" .. tostring(target) .. "\"")
+	end
+	assert(type(target) == "table", "Invalid transformer defs, expected table.")
 	local self = setmetatable({
-		defs = assert(Transformer.Transformers[target], "Unknown transformer \"" .. tostring(target) .. "\""),
+		defs = target,
 	}, Transformer)
 	return self
 end
@@ -30,19 +35,16 @@ end
 ---@param node ASTNode
 function Transformer:visit(node)
 	local indices_to_remove = {}
-	for i, v in pairs(node) do
+	-- The keys of the node can be changed during transformation, doing so can cause undefined behaviour.
+	local node_cpy = Utils.shallowcopy(node)
+	for i, v in pairs(node_cpy) do
 		self.node_parents[v] = node
 		if type(v) == "table" and v.type ~= nil then
 			local old_length = #node
 			local new_v = self:visit(v)
 			if type(i) == "number" and #node ~= old_length then
-				-- Find new `i` since something was inserted which could have moved all the indices
-				for i2, v2 in pairs(node) do
-					if v == v2 then
-						i = i2
-						break
-					end
-				end
+				-- Find new `i` since something was inserted/removed which could have moved all the indices
+				i = Utils.find_key(node, v, ipairs)
 			end
 			if new_v == nil then
 				if type(i) == "number" then
