@@ -18,7 +18,10 @@ EmitterDefs._VALUE_TYPES = {
 
 ---@param node ASTNodeSource
 function EmitterDefs:source(node)
+	self._sources_file = self._sources_file or {}
+	table.insert(self._sources_file, #self._sources_file, node.file)
 	self:visit(node.block)
+	table.remove(self._sources_file, #self._sources_file)
 end
 
 ---@param node ASTNode # TODO: Node types
@@ -179,10 +182,13 @@ end
 ---@param self LuaEmitter
 ---@param node ASTNode # TODO: Node types
 EmitterDefs["functiondef"] = function(self, node)
-	if self.config.functiondef_source and self.ast.file ~= nil then
-		local ln, col = ReLabel.calcline(self.ast.source, node.start)
-		self:add_part(("---@source %s:%i:%i"):format(self.ast.file, ln, col-1))
-		self:add_new_line()
+	if self.config.functiondef_source then
+		local file = self._sources_file[#self._sources_file] or self.ast.file
+		if file ~= nil then
+			local ln, col = ReLabel.calcline(self.ast.source, node.start)
+			self:add_part(("---@source %s:%i:%i"):format(file, ln, col-1))
+			self:add_new_line()
+		end
 	end
 	if node.scope == "local" then
 		self:add_part(node.scope)
