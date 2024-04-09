@@ -113,5 +113,11 @@ function Utils.find_key(tbl, value, iter)
     return nil
 end
 
+---@param text string
+---@return string
+function Utils.escape_pattern(text)
+	return (text:gsub("(%W)", "%%%1"))
+end
+
 
 return Utils

@@ -1,5 +1,6 @@
 local ReLabel = require "relabel"
 
+local Utils = require "SelenScript.utils"
 local Precedence = require "SelenScript.parser.precedence"
 
 
@@ -25,7 +26,7 @@ function EmitterDefs:add_luacats_source_comment(node)
 		local file = source_node.file:gsub("\\", "/"):gsub("^./", "")
 		if self.base_path then
 			local base_path = self.base_path:gsub("\\", "/"):gsub("^./", "")
-			file = file:gsub("^" .. base_path .. "/?", "")
+			file = file:gsub("^" .. Utils.escape_pattern(base_path) .. "/?", "")
 		end
 		if self.luacats_source_prefix then
 			file = self.luacats_source_prefix .. "/" .. file
