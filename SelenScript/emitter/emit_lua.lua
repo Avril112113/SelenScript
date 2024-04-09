@@ -4,6 +4,8 @@ local Precedence = require "SelenScript.parser.precedence"
 
 
 ---@class LuaEmitter : Emitter
+---@field base_path string?
+---@field luacats_source_prefix string?
 local EmitterDefs = {}
 
 
@@ -16,10 +18,29 @@ EmitterDefs._VALUE_TYPES = {
 }
 
 
+---@param node ASTNode
+function EmitterDefs:add_luacats_source_comment(node)
+	local file = self._sources_file[#self._sources_file] or self.ast.file
+	if file ~= nil then
+		file = file:gsub("\\", "/"):gsub("^./", "")
+		if self.base_path then
+			local base_path = self.base_path:gsub("\\", "/"):gsub("^./", "")
+			file = file:gsub("^" .. base_path .. "/?", "")
+		end
+		if self.luacats_source_prefix then
+			file = self.luacats_source_prefix .. "/" .. file
+		end
+		local ln, col = ReLabel.calcline(self.ast.source, node.start)
+		self:add_part(("---@source %s:%i:%i"):format(file, ln, col-1))
+		self:add_new_line()
+	end
+end
+
+
 ---@param node ASTNodeSource
 function EmitterDefs:source(node)
 	self._sources_file = self._sources_file or {}
-	table.insert(self._sources_file, #self._sources_file, node.file)
+	table.insert(self._sources_file, #self._sources_file+1, node.file)
 	self:visit(node.block)
 	table.remove(self._sources_file, #self._sources_file)
 end
@@ -63,6 +84,9 @@ end
 ---@param self LuaEmitter
 ---@param node ASTNode # TODO: Node types
 EmitterDefs["assign"] = function(self, node)
+	if self.config.luacats_source then
+		self:add_luacats_source_comment(node)
+	end
 	if node.scope == "local" then
 		self:add_part(node.scope)
 		self:add_space()
@@ -182,13 +206,8 @@ end
 ---@param self LuaEmitter
 ---@param node ASTNode # TODO: Node types
 EmitterDefs["functiondef"] = function(self, node)
-	if self.config.functiondef_source then
-		local file = self._sources_file[#self._sources_file] or self.ast.file
-		if file ~= nil then
-			local ln, col = ReLabel.calcline(self.ast.source, node.start)
-			self:add_part(("---@source %s:%i:%i"):format(file, ln, col-1))
-			self:add_new_line()
-		end
+	if self.config.luacats_source then
+		self:add_luacats_source_comment(node)
 	end
 	if node.scope == "local" then
 		self:add_part(node.scope)
