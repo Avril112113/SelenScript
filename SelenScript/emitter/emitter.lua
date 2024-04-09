@@ -43,16 +43,20 @@ local Emitter = {
 Emitter.__index = Emitter
 
 
----@param target string # The emitter to use
+---@param target string|Emitter # The emitter to use
 ---@param config EmitterConfig # Config modifications, any un-supplied values use defaults
 function Emitter.new(target, config)
 	config = config or {}
+	if type(target) == "string" then
+		target = assert(Emitter.Emitters[target], "Unknown emitter \"" .. tostring(target) .. "\"")
+	end
+	assert(type(target) == "table", "Invalid emitter defs, expected table.")
 	local self = setmetatable({
 		args={target, config},
-		defs = assert(Emitter.Emitters[target], "Unknown emitter output target \"" .. tostring(target) .. "\""),
+		defs = target,
 		parts = nil,
 		indent_depth = nil,
-		config = EmitterConfig.create(config)
+		config = EmitterConfig.create(config),
 	}, Emitter)
 	return self
 end
@@ -152,22 +156,35 @@ end
 
 --- Creates a proxy of self, with the required limited lifetime variables for emitting.
 ---@param ast ASTNodeSource
-function Emitter:_create_proxy(ast)
-	return setmetatable({
+---@param env table? # Copied into the proxied emitter object.
+function Emitter:_create_proxy(ast, env)
+	local self_proxy = setmetatable({
 		ast = ast,
 		parts = {},
 		char_position = 1,
 		indent_depth = 0,
 		source_map = SourceMap.new(),
 		visit_path = {},
-	}, {__index=self})
+	}, {__index=function(mt, index)
+		local value = rawget(self.defs, index)
+		if value ~= nil then return value end
+		value = self[index]
+		if value ~= nil then return value end
+	end})
+	if env then
+		for i, v in pairs(env) do
+			self_proxy[i] = v
+		end
+	end
+	return self_proxy
 end
 
 --- Run the emitter to generate the output.
 ---@param ast ASTNodeSource
 ---@return string, NodeLinkedSourceMap
-function Emitter:generate(ast)
-	local self_proxy = self:_create_proxy(ast)
+---@param env table? # Copied into the proxied emitter object.
+function Emitter:generate(ast, env)
+	local self_proxy = self:_create_proxy(ast, env)
 	self_proxy:visit(ast)
 	local output = table.concat(self_proxy.parts)
 	return output, self_proxy.source_map

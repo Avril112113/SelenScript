@@ -1,6 +1,6 @@
 **.log
 
-IdeasAndIdeaTests/**
-test_local/**
+IdeasAndIdeaTests/
+test_local/
 # Modified https://github.com/evanw/source-map-visualization to auto-load fiels from test_local/
-sourcemap-visualiser/**
+sourcemap-visualiser/

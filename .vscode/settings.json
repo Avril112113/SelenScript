@@ -5,6 +5,13 @@
         "C:/Users/avril/AppData/Roaming/Code/User/globalStorage/sumneko.lua/addonManager/addons/luafilesystem/module/library",
         "C:/Users/avril/AppData/Roaming/Code/User/globalStorage/sumneko.lua/addonManager/addons/luasocket/module/library"
     ],
+    "Lua.runtime.pathStrict": true,
+    "Lua.runtime.path": [
+        "?.lua",
+        "?/init.lua",
+        "libs/?.lua",
+        "libs/?/init.lua"
+    ],
     "Lua.workspace.ignoreDir": [
         ".vscode",
         "tests/parser/lua/lua_official_tests/tests"
