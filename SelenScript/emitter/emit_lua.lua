@@ -20,9 +20,9 @@ EmitterDefs._VALUE_TYPES = {
 
 ---@param node ASTNode
 function EmitterDefs:add_luacats_source_comment(node)
-	local file = self._sources_file[#self._sources_file] or self.ast.file
-	if file ~= nil then
-		file = file:gsub("\\", "/"):gsub("^./", "")
+	local source_node = self._sources[#self._sources]
+	if source_node ~= nil then
+		local file = source_node.file:gsub("\\", "/"):gsub("^./", "")
 		if self.base_path then
 			local base_path = self.base_path:gsub("\\", "/"):gsub("^./", "")
 			file = file:gsub("^" .. base_path .. "/?", "")
@@ -30,7 +30,7 @@ function EmitterDefs:add_luacats_source_comment(node)
 		if self.luacats_source_prefix then
 			file = self.luacats_source_prefix .. "/" .. file
 		end
-		local ln, col = ReLabel.calcline(self.ast.source, node.start)
+		local ln, col = ReLabel.calcline(source_node.source, node.start)
 		self:add_part(("---@source %s:%i:%i"):format(file, ln, col-1))
 		self:add_new_line()
 	end
@@ -39,10 +39,10 @@ end
 
 ---@param node ASTNodeSource
 function EmitterDefs:source(node)
-	self._sources_file = self._sources_file or {}
-	table.insert(self._sources_file, #self._sources_file+1, node.file)
+	self._sources = self._sources or {}
+	table.insert(self._sources, #self._sources+1, node)
 	self:visit(node.block)
-	table.remove(self._sources_file, #self._sources_file)
+	table.remove(self._sources, #self._sources)
 end
 
 ---@param node ASTNode # TODO: Node types
