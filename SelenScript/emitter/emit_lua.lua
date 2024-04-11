@@ -22,7 +22,7 @@ EmitterDefs._VALUE_TYPES = {
 ---@param node ASTNode
 function EmitterDefs:add_luacats_source_comment(node)
 	local source_node = self._sources[#self._sources]
-	if source_node ~= nil then
+	if source_node ~= nil and source_node.file then
 		local file = source_node.file:gsub("\\", "/"):gsub("^./", "")
 		if self.base_path then
 			local base_path = self.base_path:gsub("\\", "/"):gsub("^./", "")
