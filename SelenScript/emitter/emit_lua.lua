@@ -71,15 +71,12 @@ end
 
 ---@param node ASTNode # TODO: Node types
 function EmitterDefs:LineComment(node)
-	self:add_part(node.prefix)
-	self:add_part(node.value)
+	self:string(node)
 end
 
 ---@param node ASTNode # TODO: Node types
 function EmitterDefs:LongComment(node)
-	self:add_part("--" .. node.prefix)
-	self:add_part(node.value)
-	self:add_part(node.prefix:gsub("%[", "%]"))
+	self:string(node)
 end
 
 ---@param self LuaEmitter
@@ -361,7 +358,16 @@ end
 
 ---@param node ASTNode # TODO: Node types
 function EmitterDefs:string(node)
+	-- Temp workaround for being unable to capture `=` in prefix field.
+	if node.prefix == "[[" and node.suffix then
+		self:add_part(node.suffix:gsub("%]", "["))
+	else
+		self:add_part(node.prefix)
+	end
 	self:add_part(node.value)
+	if node.suffix then
+		self:add_part(node.suffix)
+	end
 end
 
 ---@param node ASTNode # TODO: Node types

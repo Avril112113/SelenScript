@@ -41,12 +41,15 @@ function AST:__index(name)
 	return value
 end
 
-local tostring_ast_ignored_keys = {type=true, start=true, finish=true, source=true}
+local tostring_ast_ignored_keys = {type=true, start=true, finish=true}
 local tostring_ast_indent = "    "
 function AST.tostring_ast(ast)
 	local function str_value(value)
 		if type(value) == "string" then
-			return "\"" .. value:gsub("\"", "\\\"") .. "\""
+			if #value > 64 then
+				return ("<STRING_TOO_LONG:#%i>"):format(#value)
+			end
+			return "\"" .. value:gsub("\"", "\\\""):gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t") .. "\""
 		end
 		return tostring(value)
 	end

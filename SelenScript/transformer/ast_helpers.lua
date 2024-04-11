@@ -72,32 +72,38 @@ end
 
 ---@param node ASTNode # Used for source position info
 ---@param value string
----@param add_quotes boolean?  # Add quotes to value.
+---@param prefix string?
+---@param suffix string?
 ---@return ASTNode
-function ASTNodes.string(node, value, add_quotes)
-	if add_quotes then
-		if not value:find("\"") then
-			value = "\"" .. value .. "\""
-		elseif not value:find("'") then
-			value = "'" .. value .. "'"
+function ASTNodes.string(node, value, prefix, suffix)
+	-- `prefix` might be a number if `value:gsub()` for example was used. 
+	if type(prefix) ~= "string" then
+		prefix = "\""
+		if value:find(prefix) then
+			prefix = "'"
+		end
+		if value:find(prefix) then
+			prefix = "[["
+		end
+		local i = 1
+		while value:find(prefix) do
+			prefix = "[" .. string.rep("=", i) .. "["
+			i = i + 1
+		end
+	end
+	if suffix == nil then
+		if prefix:match("%[=*%[") then
+			suffix = prefix:gsub("%[", "%]")
 		else
-			local i = 0
-			while true do
-				local eqs = string.rep("=", i)
-				local open = "[" .. eqs .. "["
-				local close = "]"  .. eqs ..  "]"
-				if not value:find(open) and not value:find(close) then
-					value = open .. value .. close
-					break
-				end
-				i = i + 0
-			end
+			suffix = prefix
 		end
 	end
 	return {
 		type = "string",
 		start = node.start,
+		prefix = prefix,
 		value = value,
+		suffix = suffix,
 		finish = node.finish
 	}
 end

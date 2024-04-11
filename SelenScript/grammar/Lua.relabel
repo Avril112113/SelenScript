@@ -214,7 +214,7 @@ numeral	<- {| {:type:''->"numeral":}
 			|}
 string	<- {| {:type:''->"string":}
 				{:start:{}:}
-				{:value: LiteralString :}
+				LiteralString
 				{:finish:{}:}
 			|}
 function	<- {| {:type:''->"function":}
@@ -349,9 +349,9 @@ Numeral	<- { "-"? (
 				/ [0-9]+ '.'? [0-9]* ([Ee] [-+]? [0-9]+)?
 			)}
 LiteralString	<- ShortString / LongString
-ShortString	<- {:prefix:["']:} ('\\' / '\'=prefix / !=prefix .)* =prefix
+ShortString	<- {:prefix:["']:} {:value:('\\' / '\'=prefix / !=prefix .)*:} {:suffix:=prefix:}
 /* TODO: see if I can get the "=" chars in the `prefix` field */
-LongString	<- {:prefix:''->'[[':} LongStringOpen (!LongStringClose .)* LongStringClose
+LongString	<- LongStringOpen {:prefix:''->'[[':} {:value:(!LongStringClose .)*:} {:suffix:LongStringClose:}
 LongStringOpen	<- "[" {:_LongStringEQs:"="*:} "["
 LongStringClose	<- "]" =_LongStringEQs "]"
 
@@ -367,9 +367,9 @@ LineComment	<- {| {:type:''->"LineComment":}
 				|} -> add_comment
 LongComment	<- {| {:type:''->"LongComment":}
 					{:start:{}:}
-					{:prefix:''->'[[':}
 					"--" LongStringOpen
+					{:prefix:''->'--[[':}
 					{:value:(!LongStringClose .)*:}
-					LongStringClose
+					{:suffix:LongStringClose:}
 					{:finish:{}:}
 				|} -> add_comment
