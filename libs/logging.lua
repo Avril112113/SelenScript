@@ -1,8 +1,8 @@
--- Created by: Dude112113
+-- Created by: Avril112113
 -- Version: 1.5
 local original_print = print
 
-local socket = require "socket"
+-- local socket = require "socket"
 local colors = require "terminal_colors"
 
 
@@ -122,41 +122,41 @@ function logging.windows_enable_ansi()
 	return logging
 end
 
-function logging.remote_connect(ip, port)
-	ip = ip or "localhost"
-	port = port or 3429
-	print_info("Connecting to logging serve server")
-	local sock = socket.tcp()
-	sock:settimeout(1)
-	local ok, err = sock:connect(ip, port)
-	if err ~= nil then
-		print_error("remote_connect()", err)
-		return
-	end
-	logging.sock = sock
-end
+-- function logging.remote_connect(ip, port)
+-- 	ip = ip or "localhost"
+-- 	port = port or 3429
+-- 	print_info("Connecting to logging serve server")
+-- 	local sock = socket.tcp()
+-- 	sock:settimeout(1)
+-- 	local ok, err = sock:connect(ip, port)
+-- 	if err ~= nil then
+-- 		print_error("remote_connect()", err)
+-- 		return
+-- 	end
+-- 	logging.sock = sock
+-- end
 
---- WARNING: This function will loop forever
-function logging.remote_serve(ip, port)
-	ip = ip or "0.0.0.0"
-	port = port or 3429
-	logging.server = socket.bind(ip, port)
-	while true do
-		local client = logging.server:accept()
-		original_print(("------------------------ logging remote connection from %s:%s ------------------------"):format(client:getsockname()))
-		client:settimeout(5)
-		while true do
-			local line, err = client:receive()
-			if err ~= nil then
-				print_error("remote_serve()", err)
-				client:close()
-				break
-			else
-				original_print(line)
-			end
-		end
-	end
-end
+-- --- WARNING: This function will loop forever
+-- function logging.remote_serve(ip, port)
+-- 	ip = ip or "0.0.0.0"
+-- 	port = port or 3429
+-- 	logging.server = socket.bind(ip, port)
+-- 	while true do
+-- 		local client = logging.server:accept()
+-- 		original_print(("------------------------ logging remote connection from %s:%s ------------------------"):format(client:getsockname()))
+-- 		client:settimeout(5)
+-- 		while true do
+-- 			local line, err = client:receive()
+-- 			if err ~= nil then
+-- 				print_error("remote_serve()", err)
+-- 				client:close()
+-- 				break
+-- 			else
+-- 				original_print(line)
+-- 			end
+-- 		end
+-- 	end
+-- end
 
 
 return logging
