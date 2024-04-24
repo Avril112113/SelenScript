@@ -5,8 +5,7 @@ local Precedence = require "SelenScript.parser.precedence"
 
 
 ---@class LuaEmitter : Emitter
----@field base_path string?
----@field luacats_source_prefix string?
+---@field get_source_path (fun(src_path:string):string)?
 local EmitterDefs = {}
 
 
@@ -24,12 +23,8 @@ function EmitterDefs:add_luacats_source_comment(node)
 	local source_node = self._sources[#self._sources]
 	if source_node ~= nil and source_node.file then
 		local file = source_node.file:gsub("\\", "/"):gsub("^./", "")
-		if self.base_path then
-			local base_path = self.base_path:gsub("\\", "/"):gsub("^./", "")
-			file = file:gsub("^" .. Utils.escape_pattern(base_path) .. "/?", "")
-		end
-		if self.luacats_source_prefix then
-			file = self.luacats_source_prefix .. "/" .. file
+		if self.get_source_path then
+			file = self.get_source_path(file) or file
 		end
 		local ln, col = ReLabel.calcline(source_node.source, node.start)
 		self:add_part(("---@source %s:%i:%i"):format(file, ln, col-1))
