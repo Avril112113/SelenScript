@@ -37,14 +37,19 @@ function Transformer:visit(node)
 	local indices_to_remove = {}
 	-- The keys of the node can be changed during transformation, doing so can cause undefined behaviour.
 	local node_cpy = Utils.shallowcopy(node)
+	local dirty_index = false
 	for i, v in pairs(node_cpy) do
 		self.node_parents[v] = node
 		if type(v) == "table" and v.type ~= nil then
 			local old_length = #node
 			local new_v = self:visit(v)
-			if type(i) == "number" and #node ~= old_length then
-				-- Find new `i` since something was inserted/removed which could have moved all the indices
-				i = Utils.find_key(node, v, ipairs)
+			if type(i) == "number" then
+				-- If length was changed, something was inserted and/or removed and the index for all number based indicies are now incorrect.
+				-- TODO: There may be a more efficent way to track these changes. 
+				dirty_index = dirty_index or #node ~= old_length
+				if dirty_index then
+					i = Utils.find_key(node, v, ipairs)
+				end
 			end
 			if new_v == nil then
 				if type(i) == "number" then
