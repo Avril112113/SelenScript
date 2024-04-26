@@ -9,13 +9,19 @@ local Precedence = require "SelenScript.parser.precedence"
 local EmitterDefs = {}
 
 
-EmitterDefs._VALUE_TYPES = {
+EmitterDefs._BRACE_REQUIRED_TYPES = {
 	["string"]=true,
 	["numeral"]=true,
 	["table"]=true,
 	["function"]=true,
 	["var_args"]=true,
 }
+for op, data in pairs(Precedence.binaryOpData) do
+	EmitterDefs._BRACE_REQUIRED_TYPES[data[2]] = true
+end
+for op, data in pairs(Precedence.unaryOpData) do
+	EmitterDefs._BRACE_REQUIRED_TYPES[data[2]] = true
+end
 
 
 ---@param node ASTNode
@@ -249,7 +255,7 @@ function EmitterDefs:index(node)
 	if node.how ~= nil then
 		self:add_part(node.how)
 	end
-	local needs_parens = node.index ~= nil and EmitterDefs._VALUE_TYPES[node.expr.type]
+	local needs_parens = node.index ~= nil and EmitterDefs._BRACE_REQUIRED_TYPES[node.expr.type]
 	if needs_parens then
 		self:add_part("(")
 	end
