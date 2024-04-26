@@ -65,7 +65,7 @@ end
 --- Weather or not a path is absolute.
 ---@param path string
 ---@return boolean
-function AVPath.isabs(path)
+function AVPath.getabs(path)
 	return path:match("^[\\/]") or path:match("^%w:[\\/]")
 end
 
@@ -74,7 +74,7 @@ end
 ---@param base string?
 ---@return string
 function AVPath.abs(path, base)
-	if AVPath.isabs(path) then
+	if AVPath.getabs(path) then
 		return path
 	end
 	base = base or assert(AVPath.cwd(), "Unable to get current working directory.")
@@ -118,24 +118,36 @@ end
 ---@param paths string[]
 ---@return string
 function AVPath.common(paths)
-	local function getroot(path)
-		return path:match("^[\\/]") and AVPath.SEPERATOR or path:match("^(%w:[\\/]?)") or nil
-	end
-	local path = paths[1] and AVPath.norm(paths[1])
-	local root = getroot(paths[1])
-	for i=2,#paths do
-		local ipath = AVPath.norm(paths[i])
-		root = root or getroot(ipath)
-		-- Added slashes ensure that the segment ends at the same location, we are checking an additional char for this too.
-		local len = math.min(#ipath, #path)+1
-		local sub = (ipath .. AVPath.SEPERATOR):sub(1, len)
-		if sub == (path .. AVPath.SEPERATOR):sub(1, len) then
-			path = sub:sub(1, -2)
-		else
-			return root and "" or "."
+	local iters = {}
+	local last_abs
+	for i, s in ipairs(paths) do
+		local isabs = AVPath.getabs(s)
+		if last_abs ~= nil and last_abs ~= isabs then
+			return ""
 		end
+		iters[i] = AVPath.norm(s):gmatch("[^\\/]+")
+		last_abs = isabs
 	end
-	return path
+	local parts = {}
+	while true do
+		local s = iters[1]()
+		local do_break = false
+		for i=2,#iters do
+			local is = iters[i]()
+			if is ~= s then
+				do_break = true
+				break
+			end
+		end
+		if do_break then break end
+		table.insert(parts, s)
+	end
+	-- Only needs to check first path, as they are checked to all be the same earlier.
+	if #parts <= 0 and not AVPath.getabs(paths[1]) then
+		return "."
+	end
+	-- Windows drive letters are already seperated by slashes.
+	return (last_abs == "/" and "/" or "") .. table.concat(parts, AVPath.SEPERATOR)
 end
 
 --- Gets the path relative to another.
@@ -146,9 +158,9 @@ function AVPath.relative(path, base)
 	base = AVPath.norm(base or ".")
 	path = AVPath.norm(path)
 	local common = AVPath.common{base, path}
-	if #common > 0 and common ~= "." then
-		path = path:sub(#base+2, -1)
-		base = base:sub(#base+1)
+	if common ~= "." then
+		path = path:sub(#common+2, -1)
+		base = base:sub(#common+1)
 	end
 	local parcount = 0
 	for s in base:gmatch("[^\\/]+") do if s ~= "." then parcount = parcount + 1 end end
