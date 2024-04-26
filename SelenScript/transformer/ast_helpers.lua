@@ -124,14 +124,16 @@ end
 ---@param how string?
 ---@param expr ASTNode
 ---@param index ASTNode?
+---@param braces string?
 ---@return ASTNode
-function ASTNodes.index(node, how, expr, index)
+function ASTNodes.index(node, how, expr, index, braces)
 	return {
 		type = "index",
 		start = node.start,
 		how = how,
 		expr = expr,
 		index = index,
+		braces = braces,
 		finish = node.finish
 	}
 end
