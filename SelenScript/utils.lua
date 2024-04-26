@@ -18,24 +18,6 @@ function Utils.writeFile(path, data)
 	f:close()
 end
 
----@param modpath string
----@return string
-function Utils.modPathParent(modpath)
-	return (modpath:gsub("(.*)%..*$","%1"))
-end
-
----@param modpath string
----@return string
-function Utils.modPathToPath(modpath)
-	return (modpath:gsub("%.", "/"))
-end
-
----@param modpath string
----@return string
-function Utils.modPathToDir(modpath)
-	return (modpath:gsub("%.", "/"):gsub("(.*)/.*$","%1"))
-end
-
 function Utils.merge(from, into, overwrite)
 	if overwrite == nil then overwrite = true end
 	into = into or {}
