@@ -33,9 +33,10 @@ end
 local RePreProcess = {}
 RePreProcess.__index = RePreProcess
 
-
+local defs_tmp_rpp
 local errors = {}
-local defs = {
+local grammar, defs
+defs = {
 	esc_t = "\t",
 	nl = lpeg.P'\r\n' + lpeg.S'\r\n',
 	dbg = function(...)
@@ -102,7 +103,32 @@ local defs = {
 			chunk = chunk,
 		}
 	end,
-	include = function(name)
+	include = function(pos, name)
+		assert(defs_tmp_rpp ~= nil)
+		if defs_tmp_rpp.read_file then
+			local ext = name:match("%.[^.]+$")
+			if defs_tmp_rpp.read_exts[ext] then
+				local src = defs_tmp_rpp.read_file(name)
+				if src then
+					local result, err, errPos = grammar:match(src)
+					if result == nil then
+						table.insert(errors, {
+							type = "MISSING_FILE",
+							pos = pos,
+							msg = "Internal error: Failed to parse grammar at " .. tostring(errPos) .. " : " .. err,
+						})
+					else
+						return result
+					end
+				else
+					table.insert(errors, {
+						type = "MISSING_FILE",
+						pos = pos,
+						msg = ("File not found \"%s\""):format(name),
+					})
+				end
+			end
+		end
 		return {
 			type = "include",
 			name = name,
@@ -121,6 +147,10 @@ local defs = {
 			name = name,
 			args = args,
 		}
+	end,
+
+	string = function(node)
+		return node.value
 	end,
 
 	comment = function(comment)
@@ -258,31 +288,29 @@ end
 Emitter["elseif"] = Emitter["if"]
 
 local grammar_src = read_file(GRAMMAR_PATH)
-local grammar = relabel.compile(grammar_src, defs)
+grammar = relabel.compile(grammar_src, defs)
 RePreProcess.grammar = grammar
 
-function RePreProcess.new()
+---@param read_file (fun(file:string):string?)?
+---@param read_exts table<string,true>?
+function RePreProcess.new(read_file, read_exts)
 	return setmetatable({
-		chunks = {}
+		chunks = {},
+		read_file = read_file,
+		read_exts = read_exts or {[".relabel"]=true},
 	}, RePreProcess)
 end
 
+---@param src string
 ---@return boolean ok, table|string result, table errors
-function RePreProcess:process(src, args)
+function RePreProcess:process(src)
 	errors = {}
+	defs_tmp_rpp = self
 	local result, err, errPos = grammar:match(src)
+	defs_tmp_rpp = nil
 	if result == nil then
 		return false, "Internal error: Failed to parse grammar at " .. tostring(errPos) .. " : " .. err, errors
 	end
-	-- if #errors > 0 then
-	-- 	print("-- Parsing errors: --")
-	-- 	for _, v in ipairs(errors) do
-	-- 		local ln, col = re.calcline(src, v.pos)
-	-- 		print(v.type .. "@" .. ln .. ":" .. col .. ": " .. v.msg)
-	-- 	end
-	-- end
-	-- print("-- Parting result: --")
-	-- require 'pl.pretty'.dump(result)
 	if result.type ~= "chunk" then
 		return false, "Internal error: AST root node is not a 'chunk'", errors
 	end

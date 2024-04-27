@@ -18,7 +18,7 @@ if		<- (directive_if Cl chunk elseif? (directive_endif/{}->MISSING_ENDIF)) -> if
 elseif	<- (directive_elseif Cl chunk (Cl (elseif/else))?) -> elseif
 else	<- directive_else Cl chunk
 block	<- (directive_block_start Cl chunk (directive_block_end/{}->MISSING_ENDBLOCK)) -> block
-include	<- (directive_include Cl) -> include
+include	<- ({} directive_include Cl) -> include
 define	<- (directive_define Cl) -> define
 
 source	<- !directive !comment {(!%nl .)+} -> source
@@ -38,9 +38,11 @@ directive_else			<- "#else"
 directive_endif			<- "#endif"
 directive_block_start	<- "#block" Sp+ {WORD}
 directive_block_end		<- "#endblock"
-directive_include		<- "#include" Sp+ {WORD}
+directive_include		<- "#include" Sp+ (string / {WORD})
 directive_define		<- "#define" Sp+ {WORD} (Sp+ {WORD} / {}->"true")
 directive_unknown		<- "#" ({WORD} {(!%nl .)*}) -> unknown_directive
+
+string	<- {|{:prefix:["']:} {:value:('\\' / '\'=prefix / !=prefix .)*:} =prefix|} -> string
 
 Cl		<- Sp* %nl?
 Sp		<- ' ' / %esc_t
