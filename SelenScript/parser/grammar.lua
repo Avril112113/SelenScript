@@ -16,6 +16,7 @@ local Grammar = {
 	default_entry = "chunk",
 	---@type string[]
 	files = {
+		"entry.relabel",
 		"LuaBase.relabel",
 		"Lua.relabel",
 		"SelenScriptBase.relabel",
@@ -32,25 +33,31 @@ local Grammar = {
 ---@return boolean, string?, Error[] # TODO: make all errors ErrorBase, they are not currently
 function Grammar.build(declarations, entry_point)
 	declarations = declarations or {}
-	entry_point = entry_point or Grammar.default_entry
 
-	local rpp = RePreProcess.new()
-	local all_errors = {}
-	-- TODO: convert errors from rpp:process() to our error objects
-	local ok, result, errors = rpp:process("entry <- " .. entry_point)
-	if not ok then table.insert(errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end
-	for _, err in ipairs(errors) do
-		table.insert(all_errors, err)
-	end
-	if not ok then
-		return ok, nil, all_errors
-	end
-	for _, file in pairs(Grammar.files) do
+	local function read_file(file)
 		local data = Grammar._loaded_files[file]
 		if not data then
-			data = Utils.readFile(GRAMMAR_DIRECTORY .. "/" .. file)
+			data = Utils.readFile(AVPath.join{GRAMMAR_DIRECTORY, file})
 			Grammar._loaded_files[file] = data
 		end
+		return data
+	end
+
+	local rpp = RePreProcess.new(read_file)
+	local all_errors = {}
+	-- TODO: convert errors from rpp:process() to our error objects
+	if entry_point then
+		local ok, result, errors = rpp:process("custom_entry <- " .. entry_point)
+		if not ok then table.insert(errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end
+		for _, err in ipairs(errors) do
+			table.insert(all_errors, err)
+		end
+		if not ok then
+			return ok, nil, all_errors
+		end
+	end
+	local function process_file(file)
+		local data = read_file(file)
 		-- TODO: convert errors from rpp:process() to our error objects
 		---@diagnostic disable-next-line: redefined-local
 		local ok, result, errors = rpp:process(data)
@@ -62,6 +69,12 @@ function Grammar.build(declarations, entry_point)
 			return ok, nil, all_errors
 		end
 	end
+	process_file("entry.relabel")
+	-- for _, file in pairs(Grammar.files) do
+	-- 	if file ~= "entry.relabel" then
+	-- 		process_file(file)
+	-- 	end
+	-- end
 	---@diagnostic disable-next-line: redefined-local
 	local ok, result, errors = rpp:generate(declarations)
 	if not ok then table.insert(all_errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end

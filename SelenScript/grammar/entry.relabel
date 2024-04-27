@@ -1,0 +1,9 @@
+entry <- chunk
+
+#include "Lua.relabel"
+#include "LuaBase.relabel"
+
+#if Grammar_SelenScript
+#include "SelenScript.relabel"
+#include "SelenScriptBase.relabel"
+#endif

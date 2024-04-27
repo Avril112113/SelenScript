@@ -22,9 +22,13 @@ local Parser = {}
 Parser.__index = Parser
 
 
+---@param opts {selenscript:boolean}?
 ---@return Parser?, Error[]
-function Parser.new()
-	local ok, built_grammar, grammar_build_errors = Grammar.build()
+function Parser.new(opts)
+	local garmmar_declarations = {}
+	garmmar_declarations.Grammar_SelenScript = not opts or not not opts.selenscript
+	print(garmmar_declarations.Grammar_SelenScript)
+	local ok, built_grammar, grammar_build_errors = Grammar.build(garmmar_declarations)
 	if not ok then
 		return nil, grammar_build_errors
 	end
