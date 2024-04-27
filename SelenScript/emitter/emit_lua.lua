@@ -7,6 +7,17 @@ local Precedence = require "SelenScript.parser.precedence"
 ---@class LuaEmitter : Emitter
 ---@field get_source_path (fun(src_path:string):string)?
 local EmitterDefs = {}
+---@class LuaEmitterConfig : EmitterConfig
+EmitterDefs.DefaultConfig = {
+	fieldlist_trail_comma = true,
+	fieldlist_compact = false,
+	field_assign_space = true,
+	space_before_function = false,
+	space_after_function = false,
+	space_between_math = true,
+	math_always_parenthesised = false,
+	luacats_source = true,  -- https://github.com/sumneko/lua-language-server/wiki/Annotations#source
+}
 
 
 EmitterDefs._BRACE_REQUIRED_TYPES = {

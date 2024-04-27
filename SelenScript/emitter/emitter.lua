@@ -8,23 +8,21 @@ local EmitterConfig = {
 	--- All Emitters
 	newline = "\n",
 	indent = "\t",
-
-	--- Lua Emitter
-	fieldlist_trail_comma = true,
-	fieldlist_compact = false,
-	field_assign_space = true,
-	space_before_function = false,
-	space_after_function = false,
-	space_between_math = true,
-	math_always_parenthesised = false,
-	luacats_source = true,  -- https://github.com/sumneko/lua-language-server/wiki/Annotations#source
 }
-function EmitterConfig.create(from)
-	return Utils.merge(EmitterConfig, Utils.deepcopy(from), false)
+---@param from table
+---@param emitter Emitter
+local function create_config(from, emitter)
+	local config = Utils.deepcopy(from)
+	Utils.merge(EmitterConfig, config, false)
+	if emitter.DefaultConfig then
+		Utils.merge(emitter.DefaultConfig, config, false)
+	end
+	return config
 end
 
 
 ---@class Emitter
+---@field DefaultConfig EmitterConfig
 ---@field args table<string, any> # Used for creating a copy emitter
 ---@field defs table<string, fun(self:Emitter, node:ASTNode):any>
 ---@field config table<string, any>
@@ -44,7 +42,7 @@ Emitter.__index = Emitter
 
 
 ---@param target string|Emitter # The emitter to use
----@param config EmitterConfig # Config modifications, any un-supplied values use defaults
+---@param config EmitterConfig # Config modifications, any ommited values use defaults
 function Emitter.new(target, config)
 	config = config or {}
 	if type(target) == "string" then
@@ -56,7 +54,7 @@ function Emitter.new(target, config)
 		defs = target,
 		parts = nil,
 		indent_depth = nil,
-		config = EmitterConfig.create(config),
+		config = create_config(config, target),
 	}, Emitter)
 	return self
 end
