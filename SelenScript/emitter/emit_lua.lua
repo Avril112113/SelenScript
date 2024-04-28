@@ -1,11 +1,10 @@
-local ReLabel = require "relabel"
-
 local Utils = require "SelenScript.utils"
 local Precedence = require "SelenScript.parser.precedence"
 
 
 ---@class LuaEmitter : Emitter
 ---@field get_source_path (fun(src_path:string):string)?
+---@field _sources ASTNodeSource[]
 local EmitterDefs = {}
 ---@class LuaEmitterConfig : EmitterConfig
 EmitterDefs.DefaultConfig = {
@@ -43,7 +42,7 @@ function EmitterDefs:add_luacats_source_comment(node)
 		if self.get_source_path then
 			file = self.get_source_path(file) or file
 		end
-		local ln, col = ReLabel.calcline(source_node.source, node.start)
+		local ln, col = source_node:calcline(node.start)
 		self:add_part(("---@source %s:%i:%i"):format(file, ln, col-1))
 		self:add_new_line()
 	end

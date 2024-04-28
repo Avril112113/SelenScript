@@ -41,7 +41,7 @@ function AST:__index(name)
 	return value
 end
 
-local tostring_ast_ignored_keys = {type=true, start=true, finish=true}
+local tostring_ast_ignored_keys = {type=true, start=true, finish=true, _avcalcline=true, calcline=true}
 local tostring_ast_indent = "    "
 function AST.tostring_ast(ast)
 	local function str_value(value)

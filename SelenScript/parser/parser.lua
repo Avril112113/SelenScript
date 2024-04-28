@@ -1,4 +1,5 @@
 local re = require "drelabel"
+local AVCalcLine = require "avcalcline"
 
 local Utils = require "SelenScript.utils"
 local Grammar = require "SelenScript.parser.grammar"
@@ -11,6 +12,8 @@ local ParserErrors = require "SelenScript.parser.errors"
 ---@field block ASTNode # TODO: Node types
 ---@field source string # The plain text source
 ---@field file string? # Defines the origin of the source, special value `[stdin]`, path be relitive to src root and use `/`
+---@field _avcalcline AVCalcLine?
+---@field calcline fun(self,pos:integer):integer,integer
 local ASTNodeSource
 
 
@@ -82,6 +85,12 @@ function Parser:parse(source, file)
 		source = source,
 		block = ast,
 		file = file,
+		calcline = function(self, pos)
+			if self._avcalcline == nil then
+				self._avcalcline = AVCalcLine.new(self.source)
+			end
+			return self._avcalcline:calcline(pos)
+		end
 	}
 	return ast_source, self.ast_defs.errors, self.ast_defs.comments
 end
