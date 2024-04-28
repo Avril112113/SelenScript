@@ -33,7 +33,7 @@ end
 function AVCalcLine:calcline(pos)
 	local segment = self.segments[1]
 	local i = 2
-	while true do
+	while self.segments[i] ~= nil do
 		if self.segments[i].pos > pos then
 			break
 		else
