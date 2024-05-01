@@ -10,7 +10,8 @@
         "?.lua",
         "?/init.lua",
         "libs/?.lua",
-        "libs/?/init.lua"
+        "libs/?/init.lua",
+        "libs/typing/?.lua"
     ],
     "Lua.workspace.ignoreDir": [
         ".vscode",

@@ -40,18 +40,27 @@ end
 ---@return string
 function AVPath.norm(path)
 	-- TODO: Some Windows paths like to a 'share' need to preserve the leading double slashes.
-	path = path:gsub("[\\/]%.([\\/])", "%1")  -- Redundant current dir `.`
+	-- Remove cur dir `.`
+	path = path
+		:gsub("^%.[\\/]+", "")  -- Leading "./"
+		:gsub("[\\/]%.([\\/])", "%1")  -- "/."
 	path = recursive_gsub(
-				path,
-				"([\\/]*)([^\\/]+)[\\/]+%.%.",
-				function(slashes, par)
-					if par == ".." then return nil end
-					return slashes
-				end
-			)  -- Process parent dir `..`
-			:gsub("([^:])[\\/]+$", "%1")  -- Trailing slashes.
-			:gsub("[\\/]+", AVPath.SEPERATOR)  -- Convert slashs and remove duplicates.
-			:gsub("[\\/]%.$", "")  -- Trailing current dir `.`
+			path,
+			"([\\/]*)([^\\/]+)[\\/]+%.%.",
+			function(slashes, par)
+				if par == ".." then return nil end
+				return slashes
+			end
+		)  -- Process parent dir `..`
+		:gsub("([^:])[\\/]+$", "%1")  -- Trailing slashes.
+		:gsub("[\\/]", AVPath.SEPERATOR)  -- Convert slashs.
+		:gsub("(.[\\/])[\\/]+", "%1")  -- Remove duplicates.
+		:gsub("[\\/]%.$", "")  -- Trailing current dir `.`
+	if #path <= 0 then
+		path = "."
+	elseif not AVPath.getabs(path) and not (path:match("^..[\\/]") or path:match("^..$")) then
+		path = "." .. AVPath.SEPERATOR .. path
+	end
 	return path
 end
 
@@ -120,13 +129,20 @@ end
 function AVPath.common(paths)
 	local iters = {}
 	local last_abs
+	local last_windows_share
 	for i, s in ipairs(paths) do
 		local isabs = AVPath.getabs(s)
 		if last_abs ~= nil and last_abs ~= isabs then
 			return ""
 		end
-		iters[i] = AVPath.norm(s):gmatch("[^\\/]+")
+		local snorm = AVPath.norm(s)
+		local is_window_share = not not snorm:match("^[\\/][\\/]")
+		if last_windows_share ~= nil and last_windows_share ~= is_window_share then
+			return ""
+		end
+		iters[i] = snorm:gmatch("[^\\/]+")
 		last_abs = isabs
+		last_windows_share = is_window_share
 	end
 	local parts = {}
 	while true do
@@ -144,10 +160,10 @@ function AVPath.common(paths)
 	end
 	-- Only needs to check first path, as they are checked to all be the same earlier.
 	if #parts <= 0 and not AVPath.getabs(paths[1]) then
-		return "."
+		return last_windows_share and AVPath.SEPERATOR..AVPath.SEPERATOR or "."
 	end
 	-- Windows drive letters are already seperated by slashes.
-	return (last_abs == "/" and "/" or "") .. table.concat(parts, AVPath.SEPERATOR)
+	return ((last_windows_share and AVPath.SEPERATOR..AVPath.SEPERATOR) or (last_abs == "/" and "/" or "")) .. table.concat(parts, AVPath.SEPERATOR)
 end
 
 --- Gets the path relative to another.
