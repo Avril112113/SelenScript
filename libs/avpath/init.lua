@@ -46,12 +46,19 @@ function AVPath.norm(path)
 		:gsub("[\\/]%.([\\/])", "%1")  -- "/."
 	path = recursive_gsub(
 			path,
-			"([\\/]*)([^\\/]+)[\\/]+%.%.",
+			"([\\/]*)([^\\/]+)[\\/]+%.%.([\\/])",
+			function(slashes, par, last)
+				if par == ".." then return nil end
+				return slashes .. last
+			end
+		)  -- Process parent dir `..`
+		:gsub(
+			"([\\/]*)([^\\/]+)[\\/]+%.%.$",
 			function(slashes, par)
 				if par == ".." then return nil end
 				return slashes
 			end
-		)  -- Process parent dir `..`
+		)
 		:gsub("([^:])[\\/]+$", "%1")  -- Trailing slashes.
 		:gsub("[\\/]", AVPath.SEPERATOR)  -- Convert slashs.
 		:gsub("(.[\\/])[\\/]+", "%1")  -- Remove duplicates.
