@@ -1,3 +1,6 @@
+local Utils = require "SelenScript.utils"
+
+
 --- This file is a collection on functions to aid in transforming
 --- NOTE: If the AST changes, these function might need updating
 local ASTHelpers = {}
@@ -24,11 +27,12 @@ end
 ---@param prefix string?
 ---@param value string
 ---@return ASTNode
-function ASTNodes.LongComment(node, prefix, value)
+function ASTNodes.LongComment(node, prefix, value, suffix)
 	return {
 		type = "LongComment",
 		start = node.start,
 		prefix = prefix or "[[",
+		suffix = suffix or "]]",
 		value = value,
 		finish = node.finish,
 	}
@@ -86,7 +90,7 @@ function ASTNodes.string(node, value, prefix, suffix)
 			prefix = "[["
 		end
 		local i = 1
-		while value:find(prefix) do
+		while value:find(Utils.escape_pattern(prefix)) do
 			prefix = "[" .. string.rep("=", i) .. "["
 			i = i + 1
 		end
