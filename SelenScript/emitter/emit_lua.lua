@@ -36,6 +36,9 @@ end
 
 ---@param node ASTNode
 function EmitterDefs:add_luacats_source_comment(node)
+	if self._sources == nil then
+		return
+	end
 	local source_node = self._sources[#self._sources]
 	if source_node ~= nil and source_node.file then
 		local file = source_node.file:gsub("\\", "/"):gsub("^./", "")
