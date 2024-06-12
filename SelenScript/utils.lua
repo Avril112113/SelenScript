@@ -2,9 +2,10 @@ local Utils = {}
 
 
 ---@param path string
+---@param binary boolean?
 ---@return string data
-function Utils.readFile(path)
-	local f = assert(io.open(path, "r"))
+function Utils.readFile(path, binary)
+	local f = assert(io.open(path, "r" .. (binary == true and "b" or "")))
 	local data = f:read("*a")
 	f:close()
 	return data
@@ -12,8 +13,9 @@ end
 
 ---@param path string
 ---@param data string
-function Utils.writeFile(path, data)
-	local f = assert(io.open(path, "w"))
+---@param binary boolean?
+function Utils.writeFile(path, data, binary)
+	local f = assert(io.open(path, "w" .. (binary == true and "b" or "")))
 	f:write(data)
 	f:close()
 end
@@ -32,6 +34,8 @@ function Utils.merge(from, into, overwrite)
 			else
 				into[i] = v
 			end
+		elseif not overwrite and type(v) == "table" and type(into[i]) == "table" then
+			Utils.merge(v, into[i], overwrite)
 		end
 	end
 	return into
@@ -50,12 +54,19 @@ end
 
 ---@generic T : table
 ---@param tbl T
+---@param preserve_mt boolean?
+---@param references table?
 ---@return T
-function Utils.deepcopy(tbl)
+function Utils.deepcopy(tbl, preserve_mt, references)
+	references = references or {}
 	local t = {}
+	references[tbl] = t
 	for i, v in pairs(tbl) do
 		if type(v) == "table" then
-			t[i] = Utils.deepcopy(v)
+			t[i] = references[v] or Utils.deepcopy(v, preserve_mt, references)
+			if preserve_mt then
+				setmetatable(t[i], getmetatable(v))
+			end
 		else
 			t[i] = v
 		end
