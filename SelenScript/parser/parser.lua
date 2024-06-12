@@ -24,6 +24,16 @@ local ASTNodeSource
 local Parser = {}
 Parser.__index = Parser
 
+---@param self ASTNodeSource
+---@param pos integer
+---@return integer, integer
+function Parser._source_calcline(self, pos)
+	if self._avcalcline == nil then
+		self._avcalcline = AVCalcLine.new(self.source)
+	end
+	return self._avcalcline:calcline(pos)
+end
+
 
 ---@param opts {selenscript:boolean}?
 ---@return Parser?, Error[]
@@ -85,12 +95,7 @@ function Parser:parse(source, file)
 		source = source,
 		block = ast,
 		file = file,
-		calcline = function(self, pos)
-			if self._avcalcline == nil then
-				self._avcalcline = AVCalcLine.new(self.source)
-			end
-			return self._avcalcline:calcline(pos)
-		end
+		calcline = Parser._source_calcline
 	}
 	return ast_source, self.ast_defs.errors, self.ast_defs.comments
 end
