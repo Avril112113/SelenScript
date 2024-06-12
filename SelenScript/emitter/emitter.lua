@@ -41,7 +41,7 @@ local Emitter = {
 Emitter.__index = Emitter
 
 
----@param target string|Emitter # The emitter to use
+---@param target "lua"|Emitter # The emitter to use
 ---@param config EmitterConfig # Config modifications, any ommited values use defaults
 function Emitter.new(target, config)
 	config = config or {}
@@ -50,7 +50,7 @@ function Emitter.new(target, config)
 	end
 	assert(type(target) == "table", "Invalid emitter defs, expected table.")
 	local self = setmetatable({
-		args={target, config},
+		args = {target, config},
 		defs = target,
 		parts = nil,
 		indent_depth = nil,

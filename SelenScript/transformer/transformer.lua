@@ -19,7 +19,7 @@ local Transformer = {
 Transformer.__index = Transformer
 
 
----@param target string|Transformer # The transformer to use
+---@param target "ss_to_lua"|Transformer # The transformer to use
 function Transformer.new(target)
 	if type(target) == "string" then
 		target = assert(Transformer.Transformers[target], "Unknown transformer \"" .. tostring(target) .. "\"")
