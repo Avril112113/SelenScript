@@ -32,43 +32,44 @@ local function recursive_gsub(s, pattern, repl, n)
 end
 
 
---- Normalizes a path.
---- - Converts slashes to system/configured slashes
---- - Normalizes `.` and `..` if possible
---- - Removes trailing and double slashs
+-- Some might not be used, but are there for sanity.
+local NORM_SPECIAL = {[".."]=true, ["."]=true, ["\\"]=true, ["/"]=true}
+--- Normalizes a path.  
+--- - Converts slashes to system/configured slashes  
+--- - Normalizes `.` and `..` if possible  
+--- - Removes trailing and double slashs (leading double slashes are preserved for windows network shares)  
 ---@param path string
 ---@return string
 function AVPath.norm(path)
-	-- TODO: Some Windows paths like to a 'share' need to preserve the leading double slashes.
-	-- Remove cur dir `.`
-	path = path
-		:gsub("^%.[\\/]+", "")  -- Leading "./"
-		:gsub("[\\/]%.([\\/])", "%1")  -- "/."
-	path = recursive_gsub(
-			path,
-			"([\\/]*)([^\\/]+)[\\/]+%.%.([\\/])",
-			function(slashes, par, last)
-				if par == ".." then return nil end
-				return slashes .. last
-			end
-		)  -- Process parent dir `..`
-		:gsub(
-			"([\\/]*)([^\\/]+)[\\/]+%.%.$",
-			function(slashes, par)
-				if par == ".." then return nil end
-				return slashes
-			end
-		)
-		:gsub("([^:])[\\/]+$", "%1")  -- Trailing slashes.
-		:gsub("[\\/]", AVPath.SEPERATOR)  -- Convert slashs.
-		:gsub("(.[\\/])[\\/]+", "%1")  -- Remove duplicates.
-		:gsub("[\\/]%.$", "")  -- Trailing current dir `.`
-	if #path <= 0 then
-		path = "."
-	elseif not AVPath.getabs(path) and not (path:match("^..[\\/]") or path:match("^..$")) then
-		path = "." .. AVPath.SEPERATOR .. path
+	local abs_part = AVPath.getabs(path)
+	local parts = {}
+	-- Remove the absolute part of the path, as it's added back at the end.
+	-- This ensures no `..` can get in the way and this way prevents slash issues.
+	if abs_part then
+		path = path:sub(#abs_part+1)
 	end
-	return path
+	-- Go through all parts of the path.
+	for part in path:gmatch("[^\\/]+") do
+		if part == ".." then
+			-- If there is something to remove and it is valid to be removed.
+			if #parts > 0 and not NORM_SPECIAL[parts[#parts]] then
+				-- We can apply the pardir, as it's not `..` or `.`
+				table.remove(parts, #parts)
+			else
+				-- Nothing to remove, so just preserve it in the path
+				table.insert(parts, part)
+			end
+		elseif part == "." then
+			-- Do nothing...
+		else
+			table.insert(parts, part)
+		end
+	end
+	-- Ensure leading `./` if it's not absolute and doesn't start with `..` or `.` already
+	if not abs_part and not NORM_SPECIAL[parts[1]] then
+		table.insert(parts, 1, ".")
+	end
+	return (abs_part and abs_part:gsub("[\\/]", AVPath.SEPERATOR) or "") .. table.concat(parts, AVPath.SEPERATOR):gsub("^[\\/]([\\/])", "%1")
 end
 
 --- Concatinates 2 or more paths together.
@@ -80,9 +81,9 @@ end
 
 --- Weather or not a path is absolute.
 ---@param path string
----@return boolean
+---@return string?
 function AVPath.getabs(path)
-	return path:match("^[\\/]") or path:match("^%w:[\\/]")
+	return path:match("^[\\/][\\/]?") or path:match("^%w:[\\/]")
 end
 
 --- Get the absolute path.
