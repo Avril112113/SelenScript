@@ -1,5 +1,6 @@
 local Utils = require "SelenScript.utils"
 local SourceMap = require "SelenScript.emitter.node_linked_source_map"
+local Buffer = require("string.buffer")  -- https://luajit.org/ext_buffer.html
 
 
 -- TODO: Make emitter config seperated for each emitter type
@@ -28,7 +29,7 @@ end
 ---@field config table<string, any>
 -- self_proxy fields
 ---@field ast ASTNodeSource
----@field parts string[]
+---@field parts string.buffer
 ---@field char_position integer
 ---@field indent_depth integer
 ---@field source_map NodeLinkedSourceMap
@@ -90,7 +91,7 @@ function Emitter:add_part(s)
 	if #s > 0 and not s:match("^[\n \t]+$") then
 		self.source_map:link(self.last_node, self.last_node.start, self.char_position)
 	end
-	table.insert(self.parts, s)
+	self.parts:put(s)
 	self.char_position = self.char_position + #s
 end
 
@@ -130,15 +131,15 @@ end
 
 --- Weather or not the last added character (from the last part) is a word character
 function Emitter:last_is_word()
-	local part = self.parts[#self.parts]
-	local char = part:sub(#part)
+	local ptr, len = self.parts:ref()
+	local char = len > 0 and string.char(ptr[len-1]) or ""
 	return char:match("[%w_]") ~= nil
 end
 
 --- Weather or not the last added character (from the last part) is a word character
 function Emitter:last_is_digit()
-	local part = self.parts[#self.parts]
-	local char = part:sub(#part)
+	local ptr, len = self.parts:ref()
+	local char = len > 0 and string.char(ptr[len-1]) or ""
 	return char:match("%d") ~= nil
 end
 
@@ -158,7 +159,7 @@ end
 function Emitter:_create_proxy(ast, env)
 	local self_proxy = setmetatable({
 		ast = ast,
-		parts = {},
+		parts = Buffer.new(),
 		char_position = 1,
 		indent_depth = 0,
 		source_map = SourceMap.new(),
@@ -184,7 +185,7 @@ end
 function Emitter:generate(ast, env)
 	local self_proxy = self:_create_proxy(ast, env)
 	self_proxy:visit(ast)
-	local output = table.concat(self_proxy.parts)
+	local output = self_proxy.parts:tostring()
 	return output, self_proxy.source_map
 end
 
