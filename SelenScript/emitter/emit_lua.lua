@@ -430,6 +430,9 @@ function EmitterDefs:_math(node)
 		if node.lhs ~= nil and not self.config.math_always_parenthesised then
 			brackets = (old_precedence or -math.huge) > self._math_precedence
 		end
+	elseif node.rhs ~= nil then
+		local opData = assert(Precedence.unaryOpData[node.op])
+		self._math_precedence = opData[1]
 	end
 	if brackets then
 		self:add_part("(")
