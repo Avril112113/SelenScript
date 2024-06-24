@@ -112,5 +112,24 @@ function Utils.escape_pattern(text)
 	return (text:gsub("(%W)", "%%%1"))
 end
 
+local ESCAPE_SEQUENCES_MAP = {
+	["\a"]="\\a", ["\b"]="\\b", ["\f"]="\\f", ["\n"]="\\n", ["\r"]="\\r", ["\t"]="\\t", ["\v"]="\\v",
+	["\\a"]="\\\\a", ["\\b"]="\\\\b", ["\\f"]="\\\\f", ["\\n"]="\\\\n", ["\\r"]="\\\\r", ["\\t"]="\\\\t", ["\\v"]="\\\\v",
+}
+---@param text string
+---@return string
+function Utils.escape_sequences(text)
+	return (text:gsub("[\a\b\f\n\r\t\v]", function(s)
+		return ESCAPE_SEQUENCES_MAP[s]
+	end))
+end
+---@param text string
+---@return string
+function Utils.escape_escape_sequences(text)
+	return (text:gsub("\\[abfnrtv]", function(s)
+		return ESCAPE_SEQUENCES_MAP[s]
+	end))
+end
+
 
 return Utils
