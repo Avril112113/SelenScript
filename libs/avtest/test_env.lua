@@ -32,10 +32,10 @@ end
 local TestEnv = {}
 
 
----@param TEST {group:Group,path:string?}
+---@param TEST {group:AvTest.Group,path:string?}
 function TestEnv.create(TEST)
-	---@class TestEnv
-	---@field group Group # Set in group.lua
+	---@class AvTest.TestEnv
+	---@field group AvTest.Group # Set in group.lua
 	---@field path string? # Set in group.lua
 	TEST = TEST
 

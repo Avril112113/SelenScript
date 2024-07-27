@@ -6,7 +6,7 @@ local TestGroup = require "avtest.group"
 ---@param path string
 ---@param recursive boolean
 ---@param filter (fun(path:string):boolean)?
----@return Group[]
+---@return AvTest.Group[]
 ---@diagnostic disable-next-line: duplicate-set-field
 function TestGroup:loadFolder(path, recursive, filter)
 	local groups = {}

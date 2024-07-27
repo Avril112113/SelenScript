@@ -3,13 +3,13 @@ local StdHook = require "avtest.std_hook"
 local TestEnv = require "avtest.test_env"
 
 
----@class Group
+---@class AvTest.Group
 ---@field name string
----@field tests Test[]
----@field groups Group[]
----@field out HookedStdout
+---@field tests AvTest.Test[]
+---@field groups AvTest.Group[]
+---@field out AvTest.HookedStdout
 ---@field err string?
----@field _runningTestResult TestResult
+---@field _runningTestResult AvTest.TestResult
 local Group = {}
 Group.__index = Group
 
@@ -24,8 +24,8 @@ function Group.new(name)
 	return self
 end
 
----@param group Group
----@return Group
+---@param group AvTest.Group
+---@return AvTest.Group
 function Group:addGroup(group)
 	table.insert(self.groups, group)
 	return group
@@ -36,7 +36,7 @@ end
 ---@param path string
 ---@param recursive boolean
 ---@param filter (fun(path:string):boolean)?
----@return Group[]
+---@return AvTest.Group[]
 function Group:loadFolder(path, recursive, filter)
 	error("Not implemented: TestGroup:loadFolder")
 end
@@ -58,7 +58,7 @@ end
 
 --- Loads the lua file, creating a new test group for all tests added by that file.
 ---@param path string
----@return Group
+---@return AvTest.Group
 function Group:loadFile(path)
 	local group = Group.new(path:match("[^/]*$"))
 	group:_createEnv(path)
@@ -78,14 +78,14 @@ function Group:loadFile(path)
 	return group
 end
 
----@param test Test
----@return Test
+---@param test AvTest.Test
+---@return AvTest.Test
 function Group:addTest(test)
 	table.insert(self.tests, test)
 	return test
 end
 
----@param filter (fun(obj:Test|Group):boolean)?
+---@param filter (fun(obj:AvTest.Test|AvTest.Group):boolean)?
 function Group:runTests(filter)
 	local results = GroupResults.new(self)
 	for _, test in ipairs(self.tests) do

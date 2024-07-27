@@ -1,18 +1,18 @@
 local Config = require "avtest.config"
 
 
----@class GroupResults
----@field group Group
----@field out HookedStdout
+---@class AvTest.GroupResults
+---@field group AvTest.Group
+---@field out AvTest.HookedStdout
 ---@field err string?
----@field tests TestResult[]
----@field groups GroupResults[]
+---@field tests AvTest.TestResult[]
+---@field groups AvTest.GroupResults[]
 ---@field fails integer
 local GroupResults = {}
 GroupResults.__index = GroupResults
 
 
----@param group Group
+---@param group AvTest.Group
 function GroupResults.new(group)
 	return setmetatable({
 		group=group,
@@ -24,7 +24,7 @@ function GroupResults.new(group)
 	}, GroupResults)
 end
 
----@param testResult TestResult
+---@param testResult AvTest.TestResult
 function GroupResults:addTestResult(testResult)
 	table.insert(self.tests, testResult)
 	if testResult:hasFailed() then
@@ -32,7 +32,7 @@ function GroupResults:addTestResult(testResult)
 	end
 end
 
----@param groupResults GroupResults
+---@param groupResults AvTest.GroupResults
 function GroupResults:addGroupResults(groupResults)
 	table.insert(self.groups, groupResults)
 	if groupResults:hasFailed() then

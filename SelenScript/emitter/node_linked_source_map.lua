@@ -6,8 +6,8 @@ local Json = require "json"
 local SourceMapLib = require "source-map"
 
 
----@class NodeLinkedSourceMap
----@field links {node:ASTNode, src_pos:integer, out_pos:integer}[]
+---@class SelenScript.NodeLinkedSourceMap
+---@field links {node:SelenScript.ASTNode, src_pos:integer, out_pos:integer}[]
 local NodeLinkedSourceMap = {}
 NodeLinkedSourceMap.__index = NodeLinkedSourceMap
 
@@ -18,7 +18,7 @@ function NodeLinkedSourceMap.new()
 	}, NodeLinkedSourceMap)
 end
 
----@param node ASTNode # The source node that is being mapped
+---@param node SelenScript.ASTNode # The source node that is being mapped
 ---@param src_pos number # The position in the output this node starts
 ---@param out_pos number # The position in the output this node starts
 function NodeLinkedSourceMap:link(node, src_pos, out_pos)

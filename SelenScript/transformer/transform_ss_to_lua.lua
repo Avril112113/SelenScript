@@ -3,13 +3,13 @@ local ASTHelpers = require "SelenScript.transformer.ast_helpers"
 local ASTNodes = ASTHelpers.Nodes
 
 
----@class Transformer_SS_to_Lua : Transformer
+---@class SelenScript.Transformer_SS_to_Lua : SelenScript.Transformer
 local TransformerDefs = {}
 
 
 local _loop_types = {["while"]=true,["foriter"]=true,["forrange"]=true,["repeat"]=true}
----@param self Transformer_SS_to_Lua
----@param node ASTNode
+---@param self SelenScript.Transformer_SS_to_Lua
+---@param node SelenScript.ASTNode
 TransformerDefs["continue"] = function(self, node)
 	local parent_loop = self:find_parent_of_type(node, function(parent) return _loop_types[parent.type] end)
 	if parent_loop == nil then
@@ -32,8 +32,8 @@ TransformerDefs["continue"] = function(self, node)
 	return nil
 end
 
----@param self Transformer_SS_to_Lua
----@param node ASTNode
+---@param self SelenScript.Transformer_SS_to_Lua
+---@param node SelenScript.ASTNode
 TransformerDefs["ifexpr"] = function(self, node)
 	-- TODO: We might sometimes be able to just use lua expressions instead of needing the `if` statement before the assign
 	--       This will probably depend on the type of whats used
@@ -67,8 +67,8 @@ TransformerDefs["ifexpr"] = function(self, node)
 	return ASTNodes.index(node, nil, ASTNodes.name(node, var_name))
 end
 
----@param self Transformer_SS_to_Lua
----@param node ASTNode
+---@param self SelenScript.Transformer_SS_to_Lua
+---@param node SelenScript.ASTNode
 TransformerDefs["stmt_expr"] = function(self, node)
 	local block, stmt = self:find_parent_of_type(node, "block")
 	if block == nil then
@@ -96,8 +96,8 @@ TransformerDefs["stmt_expr"] = function(self, node)
 	)
 end
 
----@param self Transformer_SS_to_Lua
----@param node ASTNode
+---@param self SelenScript.Transformer_SS_to_Lua
+---@param node SelenScript.ASTNode
 TransformerDefs["break"] = function(self, node)
 	local stmt_expr, _, _ = self:find_parent_of_type(node, "stmt_expr")
 	local parent_breakable, _, _ = self:find_parent_of_type(node, function(filter_node)
@@ -146,15 +146,15 @@ TransformerDefs["break"] = function(self, node)
 	return node
 end
 
----@param self Transformer_SS_to_Lua
----@param node ASTNode
+---@param self SelenScript.Transformer_SS_to_Lua
+---@param node SelenScript.ASTNode
 TransformerDefs["conditional_stmt"] = function(self, node)
 	local block = ASTNodes.block(node, unpack(node))
 	return ASTNodes["if"](node, node.condition, block)
 end
 
----@param self Transformer_SS_to_Lua
----@param node ASTNode
+---@param self SelenScript.Transformer_SS_to_Lua
+---@param node SelenScript.ASTNode
 TransformerDefs["functiondef"] = function(self, node)
 	if node.decorators ~= nil and #node.decorators > 0 then
 		local block, stmt = self:find_parent_of_type(node, "block")

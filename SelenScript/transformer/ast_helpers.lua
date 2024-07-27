@@ -9,10 +9,10 @@ local ASTHelpers = {}
 local ASTNodes = {}
 ASTHelpers.Nodes = ASTNodes
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param prefix string?
 ---@param value string
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.LineComment(node, prefix, value)
 	return {
 		type = "LineComment",
@@ -23,10 +23,10 @@ function ASTNodes.LineComment(node, prefix, value)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param prefix string?
 ---@param value string
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.LongComment(node, prefix, value, suffix)
 	return {
 		type = "LongComment",
@@ -38,9 +38,9 @@ function ASTNodes.LongComment(node, prefix, value, suffix)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param ... ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param ... SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.block(node, ...)
 	return {
 		type = "block",
@@ -50,9 +50,9 @@ function ASTNodes.block(node, ...)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param name string
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.name(node, name)
 	return {
 		type = "name",
@@ -62,9 +62,9 @@ function ASTNodes.name(node, name)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param value string
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.numeral(node, value)
 	return {
 		type = "numeral",
@@ -74,11 +74,11 @@ function ASTNodes.numeral(node, value)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param value string
 ---@param prefix string?
 ---@param suffix string?
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.string(node, value, prefix, suffix)
 	-- `prefix` might be a number if `value:gsub()` for example was used. 
 	if type(prefix) ~= "string" then
@@ -112,9 +112,9 @@ function ASTNodes.string(node, value, prefix, suffix)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param ... ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param ... SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.namelist(node, ...)
 	return {
 		type = "namelist",
@@ -124,12 +124,12 @@ function ASTNodes.namelist(node, ...)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param how string?
----@param expr ASTNode
----@param index ASTNode?
+---@param expr SelenScript.ASTNode
+---@param index SelenScript.ASTNode?
 ---@param braces string?
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.index(node, how, expr, index, braces)
 	return {
 		type = "index",
@@ -142,10 +142,10 @@ function ASTNodes.index(node, how, expr, index, braces)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param args any[]|table|string
 ---@param self nil|boolean
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.call(node, args, self)
 	return {
 		type = "call",
@@ -165,9 +165,9 @@ function ASTNodes.var_args(node)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param name string|ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param name string|SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.label(node, name)
 	return {
 		type = "label",
@@ -177,9 +177,9 @@ function ASTNodes.label(node, name)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param name string|ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param name string|SelenScript.ASTNode
+---@return SelenScript.ASTNode
 ASTNodes["goto"] = function(node, name)
 	return {
 		type = "goto",
@@ -189,11 +189,11 @@ ASTNodes["goto"] = function(node, name)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param condition ASTNode
----@param block ASTNode
----@param _else ASTNode?
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param condition SelenScript.ASTNode
+---@param block SelenScript.ASTNode
+---@param _else SelenScript.ASTNode?
+---@return SelenScript.ASTNode
 ASTNodes["if"] = function(node, condition, block, _else)
 	return {
 		type = "if",
@@ -205,11 +205,11 @@ ASTNodes["if"] = function(node, condition, block, _else)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param condition ASTNode
----@param block ASTNode
----@param _else ASTNode?
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param condition SelenScript.ASTNode
+---@param block SelenScript.ASTNode
+---@param _else SelenScript.ASTNode?
+---@return SelenScript.ASTNode
 ASTNodes["elseif"] = function(node, condition, block, _else)
 	return {
 		type = "elseif",
@@ -221,9 +221,9 @@ ASTNodes["elseif"] = function(node, condition, block, _else)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param block ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param block SelenScript.ASTNode
+---@return SelenScript.ASTNode
 ASTNodes["else"] = function(node, block)
 	return {
 		type = "else",
@@ -233,11 +233,11 @@ ASTNodes["else"] = function(node, block)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param scope "local"?
----@param names ASTNode # `varlist` or `attributenamelist`
----@param values ASTNode? # `expressionlist`
----@return ASTNode
+---@param names SelenScript.ASTNode # `varlist` or `attributenamelist`
+---@param values SelenScript.ASTNode? # `expressionlist`
+---@return SelenScript.ASTNode
 function ASTNodes.assign(node, scope, names, values)
 	return {
 		type = "assign",
@@ -249,9 +249,9 @@ function ASTNodes.assign(node, scope, names, values)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param ... ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param ... SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.expressionlist(node, ...)
 	return {
 		type = "expressionlist",
@@ -261,9 +261,9 @@ function ASTNodes.expressionlist(node, ...)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param ... ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param ... SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.varlist(node, ...)
 	return {
 		type = "varlist",
@@ -273,9 +273,9 @@ function ASTNodes.varlist(node, ...)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param ... ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param ... SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.attributenamelist(node, ...)
 	return {
 		type = "attributenamelist",
@@ -285,9 +285,9 @@ function ASTNodes.attributenamelist(node, ...)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param ... ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param ... SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.fieldlist(node, ...)
 	return {
 		type = "fieldlist",
@@ -297,10 +297,10 @@ function ASTNodes.fieldlist(node, ...)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param key ASTNode? # Expression or name
----@param value ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param key SelenScript.ASTNode? # Expression or name
+---@param value SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.field(node, key, value)
 	return {
 		type = "field",
@@ -311,10 +311,10 @@ function ASTNodes.field(node, key, value)
 	}
 end
 
----@param node ASTNode # Used for source position info
+---@param node SelenScript.ASTNode # Used for source position info
 ---@param name string
 ---@param attribute string?
----@return ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.attributename(node, name, attribute)
 	return {
 		type = "attributename",
@@ -325,9 +325,9 @@ function ASTNodes.attributename(node, name, attribute)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param fieldlist ASTNode
----@return ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param fieldlist SelenScript.ASTNode
+---@return SelenScript.ASTNode
 function ASTNodes.table(node, fieldlist)
 	return {
 		type = "table",
@@ -337,8 +337,8 @@ function ASTNodes.table(node, fieldlist)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param ... ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param ... SelenScript.ASTNode
 function ASTNodes.parlist(node, ...)
 	return {
 		type = "parlist",
@@ -348,9 +348,9 @@ function ASTNodes.parlist(node, ...)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param args ASTNode
----@param block ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param args SelenScript.ASTNode
+---@param block SelenScript.ASTNode
 function ASTNodes.funcbody(node, args, block)
 	return {
 		type = "funcbody",
@@ -361,8 +361,8 @@ function ASTNodes.funcbody(node, args, block)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param funcbody ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param funcbody SelenScript.ASTNode
 ASTNodes["function"] = function(node, funcbody)
 	return {
 		type = "function",
@@ -372,8 +372,8 @@ ASTNodes["function"] = function(node, funcbody)
 	}
 end
 
----@param node ASTNode # Used for source position info
----@param values ASTNode
+---@param node SelenScript.ASTNode # Used for source position info
+---@param values SelenScript.ASTNode
 ASTNodes["return"] = function(node, values)
 	return {
 		type = "return",

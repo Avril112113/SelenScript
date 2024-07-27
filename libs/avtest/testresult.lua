@@ -2,19 +2,19 @@ local Config = require "avtest.config"
 
 
 --- TODO: Typing for TestAssertion
----@alias TestCheck {name:string,line:integer,fail:boolean,msg:string?,value:any?}
+---@alias AvTest.TestCheck {name:string,line:integer,fail:boolean,msg:string?,value:any?}
 
 
----@class TestResult
----@field test Test
----@field out HookedStdout
+---@class AvTest.TestResult
+---@field test AvTest.Test
+---@field out AvTest.HookedStdout
 ---@field err string?
----@field checks TestCheck[]
+---@field checks AvTest.TestCheck[]
 local TestResult = {}
 TestResult.__index = TestResult
 
 
----@param test Test
+---@param test AvTest.Test
 function TestResult.new(test)
 	return setmetatable({
 		test=test,
@@ -22,7 +22,7 @@ function TestResult.new(test)
 	}, TestResult)
 end
 
----@param check TestCheck
+---@param check AvTest.TestCheck
 function TestResult:addCheck(check)
 	table.insert(self.checks, check)
 	self.out:addSpecialData(check)

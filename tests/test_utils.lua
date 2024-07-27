@@ -39,8 +39,8 @@ function TestUtils.RunForEachLuaFile(base_path, f, base_local_path)
 	end
 end
 
----@param TEST TestEnv
----@return Parser
+---@param TEST AvTest.TestEnv
+---@return SelenScript.Parser
 function TestUtils.CreateNewParser(TEST)
 	local parser, errors = Parser.new()
 	if #errors > 0 then
@@ -56,8 +56,8 @@ end
 
 local test_parser
 local test_parser_errors
----@param TEST TestEnv
----@return Parser
+---@param TEST AvTest.TestEnv
+---@return SelenScript.Parser
 function TestUtils.GetSharedParser(TEST)
 	if test_parser == nil and test_parser_errors == nil then
 		test_parser, test_parser_errors = Parser.new()
@@ -74,9 +74,9 @@ function TestUtils.GetSharedParser(TEST)
 	return parser
 end
 
----@param ast ASTNodeSource
----@param errors Error[]
----@param comments ASTNode[]
+---@param ast SelenScript.ASTNodeSource
+---@param errors SelenScript.Error[]
+---@param comments SelenScript.ASTNode[]
 function TestUtils.PrintParseResult(ast, errors, comments)
 	print("-- Parsed AST: --")
 	print(AST.tostring_ast(ast))

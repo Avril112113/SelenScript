@@ -4,14 +4,14 @@ local Buffer = require("string.buffer")  -- https://luajit.org/ext_buffer.html
 
 
 -- TODO: Make emitter config seperated for each emitter type
----@class EmitterConfig
+---@class SelenScript.EmitterConfig
 local EmitterConfig = {
 	--- All Emitters
 	newline = "\n",
 	indent = "\t",
 }
 ---@param from table
----@param emitter Emitter
+---@param emitter SelenScript.Emitter
 local function create_config(from, emitter)
 	local config = Utils.deepcopy(from)
 	Utils.merge(EmitterConfig, config, false)
@@ -22,17 +22,17 @@ local function create_config(from, emitter)
 end
 
 
----@class Emitter
----@field DefaultConfig EmitterConfig
+---@class SelenScript.Emitter
+---@field DefaultConfig SelenScript.EmitterConfig
 ---@field args table<string, any> # Used for creating a copy emitter
----@field defs table<string, fun(self:Emitter, node:ASTNode):any>
+---@field defs table<string, fun(self:SelenScript.Emitter, node:SelenScript.ASTNode):any>
 ---@field config table<string, any>
 -- self_proxy fields
----@field ast ASTNodeSource
+---@field ast SelenScript.ASTNodeSource
 ---@field parts string.buffer
 ---@field char_position integer
 ---@field indent_depth integer
----@field source_map NodeLinkedSourceMap
+---@field source_map SelenScript.NodeLinkedSourceMap
 ---@field visit_path string[] # For debugging errors
 local Emitter = {
 	Emitters = {
@@ -42,8 +42,8 @@ local Emitter = {
 Emitter.__index = Emitter
 
 
----@param target "lua"|Emitter # The emitter to use
----@param config EmitterConfig # Config modifications, any ommited values use defaults
+---@param target "lua"|SelenScript.Emitter # The emitter to use
+---@param config SelenScript.EmitterConfig # Config modifications, any ommited values use defaults
 function Emitter.new(target, config)
 	config = config or {}
 	if type(target) == "string" then
@@ -60,14 +60,14 @@ function Emitter.new(target, config)
 	return self
 end
 
----@param node ASTNode
+---@param node SelenScript.ASTNode
 function Emitter:visit(node)
 	return self:visit_type(node.type, node)
 end
 
 --- Used by EmitterDef's to reduce code duplication
 ---@param name string
----@param node ASTNode
+---@param node SelenScript.ASTNode
 function Emitter:visit_type(name, node)
 	if type(node) ~= "table" or node.type == nil then
 		print_error("_visit(node) didn't get a node but instead \"" .. tostring(node) .. "\"")
@@ -88,7 +88,7 @@ end
 
 ---@param s string
 function Emitter:add_part(s)
-	if #s > 0 and not s:match("^[\n \t]+$") then
+	if #s > 0 and not s:find("^[\n \t]+$") then
 		self.source_map:link(self.last_node, self.last_node.start, self.char_position)
 	end
 	self.parts:put(s)
@@ -119,7 +119,7 @@ end
 
 --- Checks if a space is required to separate the last character and `s`
 --- Checks for word chars [%w_] and digits followed by [%d.]
----@param s string|ASTNode
+---@param s string|SelenScript.ASTNode
 function Emitter:is_space_required_boundary(s)
 	if type(s) == "table" and s.type ~= nil then
 		local emitter = self:_create_proxy(self.ast)
@@ -154,7 +154,7 @@ function Emitter:unindent()
 end
 
 --- Creates a proxy of self, with the required limited lifetime variables for emitting.
----@param ast ASTNodeSource
+---@param ast SelenScript.ASTNodeSource
 ---@param env table? # Copied into the proxied emitter object.
 function Emitter:_create_proxy(ast, env)
 	local self_proxy = setmetatable({
@@ -179,8 +179,8 @@ function Emitter:_create_proxy(ast, env)
 end
 
 --- Run the emitter to generate the output.
----@param ast ASTNodeSource
----@return string, NodeLinkedSourceMap
+---@param ast SelenScript.ASTNodeSource
+---@return string, SelenScript.NodeLinkedSourceMap
 ---@param env table? # Copied into the proxied emitter object.
 function Emitter:generate(ast, env)
 	local self_proxy = self:_create_proxy(ast, env)

@@ -6,7 +6,7 @@ local DEBUG_INFO_FLAGS = {
 }
 
 
----@class HookedStdout
+---@class AvTest.HookedStdout
 ---@field strs string[]
 ---@field debug debuginfo[]
 ---@field special (integer|any)[]  # Can be used externally, to interweave extra data, remaining sorted. integers are index into strs & debug.
@@ -90,11 +90,11 @@ function StdHook:_createHooks()
 end
 
 --- There is version dependent behaviour, Lua 5.4 results are used here.
----@return MockFile
+---@return AvTest.MockFile
 function StdHook:_create_mock_file()
 	local stdHook = self
 
-	---@class MockFile : file*
+	---@class AvTest.MockFile : file*
 	local file = {}
 
 	---@param ... readmode

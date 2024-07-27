@@ -2,9 +2,9 @@ local TestResult = require "avtest.testresult"
 local StdHook = require "avtest.std_hook"
 
 
----@class Test
+---@class AvTest.Test
 ---@field name string
----@field group Group
+---@field group AvTest.Group
 ---@field f fun():any?
 ---@field path string?
 local Test = {}
@@ -23,10 +23,10 @@ function Test.new(name, group, f, path)
 	}, Test)
 end
 
----@return TestResult
+---@return AvTest.TestResult
 function Test:runTest()
 	local result = TestResult.new(self)
-	---@type HookedStdout
+	---@type AvTest.HookedStdout
 	result.out = StdHook.new()
 	self.group._runningTestResult = result
 	result.out:hook()

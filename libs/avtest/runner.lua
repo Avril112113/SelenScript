@@ -8,13 +8,13 @@ local function standardize_path(path)
 end
 
 
----@class AvTestRunner
+---@class AvTest.AvTestRunner
 local Runner = {}
 Runner.__index = Runner
 
 
 function Runner.new()
-	---@class AvTestRunner # Allow field injection
+	---@class AvTest.AvTestRunner # Allow field injection
 	local self = setmetatable({}, Runner)
 
 	self._output_file_enabled = false
@@ -125,14 +125,14 @@ function Runner:addDir(path)
 	return self, groups
 end
 
----@param main_results GroupResults
+---@param main_results AvTest.GroupResults
 function Runner:_processResults(main_results)
 	---@type string[]
 	local results_out_parts = {}
 	---@type table<any,file*>
 	local log_files = {}
 
-	---@param results TestResult
+	---@param results AvTest.TestResult
 	---@param prefix string?
 	local function process_test_results(results, prefix)
 		prefix = (prefix or "/") .. results.test.name
@@ -162,7 +162,7 @@ function Runner:_processResults(main_results)
 				---@cast data number
 				table.insert(parts, results.out.strs[data])
 			else
-				---@cast data TestCheck
+				---@cast data AvTest.TestCheck
 				tostring_parts()
 				local check = data
 				local line_prefix = ("    %s[CHECK]:%3s:%s%s: "):format(Config.PREFIX_TAG, check.line, (check.fail and Config.PREFIX_FAIL or Config.PREFIX_PASS) .. check.name, Config.PREFIX_TAG)
@@ -180,7 +180,7 @@ function Runner:_processResults(main_results)
 		return table.concat(test_out_parts, "\n")
 	end
 
-	---@param results GroupResults
+	---@param results AvTest.GroupResults
 	local function process_group_results(results, prefix)
 		prefix = (prefix or "") .. results.group.name .. "/"
 		---@type string[]
@@ -237,9 +237,9 @@ function Runner:_processResults(main_results)
 end
 
 function Runner:runTests()
-	---@type table<Test|Group,string>
+	---@type table<AvTest.Test|AvTest.Group,string>
 	local full_name_map = {}
-	---@param group Group
+	---@param group AvTest.Group
 	---@param path string
 	local function recur(group, path)
 		full_name_map[group] = standardize_path(path)
@@ -260,7 +260,7 @@ function Runner:runTests()
 	local tests_fails = 0
 	local checks_total = 0
 	local checks_fails = 0
-	---@param groupResults GroupResults
+	---@param groupResults AvTest.GroupResults
 	local function recurCountResults(groupResults)
 		for _, testResult in ipairs(groupResults.tests) do
 			tests_total = tests_total + 1

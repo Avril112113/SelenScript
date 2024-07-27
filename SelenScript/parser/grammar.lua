@@ -30,7 +30,7 @@ local Grammar = {
 --- Build the relabel grammar from the seperated files using RePreProcess
 ---@param declarations table<string,boolean>?
 ---@param entry_point string? # Override the entry point
----@return boolean, string?, Error[] # TODO: make all errors ErrorBase, they are not currently
+---@return boolean, string?, SelenScript.Error[] # TODO: make all errors ErrorBase, they are not currently
 function Grammar.build(declarations, entry_point)
 	declarations = declarations or {}
 
@@ -87,8 +87,8 @@ function Grammar.build(declarations, entry_point)
 	return true, result, all_errors
 end
 
----@return true, LPegGrammar, AST
----@overload fun(built_grammar): false, Error
+---@return true, SelenScript.LPegGrammar, SelenScript.AST
+---@overload fun(built_grammar): false, SelenScript.Error
 function Grammar.compile(built_grammar)
 	local ast_defs = AST.new()
 	local ok, regrammar = pcall(ReLabel.compile, built_grammar, ast_defs)

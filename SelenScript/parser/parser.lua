@@ -7,9 +7,9 @@ local ParserErrors = require "SelenScript.parser.errors"
 
 
 --- Unique custom ASTNode type that encompasses the ast of a source, it's start and end are inherited from it's block node.
----@class ASTNodeSource : ASTNode
+---@class SelenScript.ASTNodeSource : SelenScript.ASTNode
 ---@field type "source"
----@field block ASTNode # TODO: Node types
+---@field block SelenScript.ASTNode # TODO: Node types
 ---@field source string # The plain text source
 ---@field file string? # Defines the origin of the source, special value `[stdin]`, path be relitive to src root and use `/`
 ---@field _avcalcline AVCalcLine?
@@ -17,14 +17,14 @@ local ParserErrors = require "SelenScript.parser.errors"
 local ASTNodeSource
 
 
----@class Parser
----@field ast_defs AST
+---@class SelenScript.Parser
+---@field ast_defs SelenScript.AST
 ---@field grammar_src string
----@field grammar LPegGrammar
+---@field grammar SelenScript.LPegGrammar
 local Parser = {}
 Parser.__index = Parser
 
----@param self ASTNodeSource
+---@param self SelenScript.ASTNodeSource
 ---@param pos integer
 ---@return integer, integer
 function Parser._source_calcline(self, pos)
@@ -36,7 +36,7 @@ end
 
 
 ---@param opts {selenscript:boolean}?
----@return Parser?, Error[]
+---@return SelenScript.Parser?, SelenScript.Error[]
 function Parser.new(opts)
 	local garmmar_declarations = {}
 	garmmar_declarations.Grammar_SelenScript = not opts or not not opts.selenscript
@@ -49,10 +49,10 @@ function Parser.new(opts)
 	end
 	local ok, grammar, ast_defs = Grammar.compile(built_grammar)
 	if not ok then
-		---@cast grammar -LPegGrammar
+		---@cast grammar -SelenScript.LPegGrammar
 		return nil, {grammar}
 	end
-	---@cast grammar -Error
+	---@cast grammar -SelenScript.Error
 
 	local self = setmetatable({
 		grammar_src=built_grammar,
@@ -63,7 +63,7 @@ function Parser.new(opts)
 end
 
 --- Removes all keys beginning with `_` from the node and child nodes, these are used for in-grammar use and should not be in the resulting AST
----@param node ASTNode
+---@param node SelenScript.ASTNode
 function Parser.cleanup_nodes(node)
 	for i, v in pairs(node) do
 		if type(i) == "string" and i:sub(1, 1) == "_" then
@@ -79,7 +79,7 @@ end
 ---@param file string?
 function Parser:parse(source, file)
 	self.ast_defs:init(source)
-	---@type ASTNode, any?, integer?
+	---@type SelenScript.ASTNode, any?, integer?
 	local ast, err, pos = self.grammar:match(source)
 	if type(ast) == "table" then
 		Parser.cleanup_nodes(ast)
@@ -87,7 +87,7 @@ function Parser:parse(source, file)
 	if err ~= nil then
 		table.insert(self.ast_defs.errors, ParserErrors.SYNTAX_UNIDENTIFIED({pos=pos,err=err,ast=ast}, re.calcline(source, pos), err))
 	end
-	---@type ASTNodeSource
+	---@type SelenScript.ASTNodeSource
 	local ast_source = {
 		type = "source",
 		start = ast.start,

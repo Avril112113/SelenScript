@@ -1,4 +1,4 @@
----@type TestEnv
+---@type AvTest.TestEnv
 TEST = nil
 
 

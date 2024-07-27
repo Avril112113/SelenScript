@@ -1,6 +1,6 @@
 ---@meta
 
----@class LPegGrammar
+---@class SelenScript.LPegGrammar
 local ReGrammar = {}
 
 ---@param source string
