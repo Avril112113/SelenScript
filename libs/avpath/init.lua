@@ -155,6 +155,7 @@ function AVPath.common(paths)
 	local parts = {}
 	while true do
 		local s = iters[1]()
+		if s == nil then break end
 		local do_break = false
 		for i=2,#iters do
 			local is = iters[i]()
