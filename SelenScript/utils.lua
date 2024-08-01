@@ -131,5 +131,19 @@ function Utils.escape_escape_sequences(text)
 	end))
 end
 
+do
+	---@diagnostic disable-next-line: param-type-mismatch
+	local signum, hours, minutes = os.date("%z"):match("([+-])(%d%d)(%d%d)")
+	Utils.timezone_offset = tonumber(signum..hours)*3600 + tonumber(signum..minutes)*60
+end
+
+--- Parse ISO format timestamp from the GitHub API
+--- Returns time in UTC
+---@param s string # Format of "2024-07-04T09:35:14Z"
+function Utils.parse_github_timestamp(s)
+	local t_date = {isdst=false}
+	t_date.year, t_date.month, t_date.day, t_date.hour, t_date.min, t_date.sec = s:match("(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)Z")
+	return t_date
+end
 
 return Utils
