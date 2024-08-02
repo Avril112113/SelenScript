@@ -282,7 +282,6 @@ selfcall	<- {| {:type:''->"call":}
 				|}
 
 /* lcall - LastCall */
-index_continues	<- DOT / "[" / ":" / "("
 index_part	<- {:how:"[":} Sc {:expr:expression:} Sc "]"
 			 / {:how:DOT:} Sc {:expr:name:}
 			 / {:expr:call:}
