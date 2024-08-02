@@ -1,3 +1,5 @@
+---@diagnostic disable
+
 -----------------------------------------------------------------------------
 -- FTP support for the Lua language
 -- LuaSocket toolkit.
