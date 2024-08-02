@@ -15,6 +15,7 @@ local ASTNode = {}
 
 --- All the AST definitions
 ---@class SelenScript.AST
+---@field _bound_methods table<function,function>
 ---@field errors SelenScript.Error[]
 ---@field comments SelenScript.ASTNode[] # TODO: Node types
 local AST = {
@@ -31,12 +32,17 @@ function AST:__index(name)
 		value = rawget(AST, name)
 	end
 	if type(value) == "function" then
-		return function(t, ...)
-			if t == self then
-				return value(self, ...)
+		local f = self._bound_methods[name]
+		if f == nil then
+			f = function(t, ...)
+				if t == self then
+					return value(self, ...)
+				end
+				return value(self, t, ...)
 			end
-			return value(self, t, ...)
+			self._bound_methods[name] = f
 		end
+		return f
 	end
 	return value
 end
@@ -83,7 +89,9 @@ end
 --- Create a re-useable AST object
 --- This object is used as the AST definitions, not the resulting AST it's self
 function AST.new()
-	return setmetatable({}, AST)
+	return setmetatable({
+		_bound_methods = {},
+	}, AST)
 end
 
 --- Initialize that something new is going to be parsed with this AST definitions object
