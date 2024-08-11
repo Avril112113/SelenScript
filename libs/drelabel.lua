@@ -273,6 +273,8 @@ local exp = m.P{ "Exp",
                           "ExpNumName")
                 + "->" * expect(S * ( m.Cg((String + num) * m.Cc(mt.__div))
                                     + m.P"{nil}" * m.Cc(nil, function(patt) return m.Cc(nil) end)  -- CUSTOM EDIT
+                                    + m.P"{true}" * m.Cc(nil, function(patt) return m.Cc(true) end)  -- CUSTOM EDIT
+                                    + m.P"{false}" * m.Cc(nil, function(patt) return m.Cc(false) end)  -- CUSTOM EDIT
                                     + m.P"{}" * m.Cc(nil, m.Ct)
                                     + defwithfunc(mt.__div)
                                     ),
