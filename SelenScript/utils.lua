@@ -106,6 +106,40 @@ function Utils.find_key(tbl, value, iter)
     return nil
 end
 
+function Utils.keys_sort(a, b)
+	if (type(a) == "number" and type(b) == "number") or (type(a) == "string" and type(b) == "string") then
+		return a < b
+	elseif type(a) == type(b) then
+		return tostring(a) < tostring(b)
+	elseif type(a) == "number" or type(b) == "number" then
+		return type(a) == "number"
+	else
+		-- Fallback to *something* that does not error.
+		return tostring(a) < tostring(b)
+	end
+end
+
+
+---@generic K,V
+---@param tbl table<K,V>
+---@param comp? fun(a: K, b: K):boolean
+---@return fun():K,V
+function Utils.sorted_pairs(tbl, comp)
+	local keys = {}
+	for i, v in pairs(tbl) do
+		table.insert(keys, i)
+	end
+	table.sort(keys, comp or Utils.keys_sort)
+	local i = 0
+	return function()
+		i = i + 1
+		if i > #keys then
+			return nil
+		end
+		return keys[i], tbl[keys[i]]
+	end
+end
+
 ---@param text string
 ---@return string
 function Utils.escape_pattern(text)
