@@ -278,7 +278,7 @@ selfcall	<- {| {:type:''->"call":}
 					{:start:{}:}
 					{:args:args:}
 					{:finish:{}:}
-					{:self:''->"true":}
+					{:self:{}->{true}:}
 				|}
 
 /* lcall - LastCall */

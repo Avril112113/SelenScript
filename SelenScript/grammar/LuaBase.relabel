@@ -1,7 +1,5 @@
 /**** LuaBase ****/
 
-NILCP	<- {}->{nil}
-
 /* SPace */
 Sp		<- ' ' / %nl / %esc_t
 
@@ -17,7 +15,7 @@ HASHLINE	<- "#" Rest
 X16         <-  [a-fA-F0-9]
 NAME		<- (!RESERVED [a-zA-Z_][a-zA-Z_0-9]*) / RESERVED [a-zA-Z_0-9]+
 EXPECT_NAME	<- NAME / ({}->"SYNTAX_MISS_NAME"{}{})->add_error
-EXP_CP_NAME	<- {NAME} / ({}->"SYNTAX_MISS_NAME"{}{})->add_error NILCP
+EXP_CP_NAME	<- {NAME} / ({}->"SYNTAX_MISS_NAME"{}{})->add_error {}->{nil}
 
 DOT			<- '.' !'.'
 CONCAT		<- '..' !'.'
