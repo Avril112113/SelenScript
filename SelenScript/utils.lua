@@ -76,6 +76,12 @@ end
 
 -- Simplifed from https://gist.github.com/sapphyrus/fd9aeb871e3ce966cc4b0b969f62f539
 function Utils.deepeq(t1, t2)
+	if type(t1) ~= type(t2) then
+		return false
+	elseif type(t1) ~= "table" or type(t2) ~= "table" then
+		return t1 == t2
+	end
+
 	-- iterate over t1
 	for key1, value1 in pairs(t1) do
 		local value2 = t2[key1]
