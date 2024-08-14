@@ -9,7 +9,7 @@ local ParserErrors = require "SelenScript.parser.errors"
 --- Unique custom ASTNode type that encompasses the ast of a source, it's start and end are inherited from it's block node.
 ---@class SelenScript.ASTNodes.Source : SelenScript.ASTNodes.Node
 ---@field type "source"
----@field block SelenScript.ASTNodes.Node # TODO: Node types
+---@field block SelenScript.ASTNodes.chunk
 ---@field source string # The plain text source
 ---@field file string? # Defines the origin of the source, special value `[stdin]`, path be relitive to src root and use `/`
 ---@field _avcalcline AVCalcLine?
@@ -79,13 +79,16 @@ end
 ---@param file string?
 function Parser:parse(source, file)
 	self.ast_defs:init(source)
-	---@type SelenScript.ASTNodes.Node, any?, integer?
+	---@type SelenScript.ASTNodes.chunk, any?, integer?
 	local ast, err, pos = self.grammar:match(source)
 	if type(ast) == "table" then
 		Parser.cleanup_nodes(ast)
 	end
 	if err ~= nil then
 		table.insert(self.ast_defs.errors, ParserErrors.SYNTAX_UNIDENTIFIED({pos=pos,err=err,ast=ast}, re.calcline(source, pos), err))
+	end
+	if ast.type ~= "chunk" then
+		error(("INVALID GRAMMAR: returned node of type '%s' but expected 'chunk'"):format(ast.type))
 	end
 	---@type SelenScript.ASTNodes.Source
 	local ast_source = {

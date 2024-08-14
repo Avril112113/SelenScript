@@ -357,7 +357,7 @@ end
 
 ---@param node SelenScript.ASTNodes.Node # Used for source position info
 ---@param args SelenScript.ASTNodes.Node
----@param block SelenScript.ASTNodes.funcbody
+---@param block SelenScript.ASTNodes.block
 function ASTNodes.funcbody(node, args, block)
 	return {
 		type = "funcbody",
@@ -369,7 +369,7 @@ function ASTNodes.funcbody(node, args, block)
 end
 
 ---@param node SelenScript.ASTNodes.Node # Used for source position info
----@param funcbody SelenScript.ASTNodes.function
+---@param funcbody SelenScript.ASTNodes.funcbody
 ASTNodes["function"] = function(node, funcbody)
 	return {
 		type = "function",
@@ -380,7 +380,7 @@ ASTNodes["function"] = function(node, funcbody)
 end
 
 ---@param node SelenScript.ASTNodes.Node # Used for source position info
----@param values SelenScript.ASTNodes.return
+---@param values SelenScript.ASTNodes.expressionlist
 ASTNodes["return"] = function(node, values)
 	return {
 		type = "return",
