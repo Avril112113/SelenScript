@@ -74,9 +74,9 @@ function TestUtils.GetSharedParser(TEST)
 	return parser
 end
 
----@param ast SelenScript.ASTNodeSource
+---@param ast SelenScript.ASTNodes.Source
 ---@param errors SelenScript.Error[]
----@param comments SelenScript.ASTNode[]
+---@param comments SelenScript.ASTNodes.Node[]
 function TestUtils.PrintParseResult(ast, errors, comments)
 	print("-- Parsed AST: --")
 	print(AST.tostring_ast(ast))

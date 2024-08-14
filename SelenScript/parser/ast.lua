@@ -4,20 +4,11 @@ local lp = require "lpeglabel"
 local re = require "drelabel"
 
 
---- Typing
----@class SelenScript.ASTNode : table
----@field type string
----@field start integer
----@field finish integer
----@field [any] any
-local ASTNode = {}
-
-
 --- All the AST definitions
 ---@class SelenScript.AST
 ---@field _bound_methods table<function,function>
 ---@field errors SelenScript.Error[]
----@field comments SelenScript.ASTNode[] # TODO: Node types
+---@field comments (SelenScript.ASTNodes.LineComment|SelenScript.ASTNodes.LongComment)[]
 local AST = {
 	esc_t = "\t",
 	nl = lp.P'\r\n' + lp.S'\r\n',
@@ -148,7 +139,7 @@ function AST:add_comment(node)
 	table.insert(self.comments, node)
 end
 
----@param data SelenScript.ASTNode[]
+---@param data SelenScript.ASTNodes.expression[]
 ---@param min_precedence number
 function AST:_climbPrecedence(data, min_precedence)
 	local lhs = table.remove(data, 1)
@@ -205,7 +196,7 @@ function AST:_climbPrecedence(data, min_precedence)
 	end
 	return lhs
 end
----@param data SelenScript.ASTNode[]|{start:integer, finish:integer}
+---@param data SelenScript.ASTNodes.expression[]|{start:integer, finish:integer}
 ---@param min_precedence number
 function AST:climbPrecedence(data, min_precedence)
 	min_precedence = min_precedence or 1

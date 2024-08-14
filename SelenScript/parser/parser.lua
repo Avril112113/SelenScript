@@ -7,9 +7,9 @@ local ParserErrors = require "SelenScript.parser.errors"
 
 
 --- Unique custom ASTNode type that encompasses the ast of a source, it's start and end are inherited from it's block node.
----@class SelenScript.ASTNodeSource : SelenScript.ASTNode
+---@class SelenScript.ASTNodes.Source : SelenScript.ASTNodes.Node
 ---@field type "source"
----@field block SelenScript.ASTNode # TODO: Node types
+---@field block SelenScript.ASTNodes.Node # TODO: Node types
 ---@field source string # The plain text source
 ---@field file string? # Defines the origin of the source, special value `[stdin]`, path be relitive to src root and use `/`
 ---@field _avcalcline AVCalcLine?
@@ -24,7 +24,7 @@ local ASTNodeSource
 local Parser = {}
 Parser.__index = Parser
 
----@param self SelenScript.ASTNodeSource
+---@param self SelenScript.ASTNodes.Source
 ---@param pos integer
 ---@return integer, integer
 function Parser._source_calcline(self, pos)
@@ -63,7 +63,7 @@ function Parser.new(opts)
 end
 
 --- Removes all keys beginning with `_` from the node and child nodes, these are used for in-grammar use and should not be in the resulting AST
----@param node SelenScript.ASTNode
+---@param node SelenScript.ASTNodes.Node
 function Parser.cleanup_nodes(node)
 	for i, v in pairs(node) do
 		if type(i) == "string" and i:sub(1, 1) == "_" then
@@ -79,7 +79,7 @@ end
 ---@param file string?
 function Parser:parse(source, file)
 	self.ast_defs:init(source)
-	---@type SelenScript.ASTNode, any?, integer?
+	---@type SelenScript.ASTNodes.Node, any?, integer?
 	local ast, err, pos = self.grammar:match(source)
 	if type(ast) == "table" then
 		Parser.cleanup_nodes(ast)
@@ -87,7 +87,7 @@ function Parser:parse(source, file)
 	if err ~= nil then
 		table.insert(self.ast_defs.errors, ParserErrors.SYNTAX_UNIDENTIFIED({pos=pos,err=err,ast=ast}, re.calcline(source, pos), err))
 	end
-	---@type SelenScript.ASTNodeSource
+	---@type SelenScript.ASTNodes.Source
 	local ast_source = {
 		type = "source",
 		start = ast.start,

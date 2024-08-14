@@ -7,7 +7,7 @@ local SourceMapLib = require "source-map"
 
 
 ---@class SelenScript.NodeLinkedSourceMap
----@field links {node:SelenScript.ASTNode, src_pos:integer, out_pos:integer}[]
+---@field links {node:SelenScript.ASTNodes.Node|SelenScript.ASTNodes.expression|SelenScript.ASTNodes.name, src_pos:integer, out_pos:integer}[]
 local NodeLinkedSourceMap = {}
 NodeLinkedSourceMap.__index = NodeLinkedSourceMap
 
@@ -18,7 +18,7 @@ function NodeLinkedSourceMap.new()
 	}, NodeLinkedSourceMap)
 end
 
----@param node SelenScript.ASTNode # The source node that is being mapped
+---@param node SelenScript.ASTNodes.Node # The source node that is being mapped
 ---@param src_pos number # The position in the output this node starts
 ---@param out_pos number # The position in the output this node starts
 function NodeLinkedSourceMap:link(node, src_pos, out_pos)

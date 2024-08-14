@@ -4,7 +4,7 @@ local Precedence = require "SelenScript.parser.precedence"
 
 ---@class SelenScript.LuaEmitter : SelenScript.Emitter
 ---@field get_source_path (fun(src_path:string):string)?
----@field _sources SelenScript.ASTNodeSource[]
+---@field _sources SelenScript.ASTNodes.Source[]
 local EmitterDefs = {}
 ---@class SelenScript.LuaEmitterConfig : SelenScript.EmitterConfig
 EmitterDefs.DefaultConfig = {
@@ -34,7 +34,7 @@ for op, data in pairs(Precedence.unaryOpData) do
 end
 
 
----@param node SelenScript.ASTNode
+---@param node SelenScript.ASTNodes.Node
 function EmitterDefs:add_luacats_source_comment(node)
 	if self._sources == nil then
 		return
@@ -52,7 +52,7 @@ function EmitterDefs:add_luacats_source_comment(node)
 end
 
 
----@param node SelenScript.ASTNodeSource
+---@param node SelenScript.ASTNodes.Source
 function EmitterDefs:source(node)
 	self._sources = self._sources or {}
 	table.insert(self._sources, #self._sources+1, node)
@@ -60,21 +60,23 @@ function EmitterDefs:source(node)
 	table.remove(self._sources, #self._sources)
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.chunk
 function EmitterDefs:chunk(node)
 	self:visit(node.block)
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.block
 function EmitterDefs:block(node)
 	for i, v in ipairs(node) do
+		---@diagnostic disable-next-line: cast-type-mismatch
+		---@cast v SelenScript.ASTNodes.Node
 		self:visit(v)
 		if i ~= #node then
 			self:add_new_line()
 		end
 	end
 end
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.Node|{block:SelenScript.ASTNodes.block}
 function EmitterDefs:_indented_block(node)
 	self:indent()
 	self:add_new_line()
@@ -83,18 +85,24 @@ function EmitterDefs:_indented_block(node)
 	self:add_new_line()
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.LineComment
 function EmitterDefs:LineComment(node)
+	-- We can safely do this, as the node fields align (besides suffix, which is ignored if not present)
+	---@diagnostic disable-next-line: cast-type-mismatch
+	---@cast node SelenScript.ASTNodes.string
 	self:string(node)
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.LongComment
 function EmitterDefs:LongComment(node)
+	-- We can safely do this, as the node fields align (besides suffix, which is ignored if not present)
+	---@diagnostic disable-next-line: cast-type-mismatch
+	---@cast node SelenScript.ASTNodes.string
 	self:string(node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.assign
 EmitterDefs["assign"] = function(self, node)
 	if self.config.luacats_source then
 		self:add_luacats_source_comment(node)
@@ -115,7 +123,7 @@ EmitterDefs["assign"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.label
 EmitterDefs["label"] = function(self, node)
 	self:add_part("::")
 	self:visit(node.name)
@@ -123,7 +131,7 @@ EmitterDefs["label"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.goto
 EmitterDefs["goto"] = function(self, node)
 	self:add_part("goto")
 	self:add_space()
@@ -131,7 +139,7 @@ EmitterDefs["goto"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.do
 EmitterDefs["do"] = function(self, node)
 	self:add_part("do")
 	self:visit_type("_indented_block", node)
@@ -139,7 +147,7 @@ EmitterDefs["do"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.while
 EmitterDefs["while"] = function(self, node)
 	self:add_part("while")
 	self:add_space()
@@ -149,7 +157,7 @@ EmitterDefs["while"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.repeat
 EmitterDefs["repeat"] = function(self, node)
 	self:add_part("repeat")
 	self:indent()
@@ -163,7 +171,7 @@ EmitterDefs["repeat"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.if
 EmitterDefs["if"] = function(self, node)
 	self:add_part(node.type)  -- "if" or "elseif" or "else"
 	if node.type ~= "else" then
@@ -184,7 +192,7 @@ EmitterDefs["elseif"] = EmitterDefs["if"]
 EmitterDefs["else"] = EmitterDefs["if"]
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.forrange
 EmitterDefs["forrange"] = function(self, node)
 	self:add_part("for")
 	self:add_space()
@@ -202,7 +210,7 @@ EmitterDefs["forrange"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.foriter
 EmitterDefs["foriter"] = function(self, node)
 	self:add_part("for")
 	self:add_space()
@@ -216,7 +224,7 @@ EmitterDefs["foriter"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.functiondef
 EmitterDefs["functiondef"] = function(self, node)
 	if self.config.luacats_source then
 		self:add_luacats_source_comment(node)
@@ -240,13 +248,13 @@ EmitterDefs["functiondef"] = function(self, node)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.break
 EmitterDefs["break"] = function(self, node)
 	self:add_part("break")
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.return
 EmitterDefs["return"] = function(self, node)
 	self:add_part("return")
 	if #node.values > 0 then
@@ -255,11 +263,15 @@ EmitterDefs["return"] = function(self, node)
 	end
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.Node|SelenScript.ASTNodes.index
 local function is_indexing_multi_value(node)
-	return (node.expr and node.expr.type == "call" and not node.index) or (node.index and is_indexing_multi_value(node.index))
+	return (
+		node.expr and node.expr.type == "call" and not node.index
+	) or (
+		node.index and is_indexing_multi_value(node.index)
+	)
 end
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.index
 function EmitterDefs:index(node)
 	local braces = node.how == nil and node.braces ~= nil and is_indexing_multi_value(node.expr)
 	if braces and node.braces == "(" then
@@ -287,14 +299,14 @@ function EmitterDefs:index(node)
 	end
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.call
 function EmitterDefs:call(node)
 	self:add_part("(")
 	self:visit(node.args)
 	self:add_part(")")
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.funcbody
 function EmitterDefs:funcbody(node)
 	self:add_part("(")
 	self:visit(node.args)
@@ -307,12 +319,12 @@ function EmitterDefs:funcbody(node)
 	self:add_part("end")
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.name
 function EmitterDefs:name(node)
 	self:add_part(node.name)
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.attributename
 function EmitterDefs:attributename(node)
 	self:visit(node.name)
 	if node.attribute ~= nil then
@@ -322,7 +334,7 @@ function EmitterDefs:attributename(node)
 	end
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.Node|{[integer]:SelenScript.ASTNodes.Node}
 function EmitterDefs:_list(node)
 	local compact = self.config[node.type.."_compact"]
 	if compact == nil then compact = true end
@@ -355,22 +367,22 @@ EmitterDefs.varlist = EmitterDefs._list
 EmitterDefs.attributenamelist = EmitterDefs._list
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.nil
 EmitterDefs["nil"] = function(self, node)
 	self:add_part("nil")
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.var_args
 function EmitterDefs:var_args(node)
 	self:add_part("...")
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.numeral
 function EmitterDefs:numeral(node)
 	self:add_part(node.value)
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.string
 function EmitterDefs:string(node)
 	-- Temp workaround for being unable to capture `=` in prefix field.
 	if node.prefix == "[[" and node.suffix then
@@ -384,25 +396,25 @@ function EmitterDefs:string(node)
 	end
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.boolean
 function EmitterDefs:boolean(node)
 	self:add_part(node.value)
 end
 
 ---@param self SelenScript.LuaEmitter
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.function
 EmitterDefs["function"] = function(self, node)
 	self:add_part("function")
 	self:visit(node.funcbody)
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.table
 function EmitterDefs:table(node)
 	self:add_part("{")
 	self:visit(node.fields)
 	self:add_part("}")
 end
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.field
 function EmitterDefs:field(node)
 	if node.key ~= nil and node.key.type == "name" then
 		self:visit(node.key)
@@ -419,7 +431,7 @@ function EmitterDefs:field(node)
 	self:visit(node.value)
 end
 
----@param node SelenScript.ASTNode # TODO: Node types
+---@param node SelenScript.ASTNodes.expression
 function EmitterDefs:_math(node)
 	-- TODO: check if this can cause extra brackets in nested math sections (seperated sections of math)
 	local old_precedence = self._math_precedence

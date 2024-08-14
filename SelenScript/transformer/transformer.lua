@@ -3,13 +3,13 @@ local TransformerErrors = require "SelenScript.transformer.errors"
 
 
 ---@class SelenScript.Transformer
----@field defs table<string, fun(self:SelenScript.Transformer, node:SelenScript.ASTNode):any>
+---@field defs table<string, fun(self:SelenScript.Transformer, node:SelenScript.ASTNodes.Node):any>
 -- self_proxy fields
 ---@field errors SelenScript.Error[]
----@field node_parents table<any,SelenScript.ASTNode>
+---@field node_parents table<any,SelenScript.ASTNodes.Node>
 ---@field visit_path string[] # For debugging errors
 ---@field var_names table<string, number> # A table for the amount of times a SS variable name has been used
----@field ast SelenScript.ASTNodeSource
+---@field ast SelenScript.ASTNodes.Source
 local Transformer = {
 	VAR_NAME_BASE = "___SS_",
 	Transformers = {
@@ -32,7 +32,7 @@ function Transformer.new(target)
 end
 
 --- Starting from the far-most nodes working back-to-front, transform each node
----@param node SelenScript.ASTNode
+---@param node SelenScript.ASTNodes.Node
 function Transformer:visit(node)
 	local indices_to_remove = {}
 	-- The keys of the node can be changed during transformation, doing so can cause undefined behaviour.
@@ -69,7 +69,7 @@ function Transformer:visit(node)
 end
 
 --- Used by TransformerDef to reduce code duplication
----@param node SelenScript.ASTNode
+---@param node SelenScript.ASTNodes.Node
 function Transformer:_visit(name, node)
 	if type(node) ~= "table" or node.type == nil then
 		print_error("_visit(node) didn't get a node but instead \"" .. tostring(node) .. "\"")
@@ -87,7 +87,7 @@ function Transformer:_visit(name, node)
 end
 
 ---@param idOrErrorBase string|SelenScript.ErrorBase
----@param node SelenScript.ASTNode # The node at which the error appeared
+---@param node SelenScript.ASTNodes.Node # The node at which the error appeared
 ---@param ... string
 function Transformer:add_error(idOrErrorBase, node, ...)
 	local errorBase = type(idOrErrorBase) == "table" and idOrErrorBase or TransformerErrors[idOrErrorBase]
@@ -104,15 +104,15 @@ function Transformer:add_error(idOrErrorBase, node, ...)
 end
 
 --- NOTE: parent nodes will not have been transformed yet!
----@param node SelenScript.ASTNode # The node to get parent of
+---@param node SelenScript.ASTNodes.Node # The node to get parent of
 function Transformer:get_parent(node)
 	return self.node_parents[node]
 end
 
 --- Recursively gets the parent of a node until it reaches a specific type of node and returns
----@param node SelenScript.ASTNode
----@param node_type string|fun(node:SelenScript.ASTNode):boolean
----@return SelenScript.ASTNode?, SelenScript.ASTNode, number # Node matches node_type, child of parent that matched node_type
+---@param node SelenScript.ASTNodes.Node
+---@param node_type string|fun(node:SelenScript.ASTNodes.Node):boolean
+---@return SelenScript.ASTNodes.Node?, SelenScript.ASTNodes.Node, number # Node matches node_type, child of parent that matched node_type
 function Transformer:find_parent_of_type(node, node_type, depth)
 	depth = depth or 0
 	local parent = self:get_parent(node)
@@ -130,7 +130,7 @@ function Transformer:get_var(name)
 end
 
 --- Creates a proxy of self, with the required limited lifetime variables for transformation.
----@param ast SelenScript.ASTNodeSource
+---@param ast SelenScript.ASTNodes.Source
 ---@param env table? # Copied into the proxied transformer object.
 function Transformer:_create_proxy(ast, env)
 	local self_proxy = setmetatable({
@@ -155,7 +155,7 @@ function Transformer:_create_proxy(ast, env)
 end
 
 --- Runs a transformer though the `ast`, mutating the input parameter.
----@param ast SelenScript.ASTNodeSource # WARNING: Mutated
+---@param ast SelenScript.ASTNodes.Source # WARNING: Mutated
 ---@param env table? # Copied into the proxied transformer object.
 function Transformer:transform(ast, env)
 	-- NOTE: The `ast` param shouldn't be transformed, as that will replace it, causing potentially untransformed ast nodes.

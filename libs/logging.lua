@@ -37,15 +37,15 @@ function logging.get_source()
 		end
 		i = i + 1
 	end
-	return debug.getinfo(i).source:sub(2, -1):gsub("/init", ""):gsub(".lua", ""):gsub("/", ".")
+	local dbg_info = debug.getinfo(i)
+	return dbg_info.source:sub(2, -1):gsub("/init", ""):gsub(".lua", ""):gsub("/", "."), dbg_info.currentline
 end
 
 ---@param log_type string
 ---@param ... any
 function logging._log(log_type, ...)
-	local source = logging.get_source()
-	local prefix = colors.fix .. "[" .. log_type .. colors.fix .. "]\t" .. colors.reset .. source .. colors.fix
-	prefix = prefix .. ": "
+	local source, currentline = logging.get_source()
+	local prefix = colors.fix .. "[" .. log_type .. colors.fix .. "]\t" .. colors.reset .. source .. colors.fix .. (":%s:"):format(currentline)
 	local msgParts = {prefix .. colors.reset}
 	local values = {...}
 	for i=1,select("#", ...) do
