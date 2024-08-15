@@ -1,6 +1,5 @@
 local re = require "drelabel"
 local AVCalcLine = require "avcalcline"
-local CBOR = require "cbor"
 
 local Utils = require "SelenScript.utils"
 local Grammar = require "SelenScript.parser.grammar"
@@ -29,7 +28,7 @@ Parser.__index = Parser
 ---@param pos integer
 ---@return integer, integer
 function Parser._source_calcline(self, pos)
-	if self._avcalcline == nil or self._avcalcline == CBOR.null then
+	if self._avcalcline == nil then
 		self._avcalcline = AVCalcLine.new(self.source)
 	end
 	return self._avcalcline:calcline(pos)
@@ -105,25 +104,22 @@ function Parser:parse(source, file)
 end
 
 
--- CBOR compatibility
+-- AMF3 compatibility
 
 ---@diagnostic disable-next-line: inject-field
-AVCalcLine.__tocbor = function()
-	return CBOR.encode(nil)
+AVCalcLine.__toAMF3 = function()
+	return nil
 end
 
----@diagnostic disable-next-line: duplicate-set-field
-CBOR.type_encoders["function"] = function(f)
-	if f == Parser._source_calcline then
-		return CBOR.encode(CBOR.tagged(79135, CBOR.null))
-	end
-	local info = debug.getinfo(f, "S")
-	error(("can't encode function\ndefined at line %s in '%s'"):format(info.linedefined, info.source))
-end
-
-CBOR.tagged_decoders[79135] = function(...)
-	return Parser._source_calcline
-end
+debug.setmetatable(function()end, {
+	__toAMF3 = function(f)
+		if f == Parser._source_calcline then
+			return nil
+		else
+			error("Can not serialise functions using AMF3")
+		end
+	end,
+})
 
 
 return Parser
