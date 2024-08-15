@@ -30,8 +30,7 @@ TransformerDefs["continue"] = function(self, node)
 	end
 	local label_name = self:get_var("continue")
 	table.insert(loop_block, ASTNodes.label(node, label_name))
-	table.insert(parent_block, ASTNodes["goto"](node, label_name))
-	return nil
+	return ASTNodes["goto"](node, label_name)
 end
 
 ---@param self SelenScript.Transformer_SS_to_Lua
