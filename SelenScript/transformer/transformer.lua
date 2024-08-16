@@ -36,11 +36,10 @@ end
 function Transformer:visit(node)
 	local indices_to_remove = {}
 	-- The keys of the node can be changed during transformation, doing so can cause undefined behaviour.
-	local node_cpy = Utils.shallowcopy(node)
 	local dirty_index = false
-	for i, v in pairs(node_cpy) do
-		self.node_parents[v] = node
+	for i, v in pairs(Utils.shallowcopy(node)) do
 		if type(v) == "table" and v.type ~= nil then
+			self.node_parents[v] = node
 			local old_length = #node
 			local new_v = self:visit(v)
 			if type(i) == "number" then
@@ -70,6 +69,7 @@ end
 
 --- Used by TransformerDef to reduce code duplication
 ---@param node SelenScript.ASTNodes.Node
+---@return false|nil|SelenScript.ASTNodes.Node
 function Transformer:_visit(name, node)
 	if type(node) ~= "table" or node.type == nil then
 		print_error("_visit(node) didn't get a node but instead \"" .. tostring(node) .. "\"")
