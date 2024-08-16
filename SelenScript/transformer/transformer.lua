@@ -34,7 +34,6 @@ end
 --- Starting from the far-most nodes working back-to-front, transform each node
 ---@param node SelenScript.ASTNodes.Node
 function Transformer:visit(node)
-	local indices_to_remove = {}
 	-- The keys of the node can be changed during transformation, doing so can cause undefined behaviour.
 	local dirty_index = false
 	for i, v in pairs(Utils.shallowcopy(node)) do
@@ -52,7 +51,8 @@ function Transformer:visit(node)
 			end
 			if new_v == nil then
 				if type(i) == "number" then
-					table.insert(indices_to_remove, 1, i)
+					-- Safe since we iterate on a copy and if anything has changed we find the new index.
+					table.remove(node, i)
 				else
 					node[i] = nil
 				end
@@ -61,16 +61,13 @@ function Transformer:visit(node)
 			end
 		end
 	end
-	for _, i in ipairs(indices_to_remove) do
-		table.remove(node, i)
-	end
-	return self:_visit(node.type, node)
+	return self:visit_type(node.type, node)
 end
 
 --- Used by TransformerDef to reduce code duplication
 ---@param node SelenScript.ASTNodes.Node
 ---@return false|nil|SelenScript.ASTNodes.Node
-function Transformer:_visit(name, node)
+function Transformer:visit_type(name, node)
 	if type(node) ~= "table" or node.type == nil then
 		print_error("_visit(node) didn't get a node but instead \"" .. tostring(node) .. "\"")
 		return false
