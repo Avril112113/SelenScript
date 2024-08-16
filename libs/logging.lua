@@ -45,7 +45,7 @@ end
 ---@param ... any
 function logging._log(log_type, ...)
 	local source, currentline = logging.get_source()
-	local prefix = colors.fix .. "[" .. log_type .. colors.fix .. "]\t" .. colors.reset .. source .. colors.fix .. (":%s:"):format(currentline)
+	local prefix = colors.fix .. "[" .. log_type .. colors.fix .. "]\t" .. colors.reset .. source .. colors.fix .. (":%s: "):format(currentline)
 	local msgParts = {prefix .. colors.reset}
 	local values = {...}
 	for i=1,select("#", ...) do
