@@ -1,8 +1,3 @@
--- This file will be removed in the future, once a system for managing multiple files is worked on
-
-
-local ReLabel = require "relabel"
-local Json = require "json"
 local SourceMapLib = require "source-map"
 local AvCalcline = require "avcalcline"
 
@@ -56,7 +51,7 @@ function NodeLinkedSourceMap:generate(outSrc, outPath)
 		end
 	    ::continue::
 	end
-	return Json.encode(sourceMap:toJson())
+	return sourceMap
 end
 
 
