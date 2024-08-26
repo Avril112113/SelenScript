@@ -91,11 +91,11 @@ function Transformer:add_error(idOrErrorBase, node, ...)
 	if errorBase == nil then
 		table.insert(self.errors, errorBase)
 	else
-		local ln, col = re.calcline(self.ast.source, node.start)
+		local ln, col = re.calcline(self.ast.src, node.start)
 		table.insert(self.errors, errorBase({
 			start = node.start,
 			finish = node.finish,
-			src = self.ast.source
+			src = self.ast.src
 		}, ln, col, ...))
 	end
 end

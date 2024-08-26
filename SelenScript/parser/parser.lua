@@ -10,7 +10,7 @@ local ParserErrors = require "SelenScript.parser.errors"
 ---@class SelenScript.ASTNodes.Source : SelenScript.ASTNodes.Node
 ---@field type "source"
 ---@field block SelenScript.ASTNodes.chunk
----@field source string # The plain text source
+---@field src string # The plain text source
 ---@field file string? # Defines the origin of the source, special value `[stdin]`, path be relitive to src root and use `/`
 ---@field _avcalcline AVCalcLine?
 ---@field calcline fun(self,pos:integer):integer,integer
@@ -29,7 +29,7 @@ Parser.__index = Parser
 ---@return integer, integer
 function Parser._source_calcline(self, pos)
 	if self._avcalcline == nil then
-		self._avcalcline = AVCalcLine.new(self.source)
+		self._avcalcline = AVCalcLine.new(self.src)
 	end
 	return self._avcalcline:calcline(pos)
 end
@@ -88,7 +88,7 @@ function Parser:parse(source, file)
 		type = "source",
 		start = ast.start,
 		finish = ast.finish,
-		source = source,
+		src = source,
 		block = ast,
 		file = file,
 		calcline = Parser._source_calcline

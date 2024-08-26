@@ -88,9 +88,9 @@ function AST.new()
 end
 
 --- Initialize that something new is going to be parsed with this AST definitions object
----@param source string # Required for error message position calculations
-function AST:init(source)
-	self.source = source
+---@param src string # Required for error message position calculations
+function AST:init(src)
+	self.src = src
 	self.errors = {}
 	self.comments = {}
 end
@@ -104,8 +104,8 @@ function AST:add_error(id, start, finish, ...)
 	if errorBase == nil then
 		table.insert(self.errors, errorBase)
 	else
-		local ln, col = re.calcline(self.source, start)
-		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.source}, ln, col, ...))
+		local ln, col = re.calcline(self.src, start)
+		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.src}, ln, col, ...))
 	end
 end
 
@@ -118,8 +118,8 @@ function AST:add_error_t(tbl)
 	if errorBase == nil then
 		table.insert(self.errors, errorBase)
 	else
-		local ln, col = re.calcline(self.source, start)
-		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.source}, ln, col, unpack(tbl)))
+		local ln, col = re.calcline(self.src, start)
+		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.src}, ln, col, unpack(tbl)))
 	end
 end
 
@@ -132,8 +132,8 @@ function AST:add_error_o(id, start, msg, finish)
 	if errorBase == nil then
 		table.insert(self.errors, errorBase)
 	else
-		local ln, col = re.calcline(self.source, start)
-		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.source}, ln, col, msg))
+		local ln, col = re.calcline(self.src, start)
+		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.src}, ln, col, msg))
 	end
 end
 

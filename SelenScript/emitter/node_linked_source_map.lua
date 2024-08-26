@@ -31,11 +31,16 @@ function NodeLinkedSourceMap:generate(outSrc, outPath)
 	local sourceMap = SourceMapLib.new()
 	sourceMap:setFile(outPath)
 	for i, link in ipairs(self.links) do
-		if not link.node.source then
+		---@type SelenScript.ASTNodes.Source
+		local source_node = link.node.source
+		if link.node.type == "source" then
+			---@diagnostic disable-next-line: cast-local-type
+			source_node = link.node
+		elseif not link.node.source then
 			print_warn(("Missing source field on node of type '%s'"):format(link.node.type))
 			goto continue
 		end
-		local src_start_ln, src_start_col = link.node.source:calcline(link.src_pos)
+		local src_start_ln, src_start_col = source_node:calcline(link.src_pos)
 		local out_start_ln, out_start_col = out_avcalcline:calcline(link.out_pos)
 		local name = type(link.node.name) == "string" and link.node.name or nil
 		if link.node.value ~= nil then
@@ -45,9 +50,9 @@ function NodeLinkedSourceMap:generate(outSrc, outPath)
 				name = "=" .. tostring(link.node.value)
 			end
 		end
-		sourceMap:addSourceMapping(link.node.source.file, src_start_ln, src_start_col, out_start_ln, out_start_col, name)
-		if not sourceMap.sourcesContent[link.node.source.file] then
-			sourceMap:addSourceContent(link.node.source.file, link.node.source.source)
+		sourceMap:addSourceMapping(source_node.file, src_start_ln, src_start_col, out_start_ln, out_start_col, name)
+		if not sourceMap.sourcesContent[source_node.file] then
+			sourceMap:addSourceContent(source_node.file, source_node.src)
 		end
 	    ::continue::
 	end
