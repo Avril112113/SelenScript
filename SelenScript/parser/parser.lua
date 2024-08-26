@@ -64,15 +64,17 @@ end
 
 --- Removes all keys beginning with `_` from the node and child nodes, these are used for in-grammar use and should not be in the resulting AST
 ---@param node SelenScript.ASTNodes.Node
-function Parser.cleanup_nodes(node)
+---@param source SelenScript.ASTNodes.Source
+function Parser.postprocess_nodes(node, source)
 	for i, v in pairs(node) do
 		if type(i) == "string" and i:sub(1, 1) == "_" then
 			node[i] = nil
 		end
 		if type(v) == "table" and v.type ~= nil then
-			Parser.cleanup_nodes(v)
+			Parser.postprocess_nodes(v, source)
 		end
 	end
+	node.source = source
 end
 
 ---@param source string
@@ -81,15 +83,6 @@ function Parser:parse(source, file)
 	self.ast_defs:init(source)
 	---@type SelenScript.ASTNodes.chunk, any?, integer?
 	local ast, err, pos = self.grammar:match(source)
-	if type(ast) == "table" then
-		Parser.cleanup_nodes(ast)
-	end
-	if err ~= nil then
-		table.insert(self.ast_defs.errors, ParserErrors.SYNTAX_UNIDENTIFIED({pos=pos,err=err,ast=ast}, re.calcline(source, pos), err))
-	end
-	if ast.type ~= "chunk" then
-		error(("INVALID GRAMMAR: returned node of type '%s' but expected 'chunk'"):format(ast.type))
-	end
 	---@type SelenScript.ASTNodes.Source
 	local ast_source = {
 		type = "source",
@@ -100,6 +93,15 @@ function Parser:parse(source, file)
 		file = file,
 		calcline = Parser._source_calcline
 	}
+	if type(ast) == "table" then
+		Parser.postprocess_nodes(ast, ast_source)
+	end
+	if err ~= nil then
+		table.insert(self.ast_defs.errors, ParserErrors.SYNTAX_UNIDENTIFIED({pos=pos,err=err,ast=ast}, re.calcline(source, pos), err))
+	end
+	if ast.type ~= "chunk" then
+		error(("INVALID GRAMMAR: returned node of type '%s' but expected 'chunk'"):format(ast.type))
+	end
 	return ast_source, self.ast_defs.errors, self.ast_defs.comments
 end
 

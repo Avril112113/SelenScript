@@ -22,9 +22,41 @@ local TESTING_NODE_NAME = nil
 
 local ENABLE_HELPER_ASSERTIONS = true
 
+
+---@param name string
+---@param default SelenScript.ASTNodes.expression
+---@return SelenScript.ASTNodes.or
+local function _default_parent_or(name, default)
+	return ASTNodes["or"]{
+		lhs = ASTNodes["and"]{
+			lhs = ASTNodes.index{
+				expr = ASTNodes.name{name="args"},
+				index = ASTNodes.index{
+					how = ".",
+					expr = ASTNodes.name{name="_parent"},
+				}
+			},
+			rhs = ASTNodes.index{
+				expr = ASTNodes.name{name="args"},
+				index = ASTNodes.index{
+					how = ".",
+					expr = ASTNodes.name{name="_parent"},
+					index = ASTNodes.index{
+						how = ".",
+						expr = ASTNodes.name{name=name},
+					}
+				}
+			},
+		},
+		rhs = default,
+	}
+end
+
+-- args._parent and args._parent.start or 1
+
 local HELPER_FIELD_DEFAULTS = {
-	start=ASTNodes.numeral{value="1"},
-	finish=ASTNodes.numeral{value="1"},
+	start = _default_parent_or("start", ASTNodes.numeral{value="1"}),
+	finish = _default_parent_or("finish", ASTNodes.numeral{value="1"}),
 }
 
 -- Fields are done in alphadetical order.
@@ -72,7 +104,7 @@ local HELPER_CUSTOM_CODE = {
 			return [[
 				if type(args["name"]) == "string" then
 					args["name"] = ASTNodes["name"]{
-						start = args["start"], finish = args["finish"],
+						_parent = args,
 						name = args["name"],
 					}
 				end
@@ -86,7 +118,7 @@ local HELPER_CUSTOM_CODE = {
 			return [[
 				if type(args["name"]) == "string" then
 					args["name"] = ASTNodes["name"]{
-						start = args["start"], finish = args["finish"],
+						_parent = args,
 						name = args["name"],
 					}
 				end
@@ -100,7 +132,7 @@ local HELPER_CUSTOM_CODE = {
 			return [[
 				if args["values"] == nil then
 					args["values"] = ASTNodes["expressionlist"]{
-						start = args["start"], finish = args["finish"],
+						_parent = args,
 					}
 				end
 			]]
@@ -113,7 +145,7 @@ local HELPER_CUSTOM_CODE = {
 			return [[
 				if type(args["name"]) == "string" then
 					args["name"] = ASTNodes["name"]{
-						start = args["start"], finish = args["finish"],
+						_parent = args,
 						name = args["name"],
 					}
 				end
@@ -125,7 +157,7 @@ local HELPER_CUSTOM_CODE = {
 			return [[
 				if type(args["attribute"]) == "string" then
 					args["attribute"] = ASTNodes["attribute"]{
-						start = args["start"], finish = args["finish"],
+						_parent = args,
 						value = args["attribute"],
 					}
 				end
@@ -843,6 +875,7 @@ table.insert(ast, ASTNodes.LineComment{prefix="---", value="@class SelenScript.A
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field type string"})
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field start integer"})
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field finish integer"})
+table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field source SelenScript.ASTNodes.Source"})
 
 table.insert(ast, ASTNodes.LineComment{prefix="", value=""})  -- Used to create a blank line.
 table.insert(ast, ASTNodes.LineComment{prefix="---", value=("@alias SelenScript.ASTNodes.expression %s"):format(str_field_type(value_captures))})
@@ -878,8 +911,12 @@ for _, astnode in Utils.sorted_pairs(astnodes, astnodes_sort_cmp) do
 
 	table.insert(ast, ASTNodes.LineComment{prefix="", value=""})  -- Used to create a blank line.
 
-	local func_args_fields = {}
+	local func_args_fields = {"_parent:SelenScript.ASTNodes.Node?"}
 	local func_block = ASTNodes.block{}
+	table.insert(func_block, ASTNodes.assign{
+		names=ASTNodes.varlist{ASTNodes.index{expr=ASTNodes.name{name="args"}, index=ASTNodes.index{how="[", expr=ASTNodes.string{value="source"}}}},
+		values=ASTNodes.expressionlist{_default_parent_or("source", ASTNodes["nil"]{})},
+	})
 	for field_name, field_info in Utils.sorted_pairs(astnode.fields, astnodes_type_field_sort_cmp) do
 		if type(field_name) == "string" and field_name:sub(1, 1) ~= "_" then
 			local field_index_node = ASTNodes.index{expr=ASTNodes.name{name="args"}, index=ASTNodes.index{how="[", expr=ASTNodes.string{value=field_name}}}
@@ -951,6 +988,10 @@ for _, astnode in Utils.sorted_pairs(astnodes, astnodes_sort_cmp) do
 			end
 		end
 	end
+	table.insert(func_block, ASTNodes.assign{
+		names=ASTNodes.varlist{ASTNodes.index{expr=ASTNodes.name{name="args"}, index=ASTNodes.index{how="[", expr=ASTNodes.string{value="_parent"}}}},
+		values=ASTNodes.expressionlist{ASTNodes["nil"]{}},
+	})
 	table.insert(func_block, ASTNodes["return"]{values=ASTNodes.expressionlist{ASTNodes.index{expr=ASTNodes.name{name="args"}}}})
 	table.insert(ast, ASTNodes.LineComment{prefix="---", value=("@param args {%s}"):format(table.concat(func_args_fields, ", "))})
 	table.insert(ast, ASTNodes.LineComment{prefix="---", value=("@return SelenScript.ASTNodes.%s"):format(astnode.name)})

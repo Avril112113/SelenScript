@@ -37,7 +37,7 @@ function Transformer:visit(node)
 	-- The keys of the node can be changed during transformation, doing so can cause undefined behaviour.
 	local dirty_index = false
 	for i, v in pairs(Utils.shallowcopy(node)) do
-		if type(v) == "table" and v.type ~= nil then
+		if type(v) == "table" and v.type ~= nil and i ~= "source" then
 			self.node_parents[v] = node
 			local old_length = #node
 			local new_v = self:visit(v)

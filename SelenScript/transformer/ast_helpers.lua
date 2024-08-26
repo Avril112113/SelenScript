@@ -24,6 +24,7 @@ function ASTNodes.LineComment(node, prefix, value)
 	return {
 		type = "LineComment",
 		start = node.start,
+		source = node.source,
 		prefix = prefix or "--",
 		value = value,
 		finish = node.finish,
@@ -38,6 +39,7 @@ function ASTNodes.LongComment(node, prefix, value, suffix)
 	return {
 		type = "LongComment",
 		start = node.start,
+		source = node.source,
 		prefix = prefix or "[[",
 		suffix = suffix or "]]",
 		value = value,
@@ -52,6 +54,7 @@ function ASTNodes.block(node, ...)
 	return {
 		type = "block",
 		start = node.start,
+		source = node.source,
 		finish = node.finish,
 		...
 	}
@@ -64,6 +67,7 @@ function ASTNodes.name(node, name)
 	return {
 		type = "name",
 		start = node.start,
+		source = node.source,
 		name = name,
 		finish = node.finish
 	}
@@ -76,6 +80,7 @@ function ASTNodes.numeral(node, value)
 	return {
 		type = "numeral",
 		start = node.start,
+		source = node.source,
 		value = value,
 		finish = node.finish
 	}
@@ -112,6 +117,7 @@ function ASTNodes.string(node, value, prefix, suffix)
 	return {
 		type = "string",
 		start = node.start,
+		source = node.source,
 		prefix = prefix,
 		value = value,
 		suffix = suffix,
@@ -126,6 +132,7 @@ function ASTNodes.namelist(node, ...)
 	return {
 		type = "namelist",
 		start = node.start,
+		source = node.source,
 		finish = node.finish,
 		...
 	}
@@ -141,6 +148,7 @@ function ASTNodes.index(node, how, expr, index, braces)
 	return {
 		type = "index",
 		start = node.start,
+		source = node.source,
 		how = how,
 		expr = expr,
 		index = index,
@@ -157,6 +165,7 @@ function ASTNodes.call(node, args, self)
 	return {
 		type = "call",
 		start = node.start,
+		source = node.source,
 		args = args,
 		self = self and "true",
 		finish = node.finish
@@ -167,6 +176,7 @@ function ASTNodes.var_args(node)
 	return {
 		type = "var_args",
 		start = node.start,
+		source = node.source,
 		value = "...",
 		finish = node.finish,
 	}
@@ -179,6 +189,7 @@ function ASTNodes.label(node, name)
 	return {
 		type = "label",
 		start = node.start,
+		source = node.source,
 		name = type(name) == "string" and ASTNodes.name(node, name) or name,
 		finish = node.finish
 	}
@@ -191,6 +202,7 @@ ASTNodes["goto"] = function(node, name)
 	return {
 		type = "goto",
 		start = node.start,
+		source = node.source,
 		name = type(name) == "string" and ASTNodes.name(node, name) or name,
 		finish = node.finish
 	}
@@ -205,6 +217,7 @@ ASTNodes["if"] = function(node, condition, block, _else)
 	return {
 		type = "if",
 		start = node.start,
+		source = node.source,
 		condition = condition,
 		block = block,
 		["else"] = _else,
@@ -221,6 +234,7 @@ ASTNodes["elseif"] = function(node, condition, block, _else)
 	return {
 		type = "elseif",
 		start = node.start,
+		source = node.source,
 		condition = condition,
 		block = block,
 		["else"] = _else,
@@ -235,6 +249,7 @@ ASTNodes["else"] = function(node, block)
 	return {
 		type = "else",
 		start = node.start,
+		source = node.source,
 		block = block,
 		finish = node.finish
 	}
@@ -249,6 +264,7 @@ function ASTNodes.assign(node, scope, names, values)
 	return {
 		type = "assign",
 		start = node.start,
+		source = node.source,
 		scope = scope,
 		names = names,
 		values = values or ASTNodes.expressionlist(node),
@@ -263,6 +279,7 @@ function ASTNodes.expressionlist(node, ...)
 	return {
 		type = "expressionlist",
 		start = node.start,
+		source = node.source,
 		finish = node.finish,
 		...
 	}
@@ -275,6 +292,7 @@ function ASTNodes.varlist(node, ...)
 	return {
 		type = "varlist",
 		start = node.start,
+		source = node.source,
 		finish = node.finish,
 		...
 	}
@@ -287,6 +305,7 @@ function ASTNodes.attributenamelist(node, ...)
 	return {
 		type = "attributenamelist",
 		start = node.start,
+		source = node.source,
 		finish = node.finish,
 		...
 	}
@@ -299,6 +318,7 @@ function ASTNodes.fieldlist(node, ...)
 	return {
 		type = "fieldlist",
 		start = node.start,
+		source = node.source,
 		finish = node.finish,
 		...
 	}
@@ -312,6 +332,7 @@ function ASTNodes.field(node, key, value)
 	return {
 		type = "field",
 		start = node.start,
+		source = node.source,
 		key = key,
 		value = value,
 		finish = node.finish,
@@ -326,6 +347,7 @@ function ASTNodes.attributename(node, name, attribute)
 	return {
 		type = "attributename",
 		start = node.start,
+		source = node.source,
 		name = ASTNodes.name(node, name),
 		attribute = attribute and ASTNodes.name(node, attribute) or nil,
 		finish = node.finish
@@ -339,6 +361,7 @@ function ASTNodes.table(node, fieldlist)
 	return {
 		type = "table",
 		start = node.start,
+		source = node.source,
 		fields = fieldlist,
 		finish = node.finish
 	}
@@ -350,6 +373,7 @@ function ASTNodes.parlist(node, ...)
 	return {
 		type = "parlist",
 		start = node.start,
+		source = node.source,
 		finish = node.finish,
 		...
 	}
@@ -362,6 +386,7 @@ function ASTNodes.funcbody(node, args, block)
 	return {
 		type = "funcbody",
 		start = node.start,
+		source = node.source,
 		args = args,
 		block = block,
 		finish = node.finish
@@ -374,6 +399,7 @@ ASTNodes["function"] = function(node, funcbody)
 	return {
 		type = "function",
 		start = node.start,
+		source = node.source,
 		funcbody = funcbody,
 		finish = node.finish
 	}
@@ -385,6 +411,7 @@ ASTNodes["return"] = function(node, values)
 	return {
 		type = "return",
 		start = node.start,
+		source = node.source,
 		values = values,
 		finish = node.finish,
 	}
