@@ -123,5 +123,13 @@ debug.setmetatable(function()end, {
 	end,
 })
 
+---@param t table
+function Parser.amf3_handler(t)
+	if t.type == "source" then
+		t.calcline = Parser._source_calcline
+	end
+	return t
+end
+
 
 return Parser
