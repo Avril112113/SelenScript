@@ -1,7 +1,9 @@
-local Precedence = require "SelenScript.parser.precedence"
-local ParserErrors = require "SelenScript.parser.errors"
 local lp = require "lpeglabel"
 local re = require "drelabel"
+
+local Precedence = require "SelenScript.parser.precedence"
+local ParserErrors = require "SelenScript.parser.errors"
+local Utils = require "SelenScript.utils"
 
 
 --- All the AST definitions
@@ -59,7 +61,7 @@ function AST.tostring_ast(ast)
 		table.insert(parts, tostring(node.start))
 		table.insert(parts, ":")
 		table.insert(parts, tostring(node.finish))
-		for name, value in pairs(node) do
+		for name, value in Utils.sorted_pairs(node) do
 			if tostring_ast_ignored_keys[name] == nil then
 				table.insert(parts, "\n")
 				table.insert(parts, indent..tostring_ast_indent)
