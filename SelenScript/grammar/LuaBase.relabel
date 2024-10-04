@@ -23,18 +23,21 @@ VAR_ARGS	<- '...'
 COLON		<- ':'
 DOUBLECOLON	<- '::'
 FIELD_SEP	<- ',' / ';'
-BINARY_OP	<- '^'
-			 /* UNARY_OP */
+
+MATH_OP		<- '^'
 			 / '*' / '//' / '/' / '%'
 			 / '+' / '-'
-			 / CONCAT
-			 / '<<' / '>>'
+BITWISE_OP	<- '<<' / '>>'
 			 / '&'
 			 / '~' (!'=' / &"~=")
 			 / '|'
-			 / '<=' / '>=' / '<' / '>' / "~=" / "=="
+COMPARE_OP	<- '<=' / '>=' / '<' / '>' / "~=" / "=="
 			 / AND
 			 / OR
+BINARY_OP	<- MATH_OP
+			 / CONCAT
+			 / BITWISE_OP
+			 / COMPARE_OP
 UNARY_OP	<- '-' / NOT / '#' / '~'
 
 RESERVED		<- RESERVED_STMT / NIL / TRUE / FALSE

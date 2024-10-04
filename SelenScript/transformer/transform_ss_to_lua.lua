@@ -1,6 +1,8 @@
 local Utils = require "SelenScript.utils"
 local ASTHelpers = require "SelenScript.transformer.ast_helpers"
 local ASTNodes = ASTHelpers.Nodes
+local ASTNodesNew = require "SelenScript.parser.ast_nodes"
+local Precedence = require "SelenScript.parser.precedence"
 
 
 ---@class SelenScript.Transformer_SS_to_Lua : SelenScript.Transformer
@@ -179,6 +181,33 @@ TransformerDefs["functiondef"] = function(self, node)
 		node.decorators = nil
 	end
 	return node
+end
+
+---@param self SelenScript.Transformer_SS_to_Lua
+---@param node SelenScript.ASTNodes.op_assign
+TransformerDefs["op_assign"] = function(self, node)
+	local values = ASTNodesNew["expressionlist"]{_parent=node.values}
+	for i=1,math.max(#node.names, #node.values) do
+		local name, value = node.names[i], node.values[i]
+		if name and value then
+			local op_node_name = Precedence.binaryOpData[node.op][2]
+			table.insert(values, ASTNodesNew[op_node_name]{
+				_parent = value,
+				lhs = name,
+				op = node.op,
+				rhs = value,
+			})
+		elseif value then
+			-- It's invalid, but make the output valid lua anyway.
+			table.insert(values, value)
+		end
+	end
+	return ASTNodesNew["assign"]{
+		_parent = node,
+		scope = nil,
+		names = node.names,
+		values = values,
+	}
 end
 
 

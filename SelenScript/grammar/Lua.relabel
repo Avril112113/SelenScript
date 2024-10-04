@@ -31,7 +31,12 @@ statement	<- ";"
 #include Statements
 			 / ({}->"SYNTAX_FLOAT_EXPR" {} {expression / index} {})->add_error_o
 
-stmt_assign	<- stmt_local_assign / stmt_general_assign
+stmt_assign	<-
+#block stmt_assign
+				  stmt_local_assign
+				/ stmt_general_assign
+#endblock
+#include stmt_assign
 stmt_local_assign	<- {| {:type:''->"assign":}
 							{:start:{}:}
 							{:scope:LOCAL:} Sc {:names:attributenamelist:} (Sc "=" Sc {:values:expressionlist:} / {:values:expressionlist_empty:})
@@ -39,7 +44,7 @@ stmt_local_assign	<- {| {:type:''->"assign":}
 						|}
 stmt_general_assign	<- {| {:type:''->"assign":}
 							{:start:{}:}
-							{:names:varlist:} Sc "=" Sc {:values:expressionlist:}
+							{:names:varlist:} Sc "=" Sc {:values:expressionlist_expect:}
 							{:finish:{}:}
 						|}
 
@@ -110,7 +115,7 @@ stmt_forrange	<- {| {:type:''->"forrange":}
 
 stmt_foriter	<- {| {:type:''->"foriter":}
 						{:start:{}:}
-						FOR Sc {:namelist:namelist:} Sc IN Sc {:values:expressionlist:} Sc DO Sc {:block:block:} Sc END
+						FOR Sc {:namelist:namelist:} Sc IN Sc {:values:expressionlist_expect:} Sc DO Sc {:block:block:} Sc END
 						{:finish:{}:}
 					|}
 
@@ -182,11 +187,13 @@ namelist	<- {| {:type:''->"namelist":}
 
 expressionlist	<- {| {:type:''->"expressionlist":}
 						{:start:{}:}
-						expression (Sc "," Sc expression)*
+						  expression (Sc "," Sc expression)*
 						{:finish:{}:}
 					|}
-expressionlist_opt	<- expressionlist
-					 / expressionlist_empty
+expressionlist_expect	<- expressionlist
+						 / ({}->"SYNTAX_MISSING_EXPR"{}{})->add_error
+expressionlist_opt		<- expressionlist
+						 / expressionlist_empty
 expressionlist_empty	<- {| {:type:''->"expressionlist":}
 								{:start:{}:}
 								{:finish:{}:}

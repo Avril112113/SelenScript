@@ -399,9 +399,9 @@ end
 ---@field type "block"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] nil|SelenScript.ASTNodes.conditional_stmt|SelenScript.ASTNodes.assign|SelenScript.ASTNodes.label|SelenScript.ASTNodes.break|SelenScript.ASTNodes.goto|SelenScript.ASTNodes.do|SelenScript.ASTNodes.while|SelenScript.ASTNodes.repeat|SelenScript.ASTNodes.if|SelenScript.ASTNodes.forrange|SelenScript.ASTNodes.foriter|SelenScript.ASTNodes.functiondef|SelenScript.ASTNodes.index|SelenScript.ASTNodes.continue|SelenScript.ASTNodes.SrcPosition|SelenScript.ASTNodes.return
+---@field [integer] nil|SelenScript.ASTNodes.conditional_stmt|SelenScript.ASTNodes.assign|SelenScript.ASTNodes.op_assign|SelenScript.ASTNodes.label|SelenScript.ASTNodes.break|SelenScript.ASTNodes.goto|SelenScript.ASTNodes.do|SelenScript.ASTNodes.while|SelenScript.ASTNodes.repeat|SelenScript.ASTNodes.if|SelenScript.ASTNodes.forrange|SelenScript.ASTNodes.foriter|SelenScript.ASTNodes.functiondef|SelenScript.ASTNodes.index|SelenScript.ASTNodes.continue|SelenScript.ASTNodes.return
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:nil|SelenScript.ASTNodes.conditional_stmt|SelenScript.ASTNodes.assign|SelenScript.ASTNodes.label|SelenScript.ASTNodes.break|SelenScript.ASTNodes.goto|SelenScript.ASTNodes.do|SelenScript.ASTNodes.while|SelenScript.ASTNodes.repeat|SelenScript.ASTNodes.if|SelenScript.ASTNodes.forrange|SelenScript.ASTNodes.foriter|SelenScript.ASTNodes.functiondef|SelenScript.ASTNodes.index|SelenScript.ASTNodes.continue|SelenScript.ASTNodes.SrcPosition|SelenScript.ASTNodes.return}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:nil|SelenScript.ASTNodes.conditional_stmt|SelenScript.ASTNodes.assign|SelenScript.ASTNodes.op_assign|SelenScript.ASTNodes.label|SelenScript.ASTNodes.break|SelenScript.ASTNodes.goto|SelenScript.ASTNodes.do|SelenScript.ASTNodes.while|SelenScript.ASTNodes.repeat|SelenScript.ASTNodes.if|SelenScript.ASTNodes.forrange|SelenScript.ASTNodes.foriter|SelenScript.ASTNodes.functiondef|SelenScript.ASTNodes.index|SelenScript.ASTNodes.continue|SelenScript.ASTNodes.return}
 ---@return SelenScript.ASTNodes.block
 ASTNodes["block"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -653,10 +653,9 @@ end
 ---@field type "do"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition
 ---@field block SelenScript.ASTNodes.block
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition, block:SelenScript.ASTNodes.block}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, block:SelenScript.ASTNodes.block}
 ---@return SelenScript.ASTNodes.do
 ASTNodes["do"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -704,12 +703,11 @@ end
 ---@field type "elseif"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition|string
 ---@field block SelenScript.ASTNodes.block
 ---@field condition SelenScript.ASTNodes.expression
 ---@field else nil|SelenScript.ASTNodes.elseif|SelenScript.ASTNodes.else
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition|string, block:SelenScript.ASTNodes.block, condition:SelenScript.ASTNodes.expression, else:nil|SelenScript.ASTNodes.elseif|SelenScript.ASTNodes.else}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, block:SelenScript.ASTNodes.block, condition:SelenScript.ASTNodes.expression, else:nil|SelenScript.ASTNodes.elseif|SelenScript.ASTNodes.else}
 ---@return SelenScript.ASTNodes.elseif
 ASTNodes["elseif"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -867,12 +865,11 @@ end
 ---@field type "foriter"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition|string
 ---@field block SelenScript.ASTNodes.block
 ---@field namelist SelenScript.ASTNodes.namelist
 ---@field values SelenScript.ASTNodes.expressionlist
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition|string, block:SelenScript.ASTNodes.block, namelist:SelenScript.ASTNodes.namelist, values:SelenScript.ASTNodes.expressionlist}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, block:SelenScript.ASTNodes.block, namelist:SelenScript.ASTNodes.namelist, values:SelenScript.ASTNodes.expressionlist}
 ---@return SelenScript.ASTNodes.foriter
 ASTNodes["foriter"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -897,14 +894,13 @@ end
 ---@field type "forrange"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition|string
 ---@field block SelenScript.ASTNodes.block
 ---@field increment SelenScript.ASTNodes.expression
 ---@field name SelenScript.ASTNodes.name
 ---@field value_finish SelenScript.ASTNodes.expression
 ---@field value_start SelenScript.ASTNodes.expression
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition|string, block:SelenScript.ASTNodes.block, increment:SelenScript.ASTNodes.expression, name:SelenScript.ASTNodes.name, value_finish:SelenScript.ASTNodes.expression, value_start:SelenScript.ASTNodes.expression}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, block:SelenScript.ASTNodes.block, increment:SelenScript.ASTNodes.expression, name:SelenScript.ASTNodes.name, value_finish:SelenScript.ASTNodes.expression, value_start:SelenScript.ASTNodes.expression}
 ---@return SelenScript.ASTNodes.forrange
 ASTNodes["forrange"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -931,11 +927,10 @@ end
 ---@field type "funcbody"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition
 ---@field args SelenScript.ASTNodes.parlist
 ---@field block SelenScript.ASTNodes.block
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition, args:SelenScript.ASTNodes.parlist, block:SelenScript.ASTNodes.block}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, args:SelenScript.ASTNodes.parlist, block:SelenScript.ASTNodes.block}
 ---@return SelenScript.ASTNodes.funcbody
 ASTNodes["funcbody"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -1046,12 +1041,11 @@ end
 ---@field type "if"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition|string
 ---@field block SelenScript.ASTNodes.block
 ---@field condition SelenScript.ASTNodes.expression
 ---@field else nil|SelenScript.ASTNodes.elseif|SelenScript.ASTNodes.else
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition|string, block:SelenScript.ASTNodes.block, condition:SelenScript.ASTNodes.expression, else:nil|SelenScript.ASTNodes.elseif|SelenScript.ASTNodes.else}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, block:SelenScript.ASTNodes.block, condition:SelenScript.ASTNodes.expression, else:nil|SelenScript.ASTNodes.elseif|SelenScript.ASTNodes.else}
 ---@return SelenScript.ASTNodes.if
 ASTNodes["if"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -1076,12 +1070,11 @@ end
 ---@field type "ifexpr"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition|string
 ---@field condition SelenScript.ASTNodes.expression
 ---@field lhs SelenScript.ASTNodes.expression
 ---@field rhs SelenScript.ASTNodes.expression
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition|string, condition:SelenScript.ASTNodes.expression, lhs:SelenScript.ASTNodes.expression, rhs:SelenScript.ASTNodes.expression}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, condition:SelenScript.ASTNodes.expression, lhs:SelenScript.ASTNodes.expression, rhs:SelenScript.ASTNodes.expression}
 ---@return SelenScript.ASTNodes.ifexpr
 ASTNodes["ifexpr"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -1373,6 +1366,35 @@ ASTNodes["numeral"] = function(args)
 end
 
 
+---@class SelenScript.ASTNodes.op_assign : SelenScript.ASTNodes.Node
+---@field type "op_assign"
+---@field start SelenScript.ASTNodes.SrcPosition
+---@field finish SelenScript.ASTNodes.SrcPosition
+---@field names SelenScript.ASTNodes.varlist
+---@field op "*"|"^"|"//"|"/"|"%"|"+"|"-"|"<<"|">>"|"&"|"~"|"|"
+---@field values SelenScript.ASTNodes.expressionlist
+
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, names:SelenScript.ASTNodes.varlist, op:"*"|"^"|"//"|"/"|"%"|"+"|"-"|"<<"|">>"|"&"|"~"|"|", values:SelenScript.ASTNodes.expressionlist}
+---@return SelenScript.ASTNodes.op_assign
+ASTNodes["op_assign"] = function(args)
+	args["source"] = args._parent and args._parent.source or nil
+	args["type"] = "op_assign"
+	if args["start"] == nil then
+		args["start"] = args._parent and args._parent.start or 1
+	end
+	assert(type(args["start"]) == "number")
+	if args["finish"] == nil then
+		args["finish"] = args._parent and args._parent.finish or 1
+	end
+	assert(type(args["finish"]) == "number")
+	assert(type(args["names"]) == "table" and args["names"].type == "varlist")
+	assert(args["op"] == "*" or args["op"] == "^" or args["op"] == "//" or args["op"] == "/" or args["op"] == "%" or args["op"] == "+" or args["op"] == "-" or args["op"] == "<<" or args["op"] == ">>" or args["op"] == "&" or args["op"] == "~" or args["op"] == "|")
+	assert(type(args["values"]) == "table" and args["values"].type == "expressionlist")
+	args["_parent"] = nil
+	return args
+end
+
+
 ---@class SelenScript.ASTNodes.or : SelenScript.ASTNodes.Node
 ---@field type "or"
 ---@field start SelenScript.ASTNodes.SrcPosition
@@ -1656,11 +1678,10 @@ end
 ---@field type "while"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field [integer] SelenScript.ASTNodes.SrcPosition|string
 ---@field block SelenScript.ASTNodes.block
 ---@field expr SelenScript.ASTNodes.expression
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, [integer]:SelenScript.ASTNodes.SrcPosition|string, block:SelenScript.ASTNodes.block, expr:SelenScript.ASTNodes.expression}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, block:SelenScript.ASTNodes.block, expr:SelenScript.ASTNodes.expression}
 ---@return SelenScript.ASTNodes.while
 ASTNodes["while"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil

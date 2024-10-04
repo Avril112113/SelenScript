@@ -68,3 +68,14 @@ expr_stmt	<- {| {:type:''->"stmt_expr":}
 #include stmt_break
 					(Sc {:values:expressionlist_opt:})
 #endblock
+
+stmt_op_assign	<- {| {:type:''->"op_assign":}
+						{:start:{}:}
+						{:names:varlist:} Sc {:op:MATH_OP / BITWISE_OP:} "=" Sc {:values:expressionlist_expect:}
+						{:finish:{}:}
+					|}
+
+#block stmt_assign
+#include stmt_assign
+				/ stmt_op_assign
+#endblock

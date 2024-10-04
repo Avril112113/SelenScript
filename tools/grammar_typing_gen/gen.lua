@@ -17,6 +17,9 @@ local ASTNodes = require "SelenScript.parser.ast_nodes"
 local Precedence = require "SelenScript.parser.precedence"
 
 
+-- os.execute("luajit ./tools/grammar_typing_gen/print_ptree.lua > ./tools/grammar_typing_gen/grammar.ptree.txt")
+
+
 local TESTING_RULE_NAME = nil
 local TESTING_NODE_NAME = nil
 
@@ -205,14 +208,6 @@ local OVERRIDE_FIELD_TYPES = {
 	["index"] = {
 		braces = {optional=true},
 	},
-	["block"] = {
-		---@param field ASTNodeInfo.TypeInfo
-		---@param astnode ASTNodeInfo
-		["[integer]"] = function(field, astnode)
-			local index = Utils.find_key(field.types, "string")
-			table.remove(field.types, index)
-		end,
-	},
 }
 
 
@@ -220,8 +215,6 @@ local OVERRIDE_EMPTY_RULES = {
 	["Sc"]=true,
 }
 
-
--- os.execute("luajit ./tools/grammar_typing_gen/print_ptree.lua > ./tools/grammar_typing_gen/grammar.ptree.txt")
 
 local grammar_tree = LPegPTree.new(Utils.readFile("./tools/grammar_typing_gen/grammar.ptree.txt"))
 
@@ -321,6 +314,7 @@ for op, data in Utils.sorted_pairs(Precedence.unaryOpData) do
 end
 
 local grammar_info = GrammarInfo.new(grammar_tree, {
+	-- If false, it is COMPLETLEY ignored, including the args passed to it.
 	add_error = false,
 	add_error_o = false,
 	climbPrecedence = climbPrecedence_cap,
@@ -578,7 +572,7 @@ for _, rule in Utils.sorted_pairs(grammar_info.rules) do
 end
 
 for name, fields in pairs(OVERRIDE_FIELD_TYPES) do
-	local astnode = assert(astnodes[name])
+	local astnode = assert(astnodes[name], name)
 	for field, override in pairs(fields) do
 		if override == false then
 			astnode.fields[field] = nil

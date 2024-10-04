@@ -225,6 +225,8 @@ function GrammarInfo:_process()
 				if self.function_captures[name] ~= nil then
 					if self.function_captures[name] then
 						table.insert(capctx.captures, self.function_captures[name])
+					else
+						return
 					end
 				else
 					---@type SelenScript.GrammarTools.GrammarInfo.FunctionCapture
