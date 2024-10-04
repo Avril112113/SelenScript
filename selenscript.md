@@ -1,7 +1,7 @@
 # SelenScript Syntax
 Please note that the syntax may change as this is work in progress!  
-The syntax of SelenScript is directly a extension of Lua 5.4  
-However, SelenScript plans to be compatible with versions back to Lua5.2 and LuaJIT  
+The syntax of SelenScript is an extension of Lua 5.4  
+However, SelenScript plans to be compatible with versions back to Lua 5.2 and LuaJIT  
 
 ### **Typing info** 
 ```Lua
@@ -49,8 +49,7 @@ if foo == "foo" goto label
 if der == "der" return 1, 2, "stringy"
 ```
 
-### **Expression statements**  
-NOTE: versions prior to (LuaJIT/Lua5.2+) may not support this as it use's goto  
+### **Statements as Expressions**  
 ```Lua
 foo = while true do
 	break "foo's value"
@@ -66,20 +65,21 @@ baz = for i,v in pairs(t) do
 end
 ```
 
-Using a `return` in a statement that **is not** being used as an expression, will act like normal Lua.
-That is, with the following example, it will return from the function instead of the `do` block.
+Using a `return` in a statement that **is not** being used as an expression, it will act like normal Lua.  
+This is demonstrated with this example;  
 ```Lua
-function gz(b)
-	if b then goto later end
+function gz()
 	do
+		-- This returns from the function, not the `do` block.
 		return "early happened"
 	end
-	::later::
+	-- Meaning this is un-reachable.
 	return "later happened"
 end
-print(gz(false) == "early happened")
+print(gz())  --> early happened
 ```
-The same applies for `for`, `while`, `repeat` and any other expressionable statements.
+The same applies for `for`, `while`, `repeat` and any other expression-able statements.  
+This happens to maintain Lua source compatibility.  
 
 ### **Interfaces**  
 ```Lua
@@ -91,14 +91,14 @@ interface FooBar
 	bar: number
 	<number>: table
 end
-function f() -> FooBar
+function f(): FooBar
 	return {foo="Hi", bar=33}
 end
 
 interface Jsonable
-	jsonify: function->any
+	jsonify: function():any
 end
-Person: Jsonable and FooBar = {
+Person: Jsonable&FooBar = {
 	foo="Im foo",
 	bar="and im foo's big brother",
 	function jsonify()
@@ -112,9 +112,8 @@ Person: Jsonable and FooBar = {
 
 ### **Decorators** (based on Python)  
 ```Lua
--- `f` is always supplied
--- `f` will be only argument if the decorator is not called
--- if the decorator is call then those args are passed after `f`
+-- `f` is always supplied, it's also the sole argument if the decorator is not called.
+-- If the decorator is called then those args are passed after `f`.
 function default(f, ...)
 	local defs = {...}
 	-- return a new function that calls the supplied function `f` with the default parameters `defs`
@@ -126,14 +125,11 @@ end
 function foo(a)
 	return a
 end
--- Lua (Formatted)
+-- Lua Output
 function foo(a)
 	return a
 end
 foo = default(foo, 3)
-
--- the reason we define the function first then redefine with the decorator is because
--- we want to preserve the special nature of `:`; `function t:foo() end`.
 
 print(foo()) -- Result: 3
 ```
@@ -144,24 +140,30 @@ local test = 123
 print(f"{test} {{}}") -- Result: "123 {}"
 ```
 
+### **Addition assignment** (and other operators)  
+```Lua
+foo -= 1
+foo += 2
+foo *= 3
+```
+
 
 ## Reserved Words
-All Lua's reserved words and any that SelenScript provides like `interface` ect  
-also variables starting with `__ss_` is reserved, using these may cause unexpected results  
+All Lua's reserved words and any that SelenScript provides like `interface` ect.  
+Additionally, variables starting with `__ss_` are not to be used.  
 
 
 ## Types
 `any` can be anything  
-`table` normal Lua table  
 `table<KeyType, ValueType>`  
-`array` a list of values  
 `array<ValueType>`  
+`table` same as `table<any, any>`  
+`array` same as `array<any>`  
 `string`  
 `number` int or float  
 `int` whole number  
 `float` non-whole number (contains decimal)  
 `function`  
-`fun`  Shorthand for `function` (because EmmyLua)  
 `function(arg: ArgType)`  
-`function(arg: ArgType) -> ReturnType`  
-`unknown` when no type is defined (not useable in syntax, use `any` if the type is explicitly unknown)  
+`function(arg: ArgType): ReturnType`  
+`unknown` when no type is not known (consider using `any` instead)  
