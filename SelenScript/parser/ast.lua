@@ -102,7 +102,7 @@ end
 function AST:add_error(id, start, finish, ...)
 	local errorBase = ParserErrors[id]
 	if errorBase == nil then
-		table.insert(self.errors, errorBase)
+		table.insert(self.errors, ParserErrors.UNKNOWN_ERROR_ID({}, id))
 	else
 		local ln, col = re.calcline(self.src, start)
 		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.src}, ln, col, ...))
@@ -116,7 +116,7 @@ function AST:add_error_t(tbl)
 	local finish = tbl.finish
 	local errorBase = ParserErrors[id]
 	if errorBase == nil then
-		table.insert(self.errors, errorBase)
+		table.insert(self.errors, ParserErrors.UNKNOWN_ERROR_ID({}, id))
 	else
 		local ln, col = re.calcline(self.src, start)
 		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.src}, ln, col, unpack(tbl)))
@@ -130,7 +130,7 @@ end
 function AST:add_error_o(id, start, msg, finish)
 	local errorBase = ParserErrors[id]
 	if errorBase == nil then
-		table.insert(self.errors, errorBase)
+		table.insert(self.errors, ParserErrors.UNKNOWN_ERROR_ID({}, id))
 	else
 		local ln, col = re.calcline(self.src, start)
 		table.insert(self.errors, errorBase({start=start,finish=finish,src=self.src}, ln, col, msg))

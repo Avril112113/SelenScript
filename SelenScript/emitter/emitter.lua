@@ -33,7 +33,7 @@ end
 ---@field char_position integer
 ---@field indent_depth integer
 ---@field source_map SelenScript.NodeLinkedSourceMap
----@field visit_path string[] # For debugging errors
+-- -@field visit_path string[] # For debugging errors
 local Emitter = {
 	Emitters = {
 		lua = require "SelenScript.emitter.emit_lua",
@@ -76,13 +76,13 @@ function Emitter:visit_type(name, node)
 	if self.defs[name] == nil then
 		print_warn("Missing emitter method for node type \"" .. name .. "\"")
 	else
-		table.insert(self.visit_path, name)
+		-- table.insert(self.visit_path, name)
 		local prev_node = self.last_node
 		self.last_node = node
 		self.defs[name](self, node)
 		self.last_node = prev_node
-		local t = table.remove(self.visit_path)
-		assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
+		-- local t = table.remove(self.visit_path)
+		-- assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
 	end
 end
 
@@ -165,7 +165,7 @@ function Emitter:_create_proxy(ast, env)
 		char_position = 1,
 		indent_depth = 0,
 		source_map = SourceMap.new(),
-		visit_path = {},
+		-- visit_path = {},
 	}, {__index=function(mt, index)
 		local value = rawget(self.defs, index)
 		if value ~= nil then return value end

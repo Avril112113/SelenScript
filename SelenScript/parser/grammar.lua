@@ -48,7 +48,7 @@ function Grammar.build(declarations, entry_point)
 	-- TODO: convert errors from rpp:process() to our error objects
 	if entry_point then
 		local ok, result, errors = rpp:process("custom_entry <- " .. entry_point)
-		if not ok then table.insert(errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end
+		if not ok then table.insert(errors, ParserErrors.GRAMMAR_UNIDENTIFIED(result, tostring(result))) end
 		for _, err in ipairs(errors) do
 			table.insert(all_errors, err)
 		end
@@ -61,7 +61,7 @@ function Grammar.build(declarations, entry_point)
 		-- TODO: convert errors from rpp:process() to our error objects
 		---@diagnostic disable-next-line: redefined-local
 		local ok, result, errors = rpp:process(data)
-		if not ok then table.insert(all_errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end
+		if not ok then table.insert(all_errors, ParserErrors.GRAMMAR_UNIDENTIFIED(result, tostring(result))) end
 		for _, err in ipairs(errors) do
 			table.insert(all_errors, err)
 		end
@@ -77,7 +77,7 @@ function Grammar.build(declarations, entry_point)
 	-- end
 	---@diagnostic disable-next-line: redefined-local
 	local ok, result, errors = rpp:generate(declarations)
-	if not ok then table.insert(all_errors, ParserErrors.UNIDENTIFIED(result, tostring(result))) end
+	if not ok then table.insert(all_errors, ParserErrors.GRAMMAR_UNIDENTIFIED(result, tostring(result))) end
 	for _, err in ipairs(errors) do
 		table.insert(all_errors, err)
 	end
