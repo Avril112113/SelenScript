@@ -3,6 +3,7 @@ local ASTHelpers = require "SelenScript.transformer.ast_helpers"
 local ASTNodes = ASTHelpers.Nodes
 local ASTNodesNew = require "SelenScript.parser.ast_nodes"
 local Precedence = require "SelenScript.parser.precedence"
+local Errors = require "SelenScript.transformer.errors"
 
 
 ---@class SelenScript.Transformer_SS_to_Lua : SelenScript.Transformer
@@ -107,11 +108,11 @@ TransformerDefs["break"] = function(self, node)
 	local stmt_expr, _, _ = self:find_parent_of_type(node, "stmt_expr")
 	---@diagnostic disable-next-line: cast-type-mismatch
 	---@cast stmt_expr nil|SelenScript.ASTNodes.stmt_expr
-	local parent_breakable, _, _ = self:find_parent_of_type(node, function(filter_node)
-		return filter_node.type == "while" or filter_node.type == "forrange" or filter_node.type == "foriter" or filter_node.type == "do"
-	end)
-	---@cast parent_breakable nil|SelenScript.ASTNodes.while|SelenScript.ASTNodes.forrange|SelenScript.ASTNodes.foriter|SelenScript.ASTNodes.do
 	if stmt_expr ~= nil and #node.values > 0 then
+		local parent_breakable, _, _ = self:find_parent_of_type(node, function(filter_node)
+			return filter_node.type == "while" or filter_node.type == "forrange" or filter_node.type == "foriter" or filter_node.type == "do"
+		end)
+		---@cast parent_breakable nil|SelenScript.ASTNodes.while|SelenScript.ASTNodes.forrange|SelenScript.ASTNodes.foriter|SelenScript.ASTNodes.do
 		if (stmt_expr.stmt ~= parent_breakable) then
 			self:add_error("BREAK_VALUES_NON_EXPR", node)
 			return node
@@ -150,6 +151,8 @@ TransformerDefs["break"] = function(self, node)
 		else
 			return node
 		end
+	elseif #node.values > 0 then
+		self:add_error(Errors.BREAK_VALUES_NON_EXPR, node)
 	end
 	return node
 end
