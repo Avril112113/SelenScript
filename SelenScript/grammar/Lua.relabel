@@ -44,6 +44,7 @@ stmt_local_assign	<- {| {:type:''->"assign":}
 						|}
 stmt_general_assign	<- {| {:type:''->"assign":}
 							{:start:{}:}
+							{:scope:''->"default":}
 							{:names:varlist:} Sc "=" Sc {:values:expressionlist_expect:}
 							{:finish:{}:}
 						|}
@@ -124,6 +125,7 @@ stmt_foriter	<- {| {:type:''->"foriter":}
 stmt_function	<- stmt_local_function / stmt_general_function
 stmt_general_function	<- {| {:type:''->"functiondef":}
 								{:start:{}:}
+								{:scope:''->"default":}
 #include PreFunctionStmt
 								FUNCTION Sc {:name:funcname:} Sc {:funcbody:funcbody:}
 								{:finish:{}:}

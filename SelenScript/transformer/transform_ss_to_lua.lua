@@ -204,7 +204,7 @@ TransformerDefs["op_assign"] = function(self, node)
 	end
 	return ASTNodesNew["assign"]{
 		_parent = node,
-		scope = nil,
+		scope = "default",
 		names = node.names,
 		values = values,
 	}

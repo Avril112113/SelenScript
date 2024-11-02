@@ -256,7 +256,7 @@ ASTNodes["else"] = function(node, block)
 end
 
 ---@param node SelenScript.ASTNodes.Node # Used for source position info
----@param scope "local"?
+---@param scope "local"|"default"?
 ---@param names SelenScript.ASTNodes.Node # `varlist` or `attributenamelist`
 ---@param values SelenScript.ASTNodes.Node? # `expressionlist`
 ---@return SelenScript.ASTNodes.assign
@@ -265,7 +265,7 @@ function ASTNodes.assign(node, scope, names, values)
 		type = "assign",
 		start = node.start,
 		source = node.source,
-		scope = scope,
+		scope = scope or "default",
 		names = names,
 		values = values or ASTNodes.expressionlist(node),
 		finish = node.finish

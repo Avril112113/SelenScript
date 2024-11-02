@@ -186,4 +186,15 @@ function Utils.parse_github_timestamp(s)
 	return t_date
 end
 
+--- Intended for debugging and error output.
+---@param value any
+function Utils.tostring(value)
+	-- TODO: Improve this
+	if type(value) == "string" then
+		return ("%q"):format(value)
+	end
+	return tostring(value)
+end
+
+
 return Utils

@@ -135,10 +135,10 @@ end
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
 ---@field names SelenScript.ASTNodes.attributenamelist|SelenScript.ASTNodes.varlist
----@field scope "local"?
+---@field scope "local"|"default"
 ---@field values SelenScript.ASTNodes.expressionlist
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, names:SelenScript.ASTNodes.attributenamelist|SelenScript.ASTNodes.varlist, scope:"local"?, values:SelenScript.ASTNodes.expressionlist?}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, names:SelenScript.ASTNodes.attributenamelist|SelenScript.ASTNodes.varlist, scope:nil|"local"|"default", values:SelenScript.ASTNodes.expressionlist?}
 ---@return SelenScript.ASTNodes.assign
 ASTNodes["assign"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -152,7 +152,10 @@ ASTNodes["assign"] = function(args)
 	end
 	assert(type(args["finish"]) == "number")
 	assert(type(args["names"]) == "table" and (args["names"].type == "attributenamelist" or args["names"].type == "varlist"))
-	assert(args["scope"] == nil or args["scope"] == "local")
+	if args["scope"] == nil then
+		args["scope"] = "default"
+	end
+	assert(args["scope"] == "local" or args["scope"] == "default")
 	if args["values"] == nil then
 		args["values"] = ASTNodes[("expressionlist")]({
 			_parent = args,
@@ -982,9 +985,9 @@ end
 ---@field decorators SelenScript.ASTNodes.decorator_list?
 ---@field funcbody SelenScript.ASTNodes.funcbody
 ---@field name SelenScript.ASTNodes.name|SelenScript.ASTNodes.index
----@field scope "local"?
+---@field scope "local"|"default"
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, decorators:SelenScript.ASTNodes.decorator_list?, funcbody:SelenScript.ASTNodes.funcbody, name:SelenScript.ASTNodes.name|SelenScript.ASTNodes.index, scope:"local"?}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, decorators:SelenScript.ASTNodes.decorator_list?, funcbody:SelenScript.ASTNodes.funcbody, name:SelenScript.ASTNodes.name|SelenScript.ASTNodes.index, scope:"local"|"default"}
 ---@return SelenScript.ASTNodes.functiondef
 ASTNodes["functiondef"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -1000,7 +1003,7 @@ ASTNodes["functiondef"] = function(args)
 	assert(args["decorators"] == nil or type(args["decorators"]) == "table" and args["decorators"].type == "decorator_list")
 	assert(type(args["funcbody"]) == "table" and args["funcbody"].type == "funcbody")
 	assert(type(args["name"]) == "table" and (args["name"].type == "name" or args["name"].type == "index"))
-	assert(args["scope"] == nil or args["scope"] == "local")
+	assert(args["scope"] == "local" or args["scope"] == "default")
 	args["_parent"] = nil
 	return args
 end

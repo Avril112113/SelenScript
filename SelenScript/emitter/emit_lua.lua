@@ -34,6 +34,15 @@ for op, data in pairs(Precedence.unaryOpData) do
 end
 
 
+function EmitterDefs:str_node_src_pos(node)
+	local source_node = self._sources[#self._sources]
+	if source_node ~= nil then
+		local ln, col = source_node:calcline(node.start)
+		return ("%i:%i"):format(ln, col-1)
+	end
+	return "?:?"
+end
+
 ---@param node SelenScript.ASTNodes.Node
 function EmitterDefs:add_luacats_source_comment(node)
 	if self._sources == nil then
@@ -110,8 +119,10 @@ EmitterDefs["assign"] = function(self, node)
 	if node.scope == "local" then
 		self:add_part(node.scope)
 		self:add_space()
-	elseif node.scope ~= nil then
-		print_warn("Invalid scope \"" .. node.scope .. "\"")
+	elseif node.scope == "default" then
+		-- Do nothing.
+	else
+		print_warn("Invalid scope " .. Utils.tostring(node.scope))
 	end
 	self:visit(node.names)
 	if #node.values > 0 then
@@ -232,8 +243,10 @@ EmitterDefs["functiondef"] = function(self, node)
 	if node.scope == "local" then
 		self:add_part(node.scope)
 		self:add_space()
-	elseif node.scope ~= nil then
-		print_warn("Invalid scope \"" .. node.scope .. "\"")
+	elseif node.scope == "default" then
+		-- Do nothing.
+	else
+		print_warn(("%s Invalid scope %s"):format(self:str_node_src_pos(node), Utils.tostring(node.scope)))
 	end
 	if self.config.space_before_function then
 		self:add_new_line(false)

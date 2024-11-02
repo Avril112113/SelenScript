@@ -140,6 +140,15 @@ local HELPER_CUSTOM_CODE = {
 				end
 			]]
 		end,
+		---@param field_info ASTNodeInfo.TypeInfo
+		["scope"] = function(field_info)
+			field_info.optional = true
+			return [[
+				if args["scope"] == nil then
+					args["scope"] = "default"
+				end
+			]]
+		end,
 	},
 	["attributename"]={
 		---@param field_info ASTNodeInfo.TypeInfo
