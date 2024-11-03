@@ -175,11 +175,54 @@ TransformerDefs["functiondef"] = function(self, node)
 		end
 		local stmt_idx = Utils.find_key(block, stmt)
 		local func_name = node.name  -- TODO: deal with ":" in node.name
+		if func_name.type == "name" then
+			---@cast func_name -SelenScript.ASTNodes.name
+			func_name = ASTNodesNew["index"]{
+				_parent = func_name,
+				expr = func_name,
+			}
+		end
 		local call_node = func_name
 		for i, dec in ipairs(node.decorators) do
-			call_node = ASTNodes.index(node, nil, dec.expr, ASTNodes.call(node, call_node))
+			local root = Utils.shallowcopy(dec.expr)
+			---@type SelenScript.ASTNodes.index|SelenScript.ASTNodes.call
+			local call = root
+			while true do
+				if call.expr.type == "call" then
+					call.expr = Utils.shallowcopy(call.expr)
+					---@diagnostic disable-next-line: cast-local-type
+					call = call.expr
+					break
+				elseif not call.index then
+					call.index = ASTNodesNew["call"]{ _parent = dec.expr }
+					call = call.index
+					break
+				end
+				call.index = Utils.shallowcopy(call.index)
+				call = call.index
+				if call.type == "call" then
+					break
+				end
+			end
+			---@cast call -SelenScript.ASTNodes.index, -?
+			call.args = call.args and Utils.shallowcopy(call.args) or ASTNodesNew["expressionlist"]{ _parent = call }
+			table.insert(call.args, 1, call_node)
+			call_node = ASTNodesNew["index"]{
+				_parent = node,
+				expr = root,
+			}
 		end
-		local assign_node = ASTNodes.assign(node, nil, ASTNodes.varlist(node, func_name), ASTNodes.expressionlist(node, call_node))
+		local assign_node = ASTNodesNew["assign"]{
+			_parent = node,
+			names = ASTNodesNew["varlist"]{
+				_parent = node,
+				func_name
+			},
+			values = ASTNodesNew["expressionlist"]{
+				_parent = node,
+				call_node,
+			},
+		}
 		table.insert(block, stmt_idx+1, assign_node)
 		node.decorators = nil
 	end
