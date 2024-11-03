@@ -119,6 +119,8 @@ function Transformer:find_parent_of_type(node, node_type, depth)
 	return self:find_parent_of_type(parent, node_type, depth+1)
 end
 
+---@param name string?
+---@return string
 function Transformer:get_var(name)
 	local var_name = self.VAR_NAME_BASE .. (name or "") .. "_"
 	local n = self.var_names[var_name] or 0

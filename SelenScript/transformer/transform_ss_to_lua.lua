@@ -1,7 +1,5 @@
 local Utils = require "SelenScript.utils"
-local ASTHelpers = require "SelenScript.transformer.ast_helpers"
-local ASTNodes = ASTHelpers.Nodes
-local ASTNodesNew = require "SelenScript.parser.ast_nodes"
+local ASTNodes = require "SelenScript.parser.ast_nodes"
 local Precedence = require "SelenScript.parser.precedence"
 local Errors = require "SelenScript.transformer.errors"
 
@@ -32,8 +30,14 @@ TransformerDefs["continue"] = function(self, node)
 		return nil
 	end
 	local label_name = self:get_var("continue")
-	table.insert(loop_block, ASTNodes.label(node, label_name))
-	return ASTNodes["goto"](node, label_name)
+	table.insert(parent_block, ASTNodes["label"]{
+		_parent = node,
+		name = label_name,
+	})
+	return ASTNodes["goto"]{
+		_parent = node,
+		name = label_name,
+	}
 end
 
 ---@param self SelenScript.Transformer_SS_to_Lua
@@ -48,27 +52,71 @@ TransformerDefs["ifexpr"] = function(self, node)
 	end
 	local stmt_idx = Utils.find_key(block, stmt)
 	local var_name = self:get_var("ifexpr")
-	local local_assign_node = ASTNodes.assign(
-		node, "local",
-		ASTNodes.attributenamelist(node, ASTNodes.attributename(node, var_name))
-	)
-	local if_node = ASTNodes["if"](node, node.condition,
-		ASTNodes.block(node,
-			ASTNodes.assign(node, nil,
-				ASTNodes.varlist(node, ASTNodes.index(node, nil, ASTNodes.name(node, var_name))),
-				ASTNodes.expressionlist(node, node.lhs)
-			)
-		),
-		ASTNodes["else"](node, ASTNodes.block(node,
-			ASTNodes.assign(node, nil,
-				ASTNodes.varlist(node, ASTNodes.index(node, nil, ASTNodes.name(node, var_name))),
-				ASTNodes.expressionlist(node, node.rhs)
-			)
-		))
-	)
+	local local_assign_node = ASTNodes["assign"]{
+		_parent = node,
+		scope = "local",
+		names = ASTNodes["attributenamelist"]{
+			_parent = node,
+			ASTNodes["attributename"]{
+				_parent = node,
+				var_name
+			}
+		},
+	}
+	local if_node = ASTNodes["if"]{
+		_parent = node,
+		condition = node.condition,
+		block = ASTNodes["block"]{ _parent = node,
+			ASTNodes["assign"]{
+				_parent = node,
+				names = ASTNodes["varlist"]{
+					_parent = node,
+					ASTNodes["index"]{
+						_parent = node,
+						ASTNodes["name"]{
+							_parent = node,
+							name = var_name,
+						}
+					}
+				},
+				values = ASTNodes["expressionlist"]{
+					_parent = node,
+					node.lhs
+				},
+			},
+		},
+		["else"] = ASTNodes["else"]{
+			_parent = node,
+			block = ASTNodes["block"]{ _parent = node,
+			ASTNodes["assign"]{
+				_parent = node,
+				names = ASTNodes["varlist"]{
+					_parent = node,
+					ASTNodes["index"]{
+						_parent = node,
+						ASTNodes["name"]{
+							_parent = node,
+							name = var_name,
+						}
+					}
+				},
+				values = ASTNodes["expressionlist"]{
+					_parent = node,
+					node.rhs
+				},
+			},
+		},
+		},
+	}
 	table.insert(block, stmt_idx, local_assign_node)
 	table.insert(block, stmt_idx+1, if_node)
-	return ASTNodes.index(node, nil, ASTNodes.name(node, var_name))
+	return ASTNodes["index"]{
+		_parent = node,
+		expr = ASTNodes["name"]{
+			_parent = node,
+			name = var_name,
+		}
+	}
 end
 
 ---@param self SelenScript.Transformer_SS_to_Lua
@@ -81,23 +129,51 @@ TransformerDefs["stmt_expr"] = function(self, node)
 	end
 	local stmt_idx = Utils.find_key(block, stmt)
 	node._var_name = node._var_name or self:get_var("stmt_expr_" .. node.stmt.type)
-	local local_assign_node = ASTNodes.assign(node,
-		"local",
-		ASTNodes.attributenamelist(node, ASTNodes.attributename(node, node._var_name)),
-		ASTNodes.expressionlist(node, ASTNodes.table(node, ASTNodes.fieldlist(node)))
-	)
+	local local_assign_node = ASTNodes["assign"]{
+		_parent = node,
+		scope = "local",
+		names = ASTNodes["attributenamelist"]{
+			_parent = node,
+			ASTNodes["attributename"]{
+				_parent = node,
+				name = node._var_name
+			}
+		},
+		values = ASTNodes["expressionlist"]{
+			_parent = node,
+			ASTNodes["table"]{
+				_parent = node,
+				fields = ASTNodes["fieldlist"]{
+					_parent = node
+				}
+			}
+		}
+	}
 	table.insert(block, stmt_idx, local_assign_node)
 	table.insert(block, stmt_idx+1, node.stmt)
-	return ASTNodes.expressionlist(
-		node,
-		ASTNodes.index(node,
-			nil,
-			ASTNodes.name(node, "unpack"),
-			ASTNodes.call(node, ASTNodes.expressionlist(node,
-				ASTNodes.index(node, nil, ASTNodes.name(node, node._var_name))
-			))
-		)
-	)
+	return ASTNodes["expressionlist"]{
+		_parent = node,
+		ASTNodes["index"]{
+			_parent = node,
+			expr = ASTNodes["name"]{
+				_parent = node,
+				name = "unpack",
+			},
+			index = ASTNodes["call"]{
+				_parent = node,
+				args = ASTNodes["expressionlist"]{
+					_parent = node,
+					ASTNodes["index"]{
+						_parent = node,
+						expr = ASTNodes["name"]{
+							_parent = node,
+							name = node._var_name
+						},
+					},
+				},
+			},
+		},
+	}
 end
 
 ---@param self SelenScript.Transformer_SS_to_Lua
@@ -126,15 +202,33 @@ TransformerDefs["break"] = function(self, node)
 		stmt_expr._var_name = stmt_expr._var_name or self:get_var("stmt_expr_" .. stmt_expr.stmt.type)
 		local fields = {}
 		for i, value_node in ipairs(node.values) do
-			table.insert(fields, ASTNodes.field(node, nil, value_node))
+			table.insert(fields, ASTNodes["field"]{_parent=node, value=value_node})
 		end
-		local assign_node = ASTNodes.assign(node,
-			nil,
-			ASTNodes.varlist(node, ASTNodes.index(node, nil, ASTNodes.name(node, stmt_expr._var_name))),
-			ASTNodes.expressionlist(node, ASTNodes.table(node, ASTNodes.fieldlist(node, unpack(fields))))
-		)
+		local assign_node = ASTNodes["assign"]{
+			_parent = node,
+			names = ASTNodes["varlist"]{
+				_parent = node,
+				ASTNodes["index"]{
+					_parent = node,
+					expr = ASTNodes["name"]{
+						_parent = node,
+						name = stmt_expr._var_name,
+					},
+				},
+			},
+			values = ASTNodes["expressionlist"]{
+				_parent = node,
+				ASTNodes["table"]{
+					_parent = node,
+					fields = ASTNodes["fieldlist"]{
+						_parent = node,
+						unpack(fields)
+					},
+				},
+			},
+		}
 		table.insert(block, stmt_idx, assign_node)
-		node.values = ASTNodes.expressionlist(node)
+		node.values = nil
 		if stmt_expr.stmt.type == "do" then
 			local stmt_expr_block = stmt_expr.stmt.block
 			local label_node = stmt_expr_block[#stmt_expr_block]
@@ -142,10 +236,16 @@ TransformerDefs["break"] = function(self, node)
 			local is_our_label_last = label_node ~= node and (label_node == nil or label_node.type ~= "label" or label_node.name.name ~= stmt_expr._var_name)
 			-- TODO: Remove redundant `goto` when a label is in use but this `return` is at the end
 			if stmt_expr_block[#stmt_expr_block] ~= node then
-				table.insert(block, stmt_idx+1, ASTNodes["goto"](node, stmt_expr._var_name))
+				table.insert(block, stmt_idx+1, ASTNodes["goto"]{
+					_parent = node,
+					name = stmt_expr._var_name,
+				})
 			end
 			if is_our_label_last then
-				table.insert(stmt_expr_block, #stmt_expr_block+1, ASTNodes.label(node, stmt_expr._var_name))
+				table.insert(stmt_expr_block, #stmt_expr_block+1, ASTNodes["label"]{
+					_parent = node,
+					name = stmt_expr._var_name,
+				})
 			end
 			return nil
 		else
@@ -160,8 +260,14 @@ end
 ---@param self SelenScript.Transformer_SS_to_Lua
 ---@param node SelenScript.ASTNodes.conditional_stmt
 TransformerDefs["conditional_stmt"] = function(self, node)
-	local block = ASTNodes.block(node, unpack(node))
-	return ASTNodes["if"](node, node.condition, block)
+	return ASTNodes["if"]{
+		_parent = node,
+		condition = node.condition,
+		block = ASTNodes["block"]{
+			_parent = node,
+			unpack(node),
+		},
+	}
 end
 
 ---@param self SelenScript.Transformer_SS_to_Lua
@@ -177,7 +283,7 @@ TransformerDefs["functiondef"] = function(self, node)
 		local func_name = node.name  -- TODO: deal with ":" in node.name
 		if func_name.type == "name" then
 			---@cast func_name -SelenScript.ASTNodes.name
-			func_name = ASTNodesNew["index"]{
+			func_name = ASTNodes["index"]{
 				_parent = func_name,
 				expr = func_name,
 			}
@@ -194,7 +300,7 @@ TransformerDefs["functiondef"] = function(self, node)
 					call = call.expr
 					break
 				elseif not call.index then
-					call.index = ASTNodesNew["call"]{ _parent = dec.expr }
+					call.index = ASTNodes["call"]{ _parent = dec.expr }
 					call = call.index
 					break
 				end
@@ -205,20 +311,20 @@ TransformerDefs["functiondef"] = function(self, node)
 				end
 			end
 			---@cast call -SelenScript.ASTNodes.index, -?
-			call.args = call.args and Utils.shallowcopy(call.args) or ASTNodesNew["expressionlist"]{ _parent = call }
+			call.args = call.args and Utils.shallowcopy(call.args) or ASTNodes["expressionlist"]{ _parent = call }
 			table.insert(call.args, 1, call_node)
-			call_node = ASTNodesNew["index"]{
+			call_node = ASTNodes["index"]{
 				_parent = node,
 				expr = root,
 			}
 		end
-		local assign_node = ASTNodesNew["assign"]{
+		local assign_node = ASTNodes["assign"]{
 			_parent = node,
-			names = ASTNodesNew["varlist"]{
+			names = ASTNodes["varlist"]{
 				_parent = node,
 				func_name
 			},
-			values = ASTNodesNew["expressionlist"]{
+			values = ASTNodes["expressionlist"]{
 				_parent = node,
 				call_node,
 			},
@@ -232,12 +338,12 @@ end
 ---@param self SelenScript.Transformer_SS_to_Lua
 ---@param node SelenScript.ASTNodes.op_assign
 TransformerDefs["op_assign"] = function(self, node)
-	local values = ASTNodesNew["expressionlist"]{_parent=node.values}
+	local values = ASTNodes["expressionlist"]{_parent=node.values}
 	for i=1,math.max(#node.names, #node.values) do
 		local name, value = node.names[i], node.values[i]
 		if name and value then
 			local op_node_name = Precedence.binaryOpData[node.op][2]
-			table.insert(values, ASTNodesNew[op_node_name]{
+			table.insert(values, ASTNodes[op_node_name]{
 				_parent = value,
 				lhs = name,
 				op = node.op,
@@ -248,7 +354,7 @@ TransformerDefs["op_assign"] = function(self, node)
 			table.insert(values, value)
 		end
 	end
-	return ASTNodesNew["assign"]{
+	return ASTNodes["assign"]{
 		_parent = node,
 		scope = "default",
 		names = node.names,
