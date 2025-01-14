@@ -91,7 +91,9 @@ function Parser:parse(source, file)
 		src = source,
 		block = ast,
 		file = file,
-		calcline = Parser._source_calcline
+		calcline = Parser._source_calcline,
+		---@diagnostic disable-next-line: assign-type-mismatch
+		source = nil
 	}
 	if type(ast) == "table" then
 		Parser.postprocess_nodes(ast, ast_source)

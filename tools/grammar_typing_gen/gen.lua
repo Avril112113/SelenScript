@@ -877,6 +877,7 @@ table.insert(ast, ASTNodes.LineComment{prefix="", value=""})  -- Used to create 
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@class SelenScript.ASTNodes.Node"})
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field type string"})
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field start integer"})
+table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field start_source integer?  # Used to override source map start position"})
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field finish integer"})
 table.insert(ast, ASTNodes.LineComment{prefix="---", value="@field source SelenScript.ASTNodes.Source"})
 
@@ -959,6 +960,8 @@ for _, astnode in Utils.sorted_pairs(astnodes, astnodes_sort_cmp) do
 								lhs = field_index_node,
 								op = "==",
 								rhs = ASTNodes["nil"]{},
+								---@diagnostic disable-next-line: assign-type-mismatch
+								source = nil
 							},
 							block=ASTNodes.block{
 								ASTNodes.assign{names=ASTNodes.varlist{field_index_node}, values=ASTNodes.expressionlist{HELPER_FIELD_DEFAULTS[field_name]}}

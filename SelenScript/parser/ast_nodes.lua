@@ -10,6 +10,7 @@ local Utils = require("SelenScript.utils")
 ---@class SelenScript.ASTNodes.Node
 ---@field type string
 ---@field start integer
+---@field start_source integer?  # Used to override source map start position
 ---@field finish integer
 ---@field source SelenScript.ASTNodes.Source
 

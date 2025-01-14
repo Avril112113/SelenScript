@@ -288,6 +288,7 @@ TransformerDefs["functiondef"] = function(self, node)
 				expr = func_name,
 			}
 		end
+		local dec_end_pos = node.start
 		local call_node = func_name
 		for i, dec in ipairs(node.decorators) do
 			local root = Utils.shallowcopy(dec.expr)
@@ -317,6 +318,8 @@ TransformerDefs["functiondef"] = function(self, node)
 				_parent = node,
 				expr = root,
 			}
+
+			dec_end_pos = math.max(dec_end_pos, dec.finish)
 		end
 		local assign_node = ASTNodes["assign"]{
 			_parent = node,
@@ -331,6 +334,8 @@ TransformerDefs["functiondef"] = function(self, node)
 		}
 		table.insert(block, stmt_idx+1, assign_node)
 		node.decorators = nil
+
+		node.start_source = dec_end_pos
 	end
 	return node
 end
@@ -344,7 +349,7 @@ TransformerDefs["op_assign"] = function(self, node)
 		if name and value then
 			local op_node_name = Precedence.binaryOpData[node.op][2]
 			table.insert(values, ASTNodes[op_node_name]{
-				_parent = value,
+				_parent = node,
 				lhs = name,
 				op = node.op,
 				rhs = value,
