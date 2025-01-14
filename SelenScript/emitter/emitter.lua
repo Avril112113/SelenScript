@@ -43,7 +43,7 @@ Emitter.__index = Emitter
 
 
 ---@param target "lua"|SelenScript.Emitter # The emitter to use
----@param config SelenScript.EmitterConfig # Config modifications, any ommited values use defaults
+---@param config SelenScript.EmitterConfig|{} # Config modifications, any omitted values use defaults
 function Emitter.new(target, config)
 	config = config or {}
 	if type(target) == "string" then
@@ -89,7 +89,7 @@ end
 ---@param s string
 function Emitter:add_part(s)
 	if #s > 0 and not s:find("^[\n \t]+$") then
-		self.source_map:link(self.last_node, self.last_node.start, self.char_position)
+		self.source_map:link(self.last_node, self.last_node.start_source or self.last_node.start, self.char_position)
 	end
 	self.parts:put(s)
 	self.char_position = self.char_position + #s
