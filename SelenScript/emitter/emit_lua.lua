@@ -125,6 +125,7 @@ EmitterDefs["assign"] = function(self, node)
 		print_warn("Invalid scope " .. Utils.tostring(node.scope))
 	end
 	self:visit(node.names)
+	self:set_prev_source_pos()
 	if #node.values > 0 then
 		self:add_space()
 		self:add_part("=")
@@ -139,6 +140,7 @@ EmitterDefs["label"] = function(self, node)
 	self:add_part("::")
 	self:visit(node.name)
 	self:add_part("::")
+	self:extend_previous_link()
 end
 
 ---@param self SelenScript.LuaEmitter
@@ -154,6 +156,7 @@ end
 EmitterDefs["do"] = function(self, node)
 	self:add_part("do")
 	self:visit_type("_indented_block", node)
+	self:set_prev_source_pos()
 	self:add_part("end")
 end
 
@@ -164,7 +167,7 @@ EmitterDefs["while"] = function(self, node)
 	self:add_space()
 	self:visit(node.expr)
 	self:add_space()
-	self:visit_type("do", node)
+	self:visit_type("do", node, true)
 end
 
 ---@param self SelenScript.LuaEmitter
@@ -217,7 +220,7 @@ EmitterDefs["forrange"] = function(self, node)
 		self:visit(node.increment)
 	end
 	self:add_space()
-	self:visit_type("do", node)
+	self:visit_type("do", node, true)
 end
 
 ---@param self SelenScript.LuaEmitter
@@ -231,7 +234,7 @@ EmitterDefs["foriter"] = function(self, node)
 	self:add_space()
 	self:visit(node.values)
 	self:add_space()
-	self:visit_type("do", node)
+	self:visit_type("do", node, true)
 end
 
 ---@param self SelenScript.LuaEmitter
@@ -316,7 +319,6 @@ end
 function EmitterDefs:call(node)
 	self:add_part("(")
 	self:visit(node.args)
-	self:set_source_pos(node.args.finish)
 	self:add_part(")")
 end
 
@@ -328,6 +330,7 @@ function EmitterDefs:funcbody(node)
 	self:indent()
 	self:add_new_line()
 	self:visit(node.block)
+	self:set_prev_source_pos()
 	self:unindent()
 	self:add_new_line()
 	self:add_part("end")

@@ -68,7 +68,8 @@ end
 --- Used by EmitterDef's to reduce code duplication
 ---@param name string
 ---@param node SelenScript.ASTNodes.Node
-function Emitter:visit_type(name, node)
+---@param inherit_source_pos boolean?
+function Emitter:visit_type(name, node, inherit_source_pos)
 	if type(node) ~= "table" or node.type == nil then
 		print_error("_visit(node) didn't get a node but instead \"" .. tostring(node) .. "\"")
 		return
@@ -77,28 +78,42 @@ function Emitter:visit_type(name, node)
 		print_warn("Missing emitter method for node type \"" .. name .. "\"")
 	else
 		-- table.insert(self.visit_path, name)
-		local prev_node = self.last_node
-		local prev_source_pos = self.source_pos
+		self.prev_node = self.last_node
 		self.last_node = node
-		self.source_pos = nil
+		if not inherit_source_pos then
+			self.source_pos = self.last_node.start_source or self.last_node.start
+		end
 		self.defs[name](self, node)
-		self.source_pos = prev_source_pos
-		self.last_node = prev_node
+		self.source_pos = node.finish
+		self.last_node = self.prev_node
 		-- local t = table.remove(self.visit_path)
 		-- assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
 	end
 end
 
---- Reset after
+--- Temporary for current emitter handler.  
+--- This doesn't always get used, `math.max(self.source_pos, self.last_node.start)`  
 ---@param pos integer
 function Emitter:set_source_pos(pos)
 	self.source_pos = pos
 end
 
+function Emitter:set_prev_source_pos()
+	self.source_pos = self.prev_node.finish
+end
+
+--- Extends the previous source map link to the current position.
+function Emitter:extend_previous_link()
+	local link = self.source_map.links[#self.source_map.links]
+	if link then
+		link.out_pos = self.char_position
+	end
+end
+
 ---@param s string
 function Emitter:add_part(s)
 	if #s > 0 and not s:find("^[\n \t]+$") then
-		self.source_map:link(self.last_node, self.source_pos or self.last_node.start_source or self.last_node.start, self.char_position)
+		self.source_map:link(self.last_node, self.source_pos or 0, self.char_position)
 	end
 	self.parts:put(s)
 	self.char_position = self.char_position + #s
