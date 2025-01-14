@@ -78,18 +78,27 @@ function Emitter:visit_type(name, node)
 	else
 		-- table.insert(self.visit_path, name)
 		local prev_node = self.last_node
+		local prev_source_pos = self.source_pos
 		self.last_node = node
+		self.source_pos = nil
 		self.defs[name](self, node)
+		self.source_pos = prev_source_pos
 		self.last_node = prev_node
 		-- local t = table.remove(self.visit_path)
 		-- assert(t == name, "Removed \"" .. t .. "\" from visit_path but expected \"" .. name .. "\"")
 	end
 end
 
+--- Reset after
+---@param pos integer
+function Emitter:set_source_pos(pos)
+	self.source_pos = pos
+end
+
 ---@param s string
 function Emitter:add_part(s)
 	if #s > 0 and not s:find("^[\n \t]+$") then
-		self.source_map:link(self.last_node, self.last_node.start_source or self.last_node.start, self.char_position)
+		self.source_map:link(self.last_node, self.source_pos or self.last_node.start_source or self.last_node.start, self.char_position)
 	end
 	self.parts:put(s)
 	self.char_position = self.char_position + #s

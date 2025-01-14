@@ -3,7 +3,7 @@ local AvCalcline = require "avcalcline"
 
 
 ---@class SelenScript.NodeLinkedSourceMap
----@field links {node:SelenScript.ASTNodes.Node|SelenScript.ASTNodes.expression|SelenScript.ASTNodes.name, src_pos:integer, out_pos:integer}[]
+---@field links {node:SelenScript.ASTNodes.Node|SelenScript.ASTNodes.expression|SelenScript.ASTNodes.name|{name:SelenScript.ASTNodes.name}, src_pos:integer, out_pos:integer}[]
 local NodeLinkedSourceMap = {}
 NodeLinkedSourceMap.__index = NodeLinkedSourceMap
 
@@ -42,14 +42,19 @@ function NodeLinkedSourceMap:generate(outSrc, outPath)
 		end
 		local src_start_ln, src_start_col = source_node:calcline(link.src_pos)
 		local out_start_ln, out_start_col = out_avcalcline:calcline(link.out_pos)
-		local name = type(link.node.name) == "string" and link.node.name or nil
-		if link.node.value ~= nil then
+		local name
+		if type(link.node.name) == "string" then
+			name = link.node.name
+		elseif type(link.node.name) == "table" and type(link.node.name.name) == "string" then
+			name = link.node.name.name
+		elseif link.node.value ~= nil then
 			if name ~= nil then
 				name = name .. "=" .. tostring(link.node.value)
 			else
 				name = "=" .. tostring(link.node.value)
 			end
 		end
+		---@cast name -SelenScript.ASTNodes.name
 		sourceMap:addSourceMapping(source_node.file, src_start_ln, src_start_col, out_start_ln, out_start_col, name)
 		if not sourceMap.sourcesContent[source_node.file] then
 			sourceMap:addSourceContent(source_node.file, source_node.src)

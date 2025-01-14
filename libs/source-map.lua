@@ -241,7 +241,7 @@ function SourceMap:addSourceMapping(source, originalLine, originalColumn, genera
 end
 
 --- NOTE: You will need to replace `false` values in `sourcesContent` with a value representing `null` for your json encoder
----@param optimise boolean? # Defaut true, will join seperate sections for generated that are identical for original.
+---@param optimise boolean? # Default true, will join separate sections for generated that are identical for original.
 function SourceMap:toJson(optimise)
 	local mapping = {}
 	local lastSourceIndex = 0

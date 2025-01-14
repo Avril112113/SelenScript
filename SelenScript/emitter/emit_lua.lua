@@ -316,6 +316,7 @@ end
 function EmitterDefs:call(node)
 	self:add_part("(")
 	self:visit(node.args)
+	self:set_source_pos(node.args.finish)
 	self:add_part(")")
 end
 
