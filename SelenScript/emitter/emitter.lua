@@ -31,6 +31,8 @@ end
 ---@field ast SelenScript.ASTNodes.Node
 ---@field parts string.buffer
 ---@field char_position integer
+---@field current_line integer
+---@field current_column integer
 ---@field indent_depth integer
 ---@field source_map SelenScript.NodeLinkedSourceMap
 -- -@field visit_path string[] # For debugging errors
@@ -117,6 +119,14 @@ function Emitter:add_part(s)
 	end
 	self.parts:put(s)
 	self.char_position = self.char_position + #s
+	local line_count = select(2, s:gsub("\n", "\n"))
+	if line_count > 0 then
+		-- self.current_column = 1
+		self.current_column = #s:match("[^\n]*$")+1
+		self.current_line = self.current_line + line_count
+	else
+		self.current_column = self.current_column + #s
+	end
 end
 
 --- Adds a new line, optionally adding indentation.
@@ -187,6 +197,8 @@ function Emitter:_create_proxy(ast, env)
 		ast = ast,
 		parts = Buffer.new(),
 		char_position = 1,
+		current_line = 1,
+		current_column = 1,
 		indent_depth = 0,
 		source_map = SourceMap.new(),
 		-- visit_path = {},

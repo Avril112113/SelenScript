@@ -484,4 +484,20 @@ for _, opType in pairs(Precedence.types) do
 end
 
 
+---@param node SelenScript.ASTNodes.Node
+function EmitterDefs:Special_OutputPos(node)
+	self:add_part(tostring(self.char_position))
+end
+
+---@param node SelenScript.ASTNodes.Node
+function EmitterDefs:Special_OutputLine(node)
+	self:add_part(tostring(self.current_line))
+end
+
+---@param node SelenScript.ASTNodes.Node
+function EmitterDefs:Special_OutputColumn(node)
+	self:add_part(tostring(self.current_column))
+end
+
+
 return EmitterDefs
