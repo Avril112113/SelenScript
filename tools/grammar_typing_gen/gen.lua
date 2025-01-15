@@ -200,6 +200,10 @@ local OVERRIDE_FIELD_TYPES = {
 		prefix = {types={"string"}, optional=false},
 		value = {types={"string"}, optional=false},
 	},
+	["LongComment"] = {
+		prefix = {types={"string", "\"--[[\""}, optional=false},
+		suffix = {types={"string", "\"]]\"", "\"--]]\""}, optional=false},
+	},
 	["string"] = {
 		prefix = "string",
 		suffix = "string",

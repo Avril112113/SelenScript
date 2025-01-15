@@ -48,11 +48,11 @@ end
 ---@field type "LongComment"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field prefix "--[["
----@field suffix "]"|("="?)
+---@field prefix string|"--[["
+---@field suffix string|"]]"|"--]]"
 ---@field value string?
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, suffix:"]"|("="?), value:string?}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, prefix:string|"--[[", suffix:string|"]]"|"--]]", value:string?}
 ---@return SelenScript.ASTNodes.LongComment
 ASTNodes["LongComment"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -65,7 +65,7 @@ ASTNodes["LongComment"] = function(args)
 		args["finish"] = args._parent and args._parent.finish or 1
 	end
 	assert(type(args["finish"]) == "number")
-	args["prefix"] = "--[["
+	assert(args["prefix"])
 	assert(args["suffix"])
 	assert(args["value"] == nil or type(args["value"]) == "string")
 	args["_parent"] = nil
