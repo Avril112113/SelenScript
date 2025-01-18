@@ -42,7 +42,7 @@ UNARY_OP	<- '-' / NOT / '#' / '~'
 
 RESERVED		<- RESERVED_STMT / NIL / TRUE / FALSE
 RESERVED_STMT	<- AND / NOT / OR
-				 / RAW_THEN / RAW_DO / RAW_AS / RAW_IN / RAW_END
+				 / RAW_THEN / RAW_DO / RAW_IN / RAW_END
 				 / BREAK / GOTO / ELSE / ELSEIF / IF / FOR / FUNCTION / REPEAT / UNTIL / WHILE / RETURN / LOCAL
 
 AND			<- Sc 'and' Cut
@@ -59,9 +59,6 @@ THEN		<- RAW_THEN
 RAW_DO		<- Sc 'do' Cut
 DO			<- RAW_DO
 			 / Sc ({}->"SYNTAX_EXPECT_DO"{}{(!Cut .)*}{})->add_error_o
-RAW_AS		<- Sc 'as' Cut
-AS			<- RAW_AS
-			 / Sc ({}->"SYNTAX_EXPECT_AS"{}{(!Cut .)*}{})->add_error_o
 RAW_IN		<- Sc 'in' Cut
 IN			<- RAW_IN
 			 / Sc ({}->"SYNTAX_EXPECT_IN"{}{(!Cut .)*}{})->add_error_o
