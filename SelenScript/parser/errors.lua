@@ -13,6 +13,7 @@ Errors.GRAMMAR_INVALID_MATH = ErrorBase.generate("GRAMMAR_INVALID_MATH", "Invali
 
 Errors.SYNTAX_UNIDENTIFIED = ErrorBase.generate("SYNTAX_UNIDENTIFIED", "Syntax %u@%u: %s")
 Errors.SYNTAX_MISS_NAME = ErrorBase.generate("SYNTAX_MISS_NAME", "Syntax %u@%u: Missing name")
+Errors.SYNTAX_RESERVED_NAME = ErrorBase.generate("SYNTAX_RESERVED_NAME", "Syntax %u@%u: Keyword `%s` can not be used as a name.")
 Errors.SYNTAX_MISS_END = ErrorBase.generate("SYNTAX_MISS_END", "Syntax %u@%u: Missing closing `end`")
 Errors.SYNTAX_EXPECT_THEN = ErrorBase.generate("SYNTAX_EXPECT_THEN", "Syntax %u@%u: Expected `then` but got `%s`")
 Errors.SYNTAX_EXPECT_DO = ErrorBase.generate("SYNTAX_EXPECT_DO", "Syntax %u@%u: Expected `do` but got `%s`")
