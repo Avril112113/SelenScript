@@ -1,5 +1,5 @@
 -- Created by: Avril112113
--- Version: 1.5
+-- Version: 1.5.2
 local original_print = print
 
 -- local socket = require "socket"
@@ -101,6 +101,7 @@ print_error = logging.print_error
 --- Requires LuaJIT
 --- https://stackoverflow.com/questions/64919350/enable-ansi-sequences-in-windows-terminal
 function logging.windows_enable_ansi()
+	if jit.os ~= "Windows" then return end
 	local ffi = require"ffi"
 	ffi.cdef[[
 	typedef int BOOL;
