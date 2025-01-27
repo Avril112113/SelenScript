@@ -73,7 +73,7 @@ local HELPER_CUSTOM_CODE = {
 				if args["prefix"] == nil and type(args["value"]) == "string" then
 					args["prefix"] = "\""
 					if args["value"]:find(args["prefix"]) then
-						args["value"]["prefix"] = "'"
+						args["prefix"] = "'"
 					end
 					if args["value"]:find(args["prefix"]) then
 						args["prefix"] = "[["

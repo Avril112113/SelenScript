@@ -1221,9 +1221,9 @@ end
 ---@field type "name"
 ---@field start SelenScript.ASTNodes.SrcPosition
 ---@field finish SelenScript.ASTNodes.SrcPosition
----@field name string|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"_"|"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z"|"0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"and"|"not"|"or"|"then"|"do"|"as"|"in"|"end"|"break"|"goto"|"else"|"elseif"|"if"|"for"|"function"|"repeat"|"until"|"while"|"return"|"local"|"nil"|"true"|"false"
+---@field name string|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"_"|"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z"|"0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"and"|"not"|"or"|"then"|"do"|"in"|"end"|"break"|"goto"|"else"|"elseif"|"if"|"for"|"function"|"repeat"|"until"|"while"|"return"|"local"|"nil"|"true"|"false"
 
----@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, name:string|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"_"|"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z"|"0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"and"|"not"|"or"|"then"|"do"|"as"|"in"|"end"|"break"|"goto"|"else"|"elseif"|"if"|"for"|"function"|"repeat"|"until"|"while"|"return"|"local"|"nil"|"true"|"false"}
+---@param args {_parent:SelenScript.ASTNodes.Node?, start:SelenScript.ASTNodes.SrcPosition?, finish:SelenScript.ASTNodes.SrcPosition?, name:string|"B"|"C"|"D"|"E"|"F"|"G"|"H"|"I"|"J"|"K"|"L"|"M"|"N"|"O"|"P"|"Q"|"R"|"S"|"T"|"U"|"V"|"W"|"X"|"Y"|"Z"|"_"|"a"|"b"|"c"|"d"|"e"|"f"|"g"|"h"|"i"|"j"|"k"|"l"|"m"|"n"|"o"|"p"|"q"|"r"|"s"|"t"|"u"|"v"|"w"|"x"|"y"|"z"|"0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"and"|"not"|"or"|"then"|"do"|"in"|"end"|"break"|"goto"|"else"|"elseif"|"if"|"for"|"function"|"repeat"|"until"|"while"|"return"|"local"|"nil"|"true"|"false"}
 ---@return SelenScript.ASTNodes.name
 ASTNodes["name"] = function(args)
 	args["source"] = args._parent and args._parent.source or nil
@@ -1553,7 +1553,7 @@ ASTNodes["string"] = function(args)
 	if args["prefix"] == nil and type(args["value"]) == "string" then
 		args["prefix"] = "\""
 		if args[("value")]:find(args["prefix"]) then
-			args[("value")]["prefix"] = "'"
+			args["prefix"] = "'"
 		end
 		if args[("value")]:find(args["prefix"]) then
 			args["prefix"] = "[["
