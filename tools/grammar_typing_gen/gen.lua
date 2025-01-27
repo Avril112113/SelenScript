@@ -221,6 +221,11 @@ local OVERRIDE_FIELD_TYPES = {
 	["index"] = {
 		braces = {optional=true},
 	},
+	["block"] = {
+		["[integer]"] = function(field, astnode)
+			table.insert(field.types, 1, "SelenScript.ASTNodes.block")
+		end,
+	},
 }
 
 
