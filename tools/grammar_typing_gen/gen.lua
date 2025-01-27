@@ -224,6 +224,9 @@ local OVERRIDE_FIELD_TYPES = {
 	["block"] = {
 		["[integer]"] = function(field, astnode)
 			table.insert(field.types, 1, "SelenScript.ASTNodes.block")
+			table.insert(field.types, 1, "SelenScript.ASTNodes.Source")
+			table.insert(field.types, 1, "SelenScript.ASTNodes.LineComment")
+			table.insert(field.types, 1, "SelenScript.ASTNodes.LongComment")
 		end,
 	},
 }
