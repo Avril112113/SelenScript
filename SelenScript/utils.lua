@@ -166,9 +166,7 @@ end
 ---@param text string
 ---@return string
 function Utils.escape_escape_sequences(text)
-	return (text:gsub("\\[abfnrtv]", function(s)
-		return ESCAPE_SEQUENCES_MAP[s]
-	end))
+	return (text:gsub("\\[abfnrtv]", "\\%1"))
 end
 
 do
