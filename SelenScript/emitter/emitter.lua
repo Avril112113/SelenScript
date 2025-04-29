@@ -3,13 +3,14 @@ local SourceMap = require "SelenScript.emitter.node_linked_source_map"
 local Buffer = require("string.buffer")  -- https://luajit.org/ext_buffer.html
 
 
--- TODO: Make emitter config seperated for each emitter type
+---@alias SelenScript.EmitterConfigOpts SelenScript.EmitterConfig|{}
 ---@class SelenScript.EmitterConfig
 local EmitterConfig = {
 	--- All Emitters
 	newline = "\n",
 	indent = "\t",
 }
+
 ---@param from table
 ---@param emitter SelenScript.Emitter
 local function create_config(from, emitter)

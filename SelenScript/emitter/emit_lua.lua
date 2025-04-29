@@ -6,6 +6,8 @@ local Precedence = require "SelenScript.parser.precedence"
 ---@field get_source_path (fun(src_path:string):string)?
 ---@field _sources SelenScript.ASTNodes.Source[]
 local EmitterDefs = {}
+
+---@alias SelenScript.LuaEmitterConfigOpts SelenScript.LuaEmitterConfig|{}
 ---@class SelenScript.LuaEmitterConfig : SelenScript.EmitterConfig
 EmitterDefs.DefaultConfig = {
 	fieldlist_trail_comma = true,
