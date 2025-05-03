@@ -160,6 +160,7 @@ function Transformer:transform(ast, env)
 	-- NOTE: The `ast` param shouldn't be transformed, as that will replace it, causing potentially untransformed ast nodes.
 	local self_proxy = self:_create_proxy(ast, env)
 	self_proxy:visit(assert(ast, "Missing `ast` argument."))
+	if self_proxy.__post_transform then self_proxy:__post_transform(ast) end
 	return self_proxy.errors
 end
 
