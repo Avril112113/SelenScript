@@ -487,6 +487,17 @@ end
 
 
 ---@param node SelenScript.ASTNodes.Node
+function EmitterDefs:Special_OutputRaw(node)
+	for _, child in ipairs(node) do
+		if type(child) == "string" then
+			self:add_part(child)
+		else
+			self:visit(child)
+		end
+	end
+end
+
+---@param node SelenScript.ASTNodes.Node
 function EmitterDefs:Special_OutputPos(node)
 	self:add_part(tostring(self.char_position))
 end
