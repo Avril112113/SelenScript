@@ -62,7 +62,7 @@ local HELPER_FIELD_DEFAULTS = {
 	finish = _default_parent_or("finish", ASTNodes.numeral{value="1"}),
 }
 
--- Fields are done in alphadetical order.
+-- Fields are done in alphabetical order.
 -- Order can be overridden with `OVERRIDE_FIELD_ORDER`
 local HELPER_CUSTOM_CODE = {
 	["string"] = {
