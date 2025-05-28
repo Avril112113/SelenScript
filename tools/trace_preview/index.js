@@ -26,32 +26,187 @@ function get_status() {
 	return $("#status-a").text();
 }
 
-const SOURCE_FILE_PATH = "/test_local/test_input.sel";
-const TRACE_FILE_PATH = "/test_local/test.relabel_trace";
+const SOURCE_FILE_PATH = "/t/t.txt";
+const TRACE_FILE_PATH = "/t/test.relabel_trace";
 
 var source_editor;
 var trace_editor;
 
+/**
+ * @param {integer} start 
+ * @param {integer} finish 
+ * @param {integer|undefined} max_width 
+ * @param {boolean|undefined} allow_simple 
+ */
+function get_src_readable(start, finish, max_width, allow_simple) {
+	/** @type {string} */
+	const source = source_editor.getValue();
+	if (max_width == undefined) max_width = 16;
+	let source_str;
+	if (start === finish) {
+		source_str = `'${source.substring(start, start+1)}' @ ${start}`
+	} else {
+		source_str = source.substring(start, finish);
+		if (source_str.length > max_width+4) {
+			source_str = source_str.substring(0, max_width) + " ...";
+		}
+		if (allow_simple === false)
+			source_str = `'${source_str}' @ ${start}->${finish}`
+	}
+	return source_str;
+}
+
+const escapeHtml = unsafe => {
+  return unsafe
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+};
+
+class TraceInfoStyler {
+	/** @type TraceInfo */
+	trace;
+
+	/**
+	 * @param {TraceInfo} trace 
+	 */
+	constructor(trace) {
+		this.trace = trace;
+	}
+
+	get color() {
+		return this.trace.failed ? "darkred" : "greenyellow";
+	}
+
+	/** @param {string} color  */
+	color_key(color) {
+		return color == "greenyellow"
+			? "Match succeeded"
+			: "Match failed";
+	}
+	
+	get name() {
+		return this.trace.rule_name;
+	}
+
+	get tooltip() {
+		return escapeHtml(get_src_readable(this.trace.start, this.trace.finish, 128, false));
+	}
+
+	get start_collapsed() {
+		return this.trace.failed;
+	}
+}
+
+class ThrowInfoStyler extends TraceInfoStyler {
+	/**
+	 * @param {TraceInfo} trace 
+	 */
+	constructor(trace) {
+		super(trace);
+		if (this.trace.failed && trace.parent != undefined)
+			trace.parent.style = new ThrowRelevantInfoStyler(trace.parent);
+	}
+
+	get color() {
+		return "OrangeRed";
+	}
+
+	/** @param {string} color  */
+	color_key(color) {
+		return color == "OrangeRed"
+			? "Thrown labeled error"
+			: super.color_key(color);
+	}
+	
+	get name() {
+		return "^" + super.name;
+	}
+
+	get tooltip() {
+		const prefix = `${super.tooltip}<br/>`;
+		if (this.trace.failed) {
+			return `${prefix}Throw '${this.trace.rule_name}' did not recover @ ${this.trace.start}`;
+		}
+		if (this.trace.start === this.trace.finish) {
+			return `${prefix}Throw '${this.trace.rule_name}' recovered @ ${this.trace.start}`;
+		} else {
+			return `${prefix}Throw '${this.trace.rule_name}' recovered @ ${this.trace.start} -> ${this.trace.finish}`;
+		}
+	}
+
+	get start_collapsed() {
+		return false;
+	}
+}
+
+class ThrowRelevantInfoStyler extends TraceInfoStyler {
+	/**
+	 * @param {TraceInfo} trace 
+	 */
+	constructor(trace) {
+		super(trace);
+		if (trace.failed && trace.parent != undefined)
+			trace.parent.style = new ThrowRelevantInfoStyler(trace.parent);
+	}
+
+	get color() {
+		return this.trace.failed ? "black" : "orange";
+	}
+
+	/** @param {string} color  */
+	color_key(color) {
+		return color == "black"
+			? "Labeled error failure (did not recover)"
+			: (color == "orange")
+			? "Labeled error recovered"
+			: super.color_key(color);
+	}
+
+	get start_collapsed() {
+		return false;
+	}
+}
+
+const TRACE_STATUS_MAP = {
+	"check match": TraceInfoStyler,
+	"throw": ThrowInfoStyler,
+};
+
 class TraceInfo {
 	/** @type string */
-	name;
+	rule_name;
 	/** @type integer */
 	start;
 	/** @type integer */
 	finish;
-	/** @type boolean */
+	/** @type boolean|ThrowInfo */
 	failed;
+	/** @type TraceInfo */
+	parent;
 	/** @type TraceInfo[] */
 	traces;
+	/** @type TraceInfoStyler */
+	style;
 
-	constructor(name, start) {
-		this.name = name;
+	/**
+	 * @param {string} rule_name 
+	 * @param {integer} start 
+	 * @param {TraceInfo} parent 
+	 */
+	constructor(rule_name, start, parent) {
+		this.rule_name = rule_name;
 		this.start = start;
 		this.finish = start;
 		this.failed = false;
+		this.parent = parent;
 		this.traces = [];
+		this.style = new TraceInfoStyler(this);
 	}
 }
+
 /** @type TraceInfo */
 let trace = new TraceInfo("ROOT", 0);
 function update_trace() {
@@ -66,18 +221,29 @@ function update_trace() {
 	let trace_path = [trace];
 
 	lines.forEach(line => {
-		let parts = /([┌│└]+)(check|good|failed) match at (\d+) : (.*)/.exec(line);
+		let parts = /([┌|^│└]+)(check match|good match|failed match|throw|throw recovered|throw fail) at (\d+) : (.*)/.exec(line);
 		if (parts == null) return;
 		let [_1, _2, status, pos, name] = parts;
 		pos = Number.parseInt(pos)-1;
-		if (status === "check") {
-			let trace = new TraceInfo(name, pos);
-			trace_path[trace_path.length-1].traces.push(trace);
+		if (status in TRACE_STATUS_MAP) {
+			let parent = trace_path[trace_path.length-1];
+			let trace = new TraceInfo(name, pos, parent);
+			trace.style = new TRACE_STATUS_MAP[status](trace);
+			parent.traces.push(trace);
 			trace_path.push(trace)
 		} else {
-			trace_path[trace_path.length-1].finish = pos;
-			trace_path[trace_path.length-1].failed = status !== "good";
-			trace_path.pop();
+			let trace = trace_path[trace_path.length-1];
+			trace.finish = pos;
+			if (status === "good match" || status == "throw recovered") {
+				trace.failed = false;
+				trace_path.pop();
+			} else if (status === "failed match" || status === "throw fail") {
+				trace.failed = true;
+				trace_path.pop();
+			} else {
+				console.warn(`Unexpected status ${status}`);
+				trace_path.pop();
+			}
 		}
 	});
 	// console.log(trace);
@@ -93,25 +259,15 @@ function update_trace_preview() {
 	console.log("update_trace_preview()");
 	set_status("Generating preview...");
 
-	/** @type {string} */
-	const source = source_editor.getValue();
-	/**
-	 * @param {integer} start 
-	 * @param {integer} finish 
-	 * @param {integer|undefined} max_width 
-	 */
-	function get_src_readable(start, finish, max_width) {
-		if (max_width == undefined) max_width = 16;
-		let source_str;
-		if (start === finish) {
-			source_str = `'${source.substring(start, start+1)}' @ ${start}`
-		} else {
-			source_str = source.substring(start, finish);
-			if (source_str.length > max_width+4) {
-				source_str = source_str.substring(0, max_width) + " ...";
-			}
+	const color_key_elem = $("#color-key");
+	color_key_elem.html("");
+	const color_keys = {};
+	function ensure_color_key(key, color) {
+		const key_key = color + ";" + key;
+		if (!(key_key in color_keys)) {
+			color_keys[key_key] = color;
+			color_key_elem.append(`<p style="margin: 0;"><b style="color: ${color};">⬤</b> - ${key}</p>`);
 		}
-		return source_str;
 	}
 
 	const root = d3.hierarchy(trace, t => t.traces);
@@ -152,21 +308,22 @@ function update_trace_preview() {
 		svg_elem.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${width} ${height}`);
 	}
 
-	const gNode = svg.append("g")
-		.attr("cursor", "pointer")
-		.attr("pointer-events", "all")
-		.attr("stroke-linejoin", "round")
-		.attr("stroke-width", 3);
-
+	// Specifically first to be visually below gNode
 	const gLink = svg.append("g")
 		.attr("fill", "none")
 		.attr("stroke", "#888")
 		.attr("stroke-opacity", 0.4)
 		.attr("stroke-width", 1.5);
 
+	const gNode = svg.append("g")
+		.attr("cursor", "pointer")
+		.attr("pointer-events", "all")
+		.attr("stroke-linejoin", "round")
+		.attr("stroke-width", 3);
+
 	let link_def = d3.linkVertical()
 		.x(e => e.x)
-		.y(e => e.y)
+		.y(e => e.y);
 
 	/**
 	 * @param {d3.HierarchyNode<TraceInfo>} parent 
@@ -186,14 +343,14 @@ function update_trace_preview() {
 
 		nodeEnter
 			.append("circle")
-				.attr("fill", e => e.data.failed ? "darkred" : "greenyellow")
+				.attr("fill", e => e.data.style.color)
 				.attr("r", 5);
 
 		nodeEnter
 			.append("text")
 				.attr("dy", -TRACE_NODE_FONT_MAIN_SIZE_PX - TRACE_NODE_FONT_SUB_SIZE_PX)
-				.attr("x", e => -getTextWidth(e.data.name, TRACE_NODE_FONT_MAIN)/2)
-				.text(e => e.data.name)
+				.attr("x", e => -getTextWidth(e.data.style.name, TRACE_NODE_FONT_MAIN)/2)
+				.text(e => e.data.style.name)
 				.attr("fill", "#EEE");
 
 		nodeEnter
@@ -232,7 +389,8 @@ function update_trace_preview() {
 			})
 			.on("mouseover", (event, e) => {
 				tooltip.style("visibility", "visible");
-				tooltip.text(get_src_readable(e.data.start, e.data.finish, 128));
+				tooltip.style("text-align", "center");
+				tooltip.html(e.data.style.tooltip);
 			})
 			.on("mousemove", (event, e) => {
 				const [mx, my] = d3.pointer(event, e);
@@ -272,7 +430,9 @@ function update_trace_preview() {
 		e.id = i;
 		e._children = e.children;
 		if (e._children == undefined) e._children = [];
-		if (e.data.failed) e.children = null;
+		if (e.data.style.start_collapsed) e.children = null;
+
+		ensure_color_key(e.data.style.color_key(e.data.style.color), e.data.style.color);
 	});
 
 	update(root);
@@ -307,6 +467,7 @@ $(() => {
 		fetch(SOURCE_FILE_PATH)
 			.then((res) => res.text())
 			.then((text) => {
+				text = text.replaceAll("\r", "");
 				if (text !== source_editor.getValue()){
 					source_editor.setValue(text);
 				}

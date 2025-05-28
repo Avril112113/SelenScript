@@ -62,6 +62,27 @@ local track_leave = function(n)
     return true
   end)
 end
+-- For Debugging
+local track_throw = function(n)
+  return m.Cmt(m.P(true), function(subject, pos, ...)
+    debug.relabelDbgPrint(string.rep("│", track_depth) .. "^throw at " .. tostring(pos) .. " : " .. tostring(n))
+    return true
+  end)
+end
+-- For Debugging
+local track_throw_recovered = function(n)
+  return m.Cmt(m.P(true), function(subject, pos, ...)
+    debug.relabelDbgPrint(string.rep("│", track_depth) .. "^throw recovered at " .. tostring(pos) .. " : " .. tostring(n))
+    return true
+  end)
+end
+-- For Debugging
+local track_throw_failed = function(n)
+  return m.Cmt(m.P(true), function(subject, pos, ...)
+    debug.relabelDbgPrint(string.rep("│", track_depth) .. "^throw fail at " .. tostring(pos) .. " : " .. tostring(n))
+    return false
+  end)
+end
 -- CUSTOM EDIT END --
 
 
@@ -254,6 +275,20 @@ local function NT (n, b, _special)
   end
 end
 
+-- CUSTOM EDIT
+local function _track_throw_label(b, _special)
+  if not b then
+    return mm.T(b)
+  else
+    -- For Debugging
+    if _special ~= false and debug.relabelDbgFilter ~= nil and debug.relabelDbgFilter(b) then
+      return (track_throw(b) * m.P(false)) + (mm.T(b) * track_throw_recovered(b) + track_throw_failed(b))
+    else
+      return mm.T(b)
+    end
+  end
+end
+
 
 local exp = m.P{ "Exp",
   Exp = S * ( m.V"Grammar"
@@ -283,14 +318,14 @@ local exp = m.P{ "Exp",
                            "ExpName1")
                 + "~>" * S * defwithfunc(m.Cf)
                 ) --* S
-          )^0, function (a,b,f) if f == "lab" then return a + mm.T(b) else return f(a,b) end end );
+          )^0, function (a,b,f) if f == "lab" then return a + _track_throw_label(b,f) else return f(a,b) end end );  -- CUSTOM EDIT
   Primary = "(" * expect(m.V"Exp", "ExpPatt4") * expect(S * ")", "MisClose1")
           + String / mm.P
           + Class
           + defined
           + "%" * expect(m.P"{", "ExpNameOrLab")
             * expect(S * m.V"Label", "ExpLab1")
-            * expect(S * "}", "MisClose7") / mm.T
+            * expect(S * "}", "MisClose7") / _track_throw_label  -- CUSTOM EDIT
           + "{:" * (name * ":" + m.Cc(nil)) * expect(m.V"Exp", "ExpPatt5")
             * expect(S * ":}", "MisClose2")
             / function (n, p) return mm.Cg(p, n) end
