@@ -6,3 +6,6 @@
 /test_local/
 # Modified https://github.com/evanw/source-map-visualization to auto-load fiels from test_local/
 /tools/sourcemap-visualiser/
+
+/fuzz_corpus
+/crash-*
