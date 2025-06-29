@@ -156,6 +156,7 @@ end
 --- Runs a transformer though the `ast`, mutating the input parameter.
 ---@param ast SelenScript.ASTNodes.Source # WARNING: Mutated
 ---@param env table? # Copied into the proxied transformer object.
+---@return SelenScript.Error[]
 function Transformer:transform(ast, env)
 	-- NOTE: The `ast` param shouldn't be transformed, as that will replace it, causing potentially untransformed ast nodes.
 	local self_proxy = self:_create_proxy(ast, env)
