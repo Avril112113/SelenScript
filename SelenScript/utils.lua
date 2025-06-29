@@ -20,13 +20,16 @@ function Utils.writeFile(path, data, binary)
 	f:close()
 end
 
+---@param from table
+---@param into table  # MUTATED
+---@param overwrite boolean|"simple"?  # true = overwrite at same key/index, false = ignore_existing, "simple" = child tables will be overridden whole
 function Utils.merge(from, into, overwrite)
 	if overwrite == nil then overwrite = true end
 	into = into or {}
 	for i, v in pairs(from) do
 		if overwrite or into[i] == nil then
 			if type(v) == "table" then
-				if into[i] ~= nil then
+				if into[i] ~= nil and overwrite ~= "simple" then
 					Utils.merge(v, into[i])
 				else
 					into[i] = Utils.deepcopy(v)
