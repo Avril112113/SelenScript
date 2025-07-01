@@ -9,3 +9,8 @@
 
 /fuzz_corpus
 /crash-*
+
+# Dev only
+/libs/avflamegraph
+/flamegraph.svg
+/flamegraph.txt
